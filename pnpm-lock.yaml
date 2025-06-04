@@ -51,6 +51,9 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3
         version: 3.3.1
+      '@sanity/codegen':
+        specifier: ^3.91.0
+        version: 3.91.0
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.1.8

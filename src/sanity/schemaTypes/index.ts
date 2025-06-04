@@ -1,5 +1,9 @@
-import { type SchemaTypeDefinition } from 'sanity'
+import { type SchemaTypeDefinition } from 'sanity';
+
+import { article } from './article';
+import { configuration } from './configuration';
+import { gallery } from './gallery';
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [],
-}
+    types: [article, gallery, configuration],
+};

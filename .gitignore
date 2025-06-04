@@ -43,3 +43,6 @@ next-env.d.ts
 # cursor et prompts (development only)
 .cursor/
 prompts/
+
+# Generated Sanity types
+sanity.types.ts
