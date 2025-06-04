@@ -1,0 +1,152 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Contenu stratégique pour Hexoprint.fr – Base SEO & rédactionnelle
+
+## 🔁 Structure du site (rappel)
+
+- Accueil
+- À propos
+- Prestations
+  - Professionnels
+  - Particuliers
+- Galerie
+- Blog
+- Demande de devis
+- Contact
+
+---
+
+## 🔑 Mots-clés stratégiques
+
+### Mots-clés principaux
+- Impression 3D Haute-Garonne
+- Impression 3D Toulouse
+- Impression 3D sur-mesure
+- Pièces imprimées 3D
+- Prototypage rapide
+- Réparation pièces 3D
+- Modélisme impression 3D
+- Création objet 3D personnalisé
+- Artisan impression 3D
+- Impression 3D petite série
+
+### Mots-clés techniques
+- Fichier STL
+- Fichier OBJ
+- PLA, PETG, ABS, résine
+- Infographie 3D
+- Précision dimensionnelle
+- Résistance mécanique
+- Qualité de finition
+- Impression par dépôt de matière fondue (FDM)
+- Prototypage fonctionnel
+- Slicing impression 3D
+
+---
+
+## 🏷️ Titres recommandés
+
+### Page Accueil
+- Donnez vie à vos projets grâce à l’impression 3D artisanale et sur-mesure
+- Hexoprint : Le spécialiste local en impression 3D à Seysses (31)
+
+### À propos
+- La passion du détail au cœur de chaque impression
+- Hexoprint : Votre partenaire technique en fabrication additive
+
+### Prestations Professionnels
+- Prototypage rapide & réparation industrielle par impression 3D
+- Pièces industrielles 3D : précision, fiabilité et flexibilité
+
+### Prestations Particuliers
+- Impression 3D pour passionnés, créatifs et curieux
+- Modélisme, déco & bricolage : des réalisations sur-mesure à portée de main
+
+### Galerie
+- Découvrez nos plus belles réalisations d’impression 3D
+
+### Blog
+- Conseils pratiques et inspiration pour vos projets d’impression 3D
+- Hexoprint partage son expertise et ses astuces techniques
+
+### Devis
+- Un devis personnalisé, rapide et sans engagement pour vos projets 3D
+
+---
+
+## ✍️ Textes d’introduction & d’accroche
+
+### Accueil
+> Chez Hexoprint, chaque pièce imprimée raconte une histoire, la vôtre. Que vous soyez une entreprise cherchant à optimiser sa production grâce au prototypage rapide ou un particulier passionné de modélisme, notre atelier situé à Seysses (31) vous accompagne avec soin, écoute et précision.  
+> Notre promesse : un résultat qui répond précisément à vos attentes, quelle que soit la complexité ou la taille de votre projet.
+
+### À propos
+> Hexoprint, c’est avant tout une passion devenue métier. Fondée par Yann, un technicien passionné par l'impression 3D, l’entreprise mêle savoir-faire artisanal et rigueur technique.  
+> De la création des plans jusqu’au produit final, chaque étape est maîtrisée et réalisée avec minutie.  
+> Notre objectif est simple : vous proposer une impression 3D de qualité, avec une vraie expertise technique, une écoute attentive, et toujours avec le sourire !
+
+### Prestations – Professionnels
+> Pour les professionnels, Hexoprint offre des solutions d’impression 3D adaptées à vos enjeux industriels : prototypage fonctionnel, réparation rapide, fabrication de pièces spécifiques en petite série.  
+> Grâce à notre maîtrise avancée des matériaux (PLA, ABS, PETG, résine) et notre capacité à fournir des conseils techniques précis, nous optimisons vos projets avec réactivité et professionnalisme.
+
+### Prestations – Particuliers
+> Chez Hexoprint, tous les projets sont importants, qu’il s’agisse d’un objet décoratif personnalisé, d’une pièce de modélisme détaillée ou d’un projet créatif totalement sur-mesure.  
+> Nous accompagnons chaque client, quel que soit son niveau de connaissance, en prenant le temps nécessaire pour comprendre ses besoins, conseiller les meilleurs matériaux, et obtenir une finition impeccable.
+
+### Galerie
+> Découvrez notre galerie de réalisations : chaque objet présenté reflète notre passion du détail, notre engagement envers la qualité, et l’étendue de nos compétences techniques. Inspirez-vous pour votre prochain projet !
+
+---
+
+## 🧠 Idées d’articles de blog
+
+- Quel matériau choisir pour mon impression 3D ? Comparatif PLA, ABS, PETG et résine
+- Les clés d’une impression 3D réussie : conseils pour bien préparer son fichier STL
+- Réparer plutôt que jeter : comment l’impression 3D prolonge la vie de vos objets
+- Du plan à la pièce : comprendre le processus d’impression 3D
+- Impression 3D en modélisme : conseils et astuces pour des pièces détaillées
+
+---
+
+## 🎙️ Phrases clés à réutiliser dans les CTA ou descriptions
+
+- Ici, chaque impression compte, même la plus petite pièce.
+- Nous accompagnons vos idées, des plus simples aux plus audacieuses.
+- Votre satisfaction est au cœur de notre métier.
+- Technique, passion et précision : la recette d’une impression réussie !
+- Vous avez un projet complexe ? Aucun souci, c’est justement notre spécialité.
+
+---
+
+## 🧱 Structure du projet (fichier source partagé)
+
+```plaintext
+hexoprint-nextjs15-with-sanity/
+├── src/
+│ ├── app/
+│ │ ├── studio/ # Sanity Studio intégré (route /studio)
+│ │ └── page.tsx, layout.tsx, etc.
+│ └── sanity/
+│ ├── lib/ # Fonctions Sanity (client, image, live)
+│ └── schemaTypes/ # Schémas des collections
+├── .env.local
+├── sanity.config.ts
+├── sanity.cli.ts
+├── next.config.ts
+├── tsconfig.json
+├── package.json
+```
+
+## 👤 Positionnement et ton de voix
+
+- Ton : **sympathique mais très qualifié**, accessible sans perdre en crédibilité.
+- Style : **franc, passionné, rigoureux**, valorisant la proximité et l’expertise.
+- Valeurs : **accompagnement, qualité, accessibilité, transparence technique**.
+- Cible : **autant les entreprises industrielles que les bricoleurs créatifs**.
+
+
+
+
