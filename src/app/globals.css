@@ -142,11 +142,55 @@
     --sidebar-ring: var(--hexo-blue-light);
 }
 
+/* Animations pour StarBorder */
+@keyframes star-movement-bottom {
+    0% {
+        transform: translate(0%, 0%);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-100%, 0%);
+        opacity: 0;
+    }
+}
+
+@keyframes star-movement-top {
+    0% {
+        transform: translate(0%, 0%);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(100%, 0%);
+        opacity: 0;
+    }
+}
+
+@property --star-movement-bottom {
+    syntax: '<string>';
+    inherits: false;
+    initial-value: 'star-movement-bottom linear infinite alternate';
+}
+
+@property --star-movement-top {
+    syntax: '<string>';
+    inherits: false;
+    initial-value: 'star-movement-top linear infinite alternate';
+}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@layer utilities {
+    .animate-star-movement-bottom {
+        animation: star-movement-bottom linear infinite alternate;
+    }
+    .animate-star-movement-top {
+        animation: star-movement-top linear infinite alternate;
     }
 }
