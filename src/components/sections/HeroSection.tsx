@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 export function HeroSection() {
     return (
-        <section className='relative min-h-screen bg-black/[0.96] overflow-hidden'>
+        <section className='relative min-h-screen bg-background overflow-hidden'>
             {/* Spotlight Background Effect */}
             <Spotlight
                 className='-top-40 left-0 md:left-60 md:-top-20 z-50'
@@ -41,20 +41,20 @@ export function HeroSection() {
                     >
                         {/* Main Heading */}
                         <motion.h1
-                            className='text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400'
+                            className='text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight text-foreground'
                             initial={{ opacity: 0, x: -50 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.4 }}
                         >
                             Donnez vie à vos projets avec{' '}
-                            <span className='bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent'>
+                            <span className='text-primary'>
                                 l&apos;impression 3D
                             </span>
                         </motion.h1>
 
                         {/* Subtitle */}
                         <motion.p
-                            className='text-base md:text-lg lg:text-xl text-neutral-300 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed'
+                            className='text-base md:text-lg lg:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed'
                             initial={{ opacity: 0, x: -50 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.6 }}
@@ -88,7 +88,7 @@ export function HeroSection() {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 1.0 }}
                         >
-                            <span className='inline-block bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-2 text-sm text-neutral-300'>
+                            <span className='inline-block bg-muted/50 backdrop-blur-sm border border-border rounded-full px-6 py-2 text-sm text-muted-foreground'>
                                 📍 Seysses, Haute-Garonne (31) • Livraison dans
                                 toute la France
                             </span>
@@ -104,17 +104,27 @@ export function HeroSection() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1.5 }}
             >
-                <div className='flex flex-col items-center text-white/60'>
+                <div className='flex flex-col items-center text-muted-foreground'>
                     <span className='text-sm mb-2'>Découvrez nos services</span>
                     <motion.div
                         animate={{ y: [0, 10, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className='w-6 h-10 border-2 border-white/30 rounded-full flex justify-center'
+                        transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            repeatType: 'reverse',
+                        }}
+                        className='w-6 h-10 border-2 border-border rounded-full flex justify-center motion-reduce:animate-none'
+                        role='img'
+                        aria-label='Indicateur de défilement'
                     >
                         <motion.div
                             animate={{ y: [0, 12, 0] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                            className='w-1 h-3 bg-white/60 rounded-full mt-2'
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatType: 'reverse',
+                            }}
+                            className='w-1 h-3 bg-muted-foreground rounded-full mt-2'
                         />
                     </motion.div>
                 </div>
