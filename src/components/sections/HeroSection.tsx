@@ -54,7 +54,7 @@ export function HeroSection() {
 
                         {/* Subtitle */}
                         <motion.p
-                            className='text-base md:text-lg lg:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed'
+                            className='lead mb-8 max-w-2xl mx-auto lg:mx-0'
                             initial={{ opacity: 0, x: -50 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.6 }}
@@ -99,12 +99,24 @@ export function HeroSection() {
 
             {/* Scroll Indicator */}
             <motion.div
-                className='absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10'
+                className='absolute bottom-8 left-1/2 transform -translate-x-1/2 z-[100]'
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1.5 }}
             >
-                <div className='flex flex-col items-center text-muted-foreground'>
+                <button
+                    onClick={() => {
+                        const nextSection = document.querySelector(
+                            'main > section:nth-child(2)'
+                        );
+                        nextSection?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                        });
+                    }}
+                    className='flex flex-col items-center text-muted-foreground cursor-pointer hover:text-primary transition-colors duration-300 focus:outline-none focus:text-primary p-4'
+                    aria-label='Défiler vers la section suivante'
+                >
                     <span className='text-sm mb-2'>Découvrez nos services</span>
                     <motion.div
                         animate={{ y: [0, 10, 0] }}
@@ -127,7 +139,7 @@ export function HeroSection() {
                             className='w-1 h-3 bg-muted-foreground rounded-full mt-2'
                         />
                     </motion.div>
-                </div>
+                </button>
             </motion.div>
         </section>
     );

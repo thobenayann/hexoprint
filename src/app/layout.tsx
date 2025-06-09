@@ -1,16 +1,22 @@
 import { Navigation } from '@/components/layout/navigation';
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Open_Sans, Playfair_Display } from 'next/font/google';
 import './globals.css';
 
-const geistSans = Geist({
-    variable: '--font-geist-sans',
+const playfair = Playfair_Display({
     subsets: ['latin'],
+    weight: ['400', '700'],
+    variable: '--font-playfair',
+    display: 'swap',
+    preload: true,
 });
 
-const geistMono = Geist_Mono({
-    variable: '--font-geist-mono',
+const openSans = Open_Sans({
     subsets: ['latin'],
+    weight: ['400', '600', '700'],
+    variable: '--font-open-sans',
+    display: 'swap',
+    preload: true,
 });
 
 export const metadata: Metadata = {
@@ -27,7 +33,7 @@ export default function RootLayout({
     return (
         <html lang='fr' suppressHydrationWarning className='dark'>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
+                className={`${playfair.variable} ${openSans.variable} antialiased dark`}
             >
                 <Navigation />
                 {children}
