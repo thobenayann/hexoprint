@@ -68,11 +68,11 @@ export function WhyHexoprint() {
                     viewport={{ once: true, margin: '-100px' }}
                     className='text-center mb-20'
                 >
-                    <h2 className='text-4xl md:text-5xl lg:text-6xl font-bold mb-8 text-foreground'>
+                    <h2 className='text-xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-foreground'>
                         Pourquoi choisir{' '}
                         <span className='text-primary'>Hexoprint</span>?
                     </h2>
-                    <p className='text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed'>
+                    <p className='text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed'>
                         Notre promesse : un résultat qui répond précisément à
                         vos attentes, quelle que soit la complexité ou la taille
                         de votre projet.
@@ -84,13 +84,17 @@ export function WhyHexoprint() {
                     initial='hidden'
                     whileInView='visible'
                     viewport={{ once: true, margin: '-100px' }}
-                    className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6'
+                    className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6 justify-items-center'
                 >
                     {values.map((value, index) => {
                         const IconComponent = value.icon;
                         return (
-                            <motion.div key={index} variants={cardVariants}>
-                                <GlareCard className='h-full min-h-[320px] p-8 flex flex-col items-center justify-center text-center group'>
+                            <motion.div
+                                key={index}
+                                variants={cardVariants}
+                                className='w-full max-w-sm md:max-w-none'
+                            >
+                                <GlareCard className='h-full min-h-[320px] md:p-8 flex flex-col items-center justify-center text-center group cursor-pointer'>
                                     {/* Glass morphism background */}
                                     <div className='absolute inset-0 bg-gradient-to-br from-card/50 via-card/30 to-card/50 backdrop-blur-xl border border-border rounded-[var(--radius)] group-hover:from-card/70 group-hover:via-card/50 group-hover:to-card/70 transition-all duration-500'></div>
 
@@ -107,12 +111,12 @@ export function WhyHexoprint() {
                                         </div>
 
                                         {/* Title */}
-                                        <h3 className='text-xl font-bold text-foreground mb-4 leading-tight group-hover:text-primary transition-colors duration-300'>
+                                        <h3 className='text-lg md:text-xl font-bold text-foreground mb-3 md:mb-4 leading-tight group-hover:text-primary transition-colors duration-300'>
                                             {value.title}
                                         </h3>
 
                                         {/* Description */}
-                                        <p className='text-muted-foreground leading-relaxed text-sm group-hover:text-foreground transition-colors duration-300'>
+                                        <p className='text-sm md:text-base text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors duration-300'>
                                             {value.description}
                                         </p>
                                     </div>
@@ -139,11 +143,11 @@ export function WhyHexoprint() {
 
                         {/* Content */}
                         <div className='relative z-10 p-8 md:p-12 text-center'>
-                            <h3 className='text-3xl md:text-4xl font-bold text-foreground mb-6'>
+                            <h3 className='text-lg md:text-xl lg:text-2xl font-bold text-foreground mb-4 md:mb-6'>
                                 Une expertise technique au service de vos{' '}
                                 <span className='text-primary'>idées</span>
                             </h3>
-                            <p className='text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed'>
+                            <p className='text-sm md:text-base lg:text-lg text-muted-foreground max-w-4xl mx-auto leading-relaxed'>
                                 Fondée par Yann, un technicien passionné par
                                 l&apos;impression 3D, Hexoprint mêle
                                 savoir-faire artisanal et rigueur technique. De

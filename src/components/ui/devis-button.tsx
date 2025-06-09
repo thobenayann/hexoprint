@@ -8,7 +8,7 @@ type DevisButtonProps = {
 
 export function DevisButton(props: DevisButtonProps) {
     return (
-        <Link href='/devis'>
+        <Link href='/contact'>
             <InteractiveHoverButton
                 className={cn(
                     'bg-primary border-primary text-primary-primary shadow-md hover:shadow-lg hover:scale-105',
