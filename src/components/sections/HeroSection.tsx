@@ -1,5 +1,6 @@
 'use client';
 
+import { LogoAura } from '@/components/ui/logo-aura';
 import { SplineScene } from '@/components/ui/spline';
 import { Spotlight } from '@/components/ui/spotlight';
 import { StarBorder } from '@/components/ui/star-border';
@@ -14,6 +15,44 @@ export function HeroSection() {
                 className='-top-40 left-0 md:left-60 md:-top-20 z-50'
                 size={300}
             />
+
+            {/* Logo Background Effect */}
+            <motion.div
+                initial={{ opacity: 0, scale: 1.2 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 2, delay: 0.2 }}
+                className='absolute top-24 left-1/2 transform -translate-x-1/2 z-[60] flex flex-col items-center pointer-events-none sm:hidden 2xl:block'
+            >
+                {/* Aura Effect */}
+                <LogoAura className='-top-8 -left-8' fill='#96CFE7' />
+
+                {/* Logo SVG */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1.5, delay: 0.4 }}
+                    className='w-[200px] h-[200px] md:w-[250px] md:h-[250px] lg:w-[300px] lg:h-[300px] opacity-[0.4] bg-contain bg-center bg-no-repeat mb-4'
+                    style={{
+                        backgroundImage:
+                            "url('/logos/logo-hexoprint-svg-sans-texte.svg')",
+                    }}
+                />
+
+                {/* Custom Text */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1.5, delay: 0.6 }}
+                    className='text-center opacity-[0.35]'
+                >
+                    <div className='font-mono font-semibold text-2xl md:text-3xl lg:text-4xl text-primary mb-2 tracking-wider'>
+                        HEXO'PRINT
+                    </div>
+                    <div className='font-mono font-normal text-sm md:text-base lg:text-lg text-muted-foreground tracking-widest'>
+                        IMPRESSION 3D
+                    </div>
+                </motion.div>
+            </motion.div>
 
             <div className='flex flex-col lg:flex-row h-screen relative'>
                 {/* Right content - 3D Animation */}
@@ -32,16 +71,16 @@ export function HeroSection() {
                 </div>
 
                 {/* Left content */}
-                <div className='flex-1 p-8 lg:p-16 xl:p-24 relative z-20 flex flex-col justify-start md:justify-center items-center lg:items-start text-center lg:text-left'>
+                <div className='flex-1 p-8 lg:p-16 lg:mt-[10%] xl:p-24 relative z-20 flex flex-col justify-end pb-32 md:justify-center lg:justify-center items-center lg:items-start text-center lg:text-left'>
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
-                        className='max-w-3xl mx-auto lg:mx-0'
+                        className='max-w-2xl lg:max-w-3xl mx-auto lg:mx-0 lg:mr-auto lg:ml-0'
                     >
                         {/* Main Heading */}
                         <motion.h1
-                            className='text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight text-foreground'
+                            className='text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-6 leading-tight text-foreground'
                             initial={{ opacity: 0, x: -50 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.4 }}

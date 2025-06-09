@@ -1,6 +1,6 @@
 import { Navigation } from '@/components/layout/navigation';
 import type { Metadata } from 'next';
-import { Open_Sans, Playfair_Display } from 'next/font/google';
+import { Open_Sans, Orbitron, Playfair_Display } from 'next/font/google';
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -19,6 +19,14 @@ const openSans = Open_Sans({
     preload: true,
 });
 
+const orbitron = Orbitron({
+    subsets: ['latin'],
+    weight: ['400', '700', '900'],
+    variable: '--font-orbitron',
+    display: 'swap',
+    preload: true,
+});
+
 export const metadata: Metadata = {
     title: "Hexo'print - Impression 3D artisanale à Seysses (31)",
     description:
@@ -33,7 +41,7 @@ export default function RootLayout({
     return (
         <html lang='fr' suppressHydrationWarning className='dark'>
             <body
-                className={`${playfair.variable} ${openSans.variable} antialiased dark`}
+                className={`${playfair.variable} ${openSans.variable} ${orbitron.variable} antialiased dark`}
             >
                 <Navigation />
                 {children}
