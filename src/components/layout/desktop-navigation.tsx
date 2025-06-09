@@ -10,6 +10,7 @@ import {
     NavigationMenuList,
     NavigationMenuTrigger,
 } from '@/components/ui/navigation-menu';
+import { useActivePath } from '@/hooks/use-active-path';
 import { cn } from '@/lib/utils';
 import { useScroll } from 'framer-motion';
 import Link from 'next/link';
@@ -18,6 +19,7 @@ import { useEffect, useState } from 'react';
 export function DesktopNavigation() {
     const { scrollY } = useScroll();
     const [isScrolled, setIsScrolled] = useState(false);
+    const { isActive } = useActivePath();
 
     useEffect(() => {
         return scrollY.on('change', (latest: number) => {
@@ -28,7 +30,7 @@ export function DesktopNavigation() {
     return (
         <header
             className={cn(
-                'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out',
+                'fixed top-0 left-0 right-0 z-[9999] transition-all duration-300 ease-in-out',
                 isScrolled
                     ? 'bg-background/50 backdrop-blur-md'
                     : 'bg-transparent'
@@ -57,9 +59,13 @@ export function DesktopNavigation() {
                                     href='/'
                                     className={cn(
                                         'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        !isScrolled
+                                        isActive('/')
+                                            ? !isScrolled
+                                                ? 'text-blue-300 font-semibold'
+                                                : 'text-primary font-semibold'
+                                            : !isScrolled
                                             ? 'text-white hover:text-blue-300'
-                                            : ''
+                                            : 'hover:text-primary'
                                     )}
                                 >
                                     Accueil
@@ -73,9 +79,13 @@ export function DesktopNavigation() {
                                     href='/a-propos'
                                     className={cn(
                                         'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        !isScrolled
+                                        isActive('/a-propos')
+                                            ? !isScrolled
+                                                ? 'text-blue-300 font-semibold'
+                                                : 'text-primary font-semibold'
+                                            : !isScrolled
                                             ? 'text-white hover:text-blue-300'
-                                            : ''
+                                            : 'hover:text-primary'
                                     )}
                                 >
                                     À propos
@@ -87,9 +97,13 @@ export function DesktopNavigation() {
                             <NavigationMenuTrigger
                                 className={cn(
                                     'px-4 py-2 text-sm font-medium transition-colors hover:text-primary bg-transparent border-none shadow-none',
-                                    !isScrolled
+                                    isActive('/prestations')
+                                        ? !isScrolled
+                                            ? 'text-blue-300 font-semibold'
+                                            : 'text-primary font-semibold'
+                                        : !isScrolled
                                         ? 'text-white hover:text-blue-300'
-                                        : ''
+                                        : 'hover:text-primary'
                                 )}
                             >
                                 Prestations
@@ -139,9 +153,13 @@ export function DesktopNavigation() {
                                     href='/galerie'
                                     className={cn(
                                         'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        !isScrolled
+                                        isActive('/galerie')
+                                            ? !isScrolled
+                                                ? 'text-blue-300 font-semibold'
+                                                : 'text-primary font-semibold'
+                                            : !isScrolled
                                             ? 'text-white hover:text-blue-300'
-                                            : ''
+                                            : 'hover:text-primary'
                                     )}
                                 >
                                     Galerie
@@ -155,9 +173,13 @@ export function DesktopNavigation() {
                                     href='/blog'
                                     className={cn(
                                         'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        !isScrolled
+                                        isActive('/blog')
+                                            ? !isScrolled
+                                                ? 'text-blue-300 font-semibold'
+                                                : 'text-primary font-semibold'
+                                            : !isScrolled
                                             ? 'text-white hover:text-blue-300'
-                                            : ''
+                                            : 'hover:text-primary'
                                     )}
                                 >
                                     Blog
@@ -171,9 +193,13 @@ export function DesktopNavigation() {
                                     href='/contact'
                                     className={cn(
                                         'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        !isScrolled
+                                        isActive('/contact')
+                                            ? !isScrolled
+                                                ? 'text-blue-300 font-semibold'
+                                                : 'text-primary font-semibold'
+                                            : !isScrolled
                                             ? 'text-white hover:text-blue-300'
-                                            : ''
+                                            : 'hover:text-primary'
                                     )}
                                 >
                                     Contact

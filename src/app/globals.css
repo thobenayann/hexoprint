@@ -240,4 +240,9 @@
     .animate-logo-aura {
         animation: logo-aura 2s ease 0.75s 1 forwards;
     }
+
+    /* Safe area support for mobile navigation */
+    .safe-area-pb {
+        padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
 }

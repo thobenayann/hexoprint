@@ -1,4 +1,6 @@
 import { DesktopNavigation } from './desktop-navigation';
+import { MobileBottomNavigation } from './mobile-bottom-navigation';
+import { MobileTopNavigation } from './mobile-top-navigation';
 
 export function Navigation() {
     return (
@@ -6,8 +8,9 @@ export function Navigation() {
             {/* Navigation Desktop */}
             <DesktopNavigation />
 
-            {/* TODO: Navigation Mobile - à implémenter */}
-            {/* <MobileNavigation /> */}
+            {/* Navigation Mobile */}
+            <MobileTopNavigation />
+            <MobileBottomNavigation />
         </>
     );
 }
