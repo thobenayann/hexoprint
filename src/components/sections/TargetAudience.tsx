@@ -1,232 +1,203 @@
 'use client';
 
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { motion } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
 import { Building2, Cpu, Heart, Home, Palette, Wrench } from 'lucide-react';
 
-const professionalServices = [
+const audiences = [
     {
-        icon: Cpu,
-        title: 'Prototypage fonctionnel',
+        id: 'professionals',
+        title: 'Professionnels',
+        subtitle: 'Solutions industrielles & techniques',
         description:
-            'Validez vos concepts avec des prototypes précis et fonctionnels pour accélérer votre développement produit.',
-    },
-    {
-        icon: Wrench,
-        title: 'Réparation & dépannage',
-        description:
-            'Remplacez rapidement vos pièces défaillantes avec des impressions sur-mesure et retrouvez votre productivité.',
-    },
-    {
+            'Prototypage rapide, réparation industrielle et fabrication de pièces spécifiques en petite série.',
         icon: Building2,
-        title: 'Pièces industrielles',
-        description:
-            'Production de pièces techniques en petite et moyenne série avec une précision industrielle.',
+        gradient: 'from-primary/20 via-primary/10 to-primary/5',
+        services: [
+            {
+                icon: Cpu,
+                title: 'Prototypage fonctionnel',
+                description:
+                    'Validez vos concepts avec des prototypes précis et fonctionnels pour accélérer votre développement produit.',
+                color: 'primary',
+            },
+            {
+                icon: Wrench,
+                title: 'Réparation & dépannage',
+                description:
+                    'Remplacez rapidement vos pièces défaillantes avec des impressions sur-mesure et retrouvez votre productivité.',
+                color: 'primary',
+            },
+            {
+                icon: Building2,
+                title: 'Pièces industrielles',
+                description:
+                    'Production de pièces techniques en petite et moyenne série avec une précision industrielle.',
+                color: 'primary',
+            },
+        ],
     },
-];
-
-const individualServices = [
     {
-        icon: Heart,
-        title: 'Objets personnalisés',
+        id: 'individuals',
+        title: 'Particuliers',
+        subtitle: 'Créations sur-mesure & personnalisées',
         description:
-            'Créations uniques et sur-mesure pour vos projets personnels, cadeaux ou événements spéciaux.',
-    },
-    {
-        icon: Palette,
-        title: 'Modélisme & figurines',
-        description:
-            'Pièces détaillées pour passionnés de modélisme, miniatures et collections avec finition soignée.',
-    },
-    {
+            "Objets décoratifs, modélisme et créations personnalisées avec le même niveau d'exigence et de qualité.",
         icon: Home,
-        title: 'Objets décoratifs',
-        description:
-            'Embellissez votre intérieur avec des créations originales adaptées à votre style et vos goûts.',
+        gradient:
+            'from-hexo-blue-light/20 via-hexo-blue-light/10 to-hexo-blue-light/5',
+        services: [
+            {
+                icon: Heart,
+                title: 'Objets personnalisés',
+                description:
+                    'Créations uniques et sur-mesure pour vos projets personnels, cadeaux ou événements spéciaux.',
+                color: 'hexo-blue-light',
+            },
+            {
+                icon: Palette,
+                title: 'Modélisme & figurines',
+                description:
+                    'Pièces détaillées pour passionnés de modélisme, miniatures et collections avec finition soignée.',
+                color: 'hexo-blue-light',
+            },
+            {
+                icon: Home,
+                title: 'Objets décoratifs',
+                description:
+                    'Embellissez votre intérieur avec des créations originales adaptées à votre style et vos goûts.',
+                color: 'hexo-blue-light',
+            },
+        ],
     },
 ];
 
 export function TargetAudience() {
     return (
-        <section className='py-20 bg-white'>
-            <div className='container mx-auto px-4'>
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
-                    viewport={{ once: true, margin: '-100px' }}
-                    className='text-center mb-16'
-                >
-                    <h2 className='text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6'>
-                        Pour qui ?
+        <section className='relative py-24 overflow-hidden bg-gradient-to-b from-background to-muted/30'>
+            {/* Decorative background pattern */}
+            <div className='absolute inset-0 bg-[url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KPGcgZmlsbD0iIzI0NTU2QSIgZmlsbC1vcGFjaXR5PSIwLjA1Ij4KPGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPgo8L2c+CjwvZz4KPC9zdmc+")] opacity-40'></div>
+
+            <div className='container mx-auto px-4 relative z-10'>
+                {/* Header */}
+                <div className='text-center mb-20'>
+                    <h2 className='text-2xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-foreground'>
+                        Nos <span className='text-primary'>publics</span>
                     </h2>
-                    <p className='text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed'>
-                        Nous accompagnons tous vos projets, des plus techniques
-                        aux plus créatifs, avec la même passion du détail et la
-                        même exigence de qualité.
+                    <p className='text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed'>
+                        Professionnels ou particuliers, nous accompagnons tous
+                        vos projets avec la même passion du détail et la même
+                        exigence de qualité.
                     </p>
-                </motion.div>
+                </div>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    viewport={{ once: true, margin: '-100px' }}
-                    className='max-w-6xl mx-auto'
-                >
-                    <Tabs defaultValue='professionals' className='w-full'>
-                        <TabsList className='grid w-full grid-cols-2 mb-12 h-auto p-2'>
-                            <TabsTrigger
-                                value='professionals'
-                                className='text-base md:text-lg py-4 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white'
-                            >
-                                <Building2 className='w-5 h-5 mr-2' />
-                                Professionnels
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value='individuals'
-                                className='text-base md:text-lg py-4 px-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white'
-                            >
-                                <Home className='w-5 h-5 mr-2' />
-                                Particuliers
-                            </TabsTrigger>
-                        </TabsList>
+                {/* Main Content - Split Screen Design */}
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-7xl mx-auto'>
+                    {audiences.map((audience, index) => {
+                        const MainIcon = audience.icon;
 
-                        <TabsContent value='professionals' className='mt-8'>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                            >
-                                <div className='mb-8 text-center'>
-                                    <h3 className='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>
-                                        Solutions professionnelles
-                                    </h3>
-                                    <p className='text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed'>
-                                        Pour les professionnels, Hexoprint offre
-                                        des solutions d&apos;impression 3D
-                                        adaptées à vos enjeux industriels avec
-                                        réactivité et professionnalisme.
-                                    </p>
+                        return (
+                            <div key={audience.id} className='relative group'>
+                                {/* Main Card */}
+                                <div className='relative'>
+                                    {/* Glass morphism background */}
+                                    <div
+                                        className={`absolute inset-0 bg-gradient-to-br ${audience.gradient} backdrop-blur-xl border border-border rounded-3xl group-hover:shadow-2xl transition-all duration-500`}
+                                    ></div>
+
+                                    {/* Content */}
+                                    <div className='relative z-10 p-8 md:p-12'>
+                                        {/* Header with icon */}
+                                        <div className='flex items-center gap-6 mb-8'>
+                                            <div className='p-4 bg-gradient-to-br from-primary/20 to-primary/30 rounded-2xl backdrop-blur-sm border border-border group-hover:scale-110 transition-transform duration-300 cursor-pointer'>
+                                                <div className='p-3 bg-primary rounded-xl shadow-lg shadow-primary/30'>
+                                                    <MainIcon className='w-8 h-8 text-primary-foreground' />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className='text-lg md:text-xl lg:text-2xl font-bold text-foreground mb-2'>
+                                                    {audience.title}
+                                                </h3>
+                                                <p className='text-sm md:text-base lg:text-lg text-muted-foreground'>
+                                                    {audience.subtitle}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Description */}
+                                        <p className='text-sm md:text-base lg:text-lg text-muted-foreground mb-6 md:mb-8 leading-relaxed'>
+                                            {audience.description}
+                                        </p>
+
+                                        {/* Services Grid */}
+                                        <div className='space-y-4'>
+                                            {audience.services.map(
+                                                (service, serviceIndex) => {
+                                                    const ServiceIcon =
+                                                        service.icon;
+
+                                                    return (
+                                                        <Card
+                                                            key={serviceIndex}
+                                                            className='border-0 bg-background/50 backdrop-blur-sm hover:bg-background/70 transition-all duration-300 group/service'
+                                                        >
+                                                            <CardContent className='p-6'>
+                                                                <div className='flex items-start gap-4'>
+                                                                    <div className='p-2 bg-primary/10 rounded-lg group-hover/service:bg-primary/20 transition-colors duration-300'>
+                                                                        <ServiceIcon className='w-5 h-5 text-primary' />
+                                                                    </div>
+                                                                    <div className='flex-1'>
+                                                                        <h4 className='text-sm md:text-base font-semibold text-foreground mb-2 group-hover/service:text-primary transition-colors duration-300'>
+                                                                            {
+                                                                                service.title
+                                                                            }
+                                                                        </h4>
+                                                                        <p className='text-xs md:text-sm text-muted-foreground leading-relaxed'>
+                                                                            {
+                                                                                service.description
+                                                                            }
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </CardContent>
+                                                        </Card>
+                                                    );
+                                                }
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Subtle glow effect */}
+                                    <div className='absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500'></div>
                                 </div>
 
-                                <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-                                    {professionalServices.map(
-                                        (service, index) => {
-                                            const IconComponent = service.icon;
-                                            return (
-                                                <motion.div
-                                                    key={index}
-                                                    initial={{
-                                                        opacity: 0,
-                                                        y: 30,
-                                                    }}
-                                                    animate={{
-                                                        opacity: 1,
-                                                        y: 0,
-                                                    }}
-                                                    transition={{
-                                                        duration: 0.5,
-                                                        delay: index * 0.1,
-                                                    }}
-                                                >
-                                                    <Card className='h-full hover:shadow-lg transition-shadow duration-300 border-2 hover:border-blue-100'>
-                                                        <CardHeader className='text-center'>
-                                                            <div className='mx-auto mb-4 p-3 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full w-16 h-16 flex items-center justify-center'>
-                                                                <IconComponent className='w-8 h-8 text-white' />
-                                                            </div>
-                                                            <CardTitle className='text-xl font-semibold text-gray-900'>
-                                                                {service.title}
-                                                            </CardTitle>
-                                                        </CardHeader>
-                                                        <CardContent>
-                                                            <CardDescription className='text-gray-600 text-center leading-relaxed'>
-                                                                {
-                                                                    service.description
-                                                                }
-                                                            </CardDescription>
-                                                        </CardContent>
-                                                    </Card>
-                                                </motion.div>
-                                            );
-                                        }
-                                    )}
-                                </div>
-                            </motion.div>
-                        </TabsContent>
+                                {/* Floating accent */}
+                                <div
+                                    className={`absolute -top-4 -right-4 w-32 h-32 bg-gradient-to-br ${audience.gradient} rounded-full blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-500`}
+                                ></div>
+                            </div>
+                        );
+                    })}
+                </div>
 
-                        <TabsContent value='individuals' className='mt-8'>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                            >
-                                <div className='mb-8 text-center'>
-                                    <h3 className='text-2xl md:text-3xl font-bold text-gray-900 mb-4'>
-                                        Créations personnalisées
-                                    </h3>
-                                    <p className='text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed'>
-                                        Chez Hexoprint, tous les projets sont
-                                        importants. Nous accompagnons chaque
-                                        client en prenant le temps nécessaire
-                                        pour comprendre ses besoins et obtenir
-                                        une finition impeccable.
-                                    </p>
-                                </div>
+                {/* Bottom CTA */}
+                <div className='mt-20 text-center'>
+                    <div className='relative inline-block'>
+                        {/* Glass morphism background */}
+                        <div className='absolute inset-0 bg-gradient-to-br from-card/50 via-primary/10 to-card/50 backdrop-blur-xl border border-border rounded-2xl'></div>
 
-                                <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-                                    {individualServices.map(
-                                        (service, index) => {
-                                            const IconComponent = service.icon;
-                                            return (
-                                                <motion.div
-                                                    key={index}
-                                                    initial={{
-                                                        opacity: 0,
-                                                        y: 30,
-                                                    }}
-                                                    animate={{
-                                                        opacity: 1,
-                                                        y: 0,
-                                                    }}
-                                                    transition={{
-                                                        duration: 0.5,
-                                                        delay: index * 0.1,
-                                                    }}
-                                                >
-                                                    <Card className='h-full hover:shadow-lg transition-shadow duration-300 border-2 hover:border-cyan-100'>
-                                                        <CardHeader className='text-center'>
-                                                            <div className='mx-auto mb-4 p-3 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full w-16 h-16 flex items-center justify-center'>
-                                                                <IconComponent className='w-8 h-8 text-white' />
-                                                            </div>
-                                                            <CardTitle className='text-xl font-semibold text-gray-900'>
-                                                                {service.title}
-                                                            </CardTitle>
-                                                        </CardHeader>
-                                                        <CardContent>
-                                                            <CardDescription className='text-gray-600 text-center leading-relaxed'>
-                                                                {
-                                                                    service.description
-                                                                }
-                                                            </CardDescription>
-                                                        </CardContent>
-                                                    </Card>
-                                                </motion.div>
-                                            );
-                                        }
-                                    )}
-                                </div>
-                            </motion.div>
-                        </TabsContent>
-                    </Tabs>
-                </motion.div>
+                        {/* Content */}
+                        <div className='relative z-10 p-8 md:p-12'>
+                            <h3 className='text-lg md:text-xl lg:text-2xl font-bold text-foreground mb-4'>
+                                Un projet en tête ?
+                            </h3>
+                            <p className='text-sm md:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed'>
+                                Contactez-nous pour discuter de votre projet.
+                                Chaque demande est unique et mérite une
+                                attention particulière.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     );

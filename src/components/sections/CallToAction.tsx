@@ -1,162 +1,171 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Spotlight } from '@/components/ui/spotlight';
-import { motion } from 'framer-motion';
-import { CheckCircle, Clock, FileText } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { PrimaryButton } from '@/components/ui/primary-button';
+import { CheckCircle, Clock, FileText, Star } from 'lucide-react';
 import Link from 'next/link';
+
+const features = [
+    {
+        icon: FileText,
+        title: 'Devis détaillé',
+        description:
+            'Analyse précise de votre projet avec conseils techniques personnalisés',
+    },
+    {
+        icon: Clock,
+        title: 'Réponse rapide',
+        description:
+            "Retour sous 24h maximum pour tous vos projets d'impression 3D",
+    },
+    {
+        icon: CheckCircle,
+        title: 'Sans engagement',
+        description:
+            'Devis gratuit et sans obligation, pour explorer toutes les possibilités',
+    },
+];
+
+const trustElements = [
+    'Expertise technique garantie',
+    'Livraison dans toute la France',
+    'Accompagnement personnalisé',
+];
 
 export function CallToAction() {
     return (
-        <section className='relative py-20 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 overflow-hidden'>
-            {/* Background Effects */}
-            <Spotlight
-                className='top-40 left-0 md:left-60 md:-top-20 opacity-20'
-                fill='cyan'
-            />
-            <Spotlight
-                className='top-20 right-0 md:right-60 md:-top-10 opacity-15'
-                fill='blue'
-            />
+        <section className='relative py-24 overflow-hidden bg-gradient-to-br from-primary/10 via-background to-hexo-blue-light/10'>
+            {/* Animated background pattern */}
+            <div className='absolute inset-0 bg-[url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxwYXR0ZXJuIGlkPSJjdWJlcyIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHBhdGggZD0ibTAgMzBsMzAtMzAgMzAgMzB2MzBsLTMwIDMwLTMwLTMweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjQ1NTZBIiBzdHJva2Utd2lkdGg9IjAuNSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIvPgogICAgPC9wYXR0ZXJuPgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2N1YmVzKSIvPgo8L3N2Zz4K")] opacity-30'></div>
+
+            {/* Floating accent elements */}
+            <div className='absolute top-10 left-4 md:top-20 md:left-20 w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl opacity-60'></div>
+            <div className='absolute bottom-10 right-4 md:bottom-20 md:right-20 w-40 h-40 md:w-60 md:h-60 bg-gradient-to-br from-hexo-blue-light/20 to-transparent rounded-full blur-3xl opacity-40'></div>
 
             <div className='container mx-auto px-4 relative z-10'>
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
-                    viewport={{ once: true, margin: '-100px' }}
-                    className='text-center max-w-4xl mx-auto'
-                >
-                    {/* Main Heading */}
-                    <h2 className='text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6'>
-                        Prêt à concrétiser{' '}
-                        <span className='bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent'>
-                            votre projet
-                        </span>
-                        ?
-                    </h2>
+                {/* Main CTA Card */}
+                <div className='relative max-w-5xl mx-auto'>
+                    {/* Glass morphism background */}
+                    <div className='absolute inset-0 bg-gradient-to-br from-card/80 via-primary/5 to-card/80 backdrop-blur-xl border border-border rounded-3xl shadow-2xl'></div>
 
-                    {/* Subtitle */}
-                    <p className='text-lg md:text-xl text-gray-300 mb-12 leading-relaxed'>
-                        Obtenez un devis personnalisé, rapide et sans engagement
-                        pour vos projets d&apos;impression 3D. Notre expertise
-                        technique est à votre service pour transformer vos idées
-                        en réalité.
-                    </p>
-
-                    {/* Features Grid */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-12'
-                    >
-                        <div className='flex flex-col items-center p-6 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10'>
-                            <FileText className='w-8 h-8 text-cyan-400 mb-4' />
-                            <h3 className='text-white font-semibold mb-2'>
-                                Devis détaillé
-                            </h3>
-                            <p className='text-gray-400 text-sm text-center'>
-                                Analyse précise de votre projet avec conseils
-                                techniques personnalisés
+                    {/* Content */}
+                    <div className='relative z-10 p-8 md:p-16 text-center'>
+                        {/* Header */}
+                        <div className='mb-12'>
+                            <h2 className='text-xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-foreground'>
+                                Prêt à concrétiser votre{' '}
+                                <span className='text-primary'>projet</span> ?
+                            </h2>
+                            <p className='text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed'>
+                                Obtenez un devis personnalisé, rapide et sans
+                                engagement. Notre expertise technique transforme
+                                vos idées en réalité.
                             </p>
                         </div>
 
-                        <div className='flex flex-col items-center p-6 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10'>
-                            <Clock className='w-8 h-8 text-blue-400 mb-4' />
-                            <h3 className='text-white font-semibold mb-2'>
-                                Réponse rapide
-                            </h3>
-                            <p className='text-gray-400 text-sm text-center'>
-                                Retour sous 24h maximum pour tous vos projets
-                                d&apos;impression 3D
-                            </p>
+                        {/* Features Grid */}
+                        <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-12'>
+                            {features.map((feature, index) => {
+                                const IconComponent = feature.icon;
+
+                                return (
+                                    <Card
+                                        key={index}
+                                        className='border-0 bg-background/50 backdrop-blur-sm hover:bg-background/70 transition-all duration-300 group cursor-pointer'
+                                    >
+                                        <CardContent className='p-6 text-center'>
+                                            {/* Icon */}
+                                            <div className='mb-4 mx-auto'>
+                                                <div className='relative inline-block'>
+                                                    <div className='p-3 bg-gradient-to-br from-primary/20 to-primary/30 rounded-xl backdrop-blur-sm border border-border group-hover:scale-110 group-hover:rotate-6 transition-all duration-300'>
+                                                        <div className='p-2 bg-primary rounded-lg shadow-lg shadow-primary/30'>
+                                                            <IconComponent className='w-5 h-5 text-primary-foreground' />
+                                                        </div>
+                                                    </div>
+                                                    {/* Floating glow */}
+                                                    <div className='absolute inset-0 bg-primary/20 rounded-xl blur-lg scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Content */}
+                                            <h3 className='text-base md:text-lg font-semibold text-foreground mb-3 group-hover:text-primary transition-colors duration-300'>
+                                                {feature.title}
+                                            </h3>
+                                            <p className='text-xs md:text-sm text-muted-foreground leading-relaxed'>
+                                                {feature.description}
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
                         </div>
 
-                        <div className='flex flex-col items-center p-6 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10'>
-                            <CheckCircle className='w-8 h-8 text-cyan-400 mb-4' />
-                            <h3 className='text-white font-semibold mb-2'>
-                                Sans engagement
-                            </h3>
-                            <p className='text-gray-400 text-sm text-center'>
-                                Devis gratuit et sans obligation, pour explorer
-                                toutes les possibilités
-                            </p>
-                        </div>
-                    </motion.div>
-
-                    {/* Main CTA Button */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.4 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        className='mb-8'
-                    >
-                        <Link href='/devis'>
-                            <Button
-                                size='lg'
-                                className='bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-12 py-6 text-xl shadow-2xl hover:shadow-cyan-500/25 transition-all duration-300 transform hover:scale-105 border-0'
-                            >
+                        {/* Main CTA Button */}
+                        <div className='mb-8'>
+                            <PrimaryButton href='/devis' icon={Star}>
                                 Demander mon devis gratuit
-                            </Button>
-                        </Link>
-                    </motion.div>
+                            </PrimaryButton>
+                        </div>
 
-                    {/* Secondary Actions */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.6 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        className='flex flex-col sm:flex-row gap-4 justify-center items-center'
-                    >
-                        <Link href='/contact'>
-                            <Button
-                                variant='outline'
-                                size='lg'
-                                className='border-white/30 text-white hover:bg-white/10 hover:border-white/50 bg-transparent font-medium px-8 py-3'
-                            >
-                                Nous contacter
-                            </Button>
-                        </Link>
+                        {/* Secondary Actions */}
+                        <div className='flex flex-col sm:flex-row gap-4 justify-center items-center mb-12'>
+                            <Link href='/contact' className='w-full sm:w-auto'>
+                                <Button
+                                    variant='outline'
+                                    size='lg'
+                                    className='border-border text-foreground hover:bg-primary/10 hover:border-primary/50 hover:text-primary font-medium px-6 py-3 md:px-8 transition-all duration-300 w-full sm:w-auto'
+                                >
+                                    Nous contacter
+                                </Button>
+                            </Link>
 
-                        <Link href='/galerie'>
-                            <Button
-                                variant='ghost'
-                                size='lg'
-                                className='text-gray-300 hover:text-white hover:bg-white/5 font-medium px-8 py-3'
-                            >
-                                Voir nos réalisations
-                            </Button>
-                        </Link>
-                    </motion.div>
+                            <Link href='/galerie' className='w-full sm:w-auto'>
+                                <Button
+                                    variant='ghost'
+                                    size='lg'
+                                    className='text-muted-foreground hover:text-primary hover:bg-primary/5 font-medium px-6 py-3 md:px-8 transition-all duration-300 w-full sm:w-auto'
+                                >
+                                    Voir nos réalisations
+                                </Button>
+                            </Link>
+                        </div>
 
-                    {/* Trust Elements */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 0.6, delay: 0.8 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        className='mt-12 pt-8 border-t border-white/10'
-                    >
-                        <div className='flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-400 text-sm'>
-                            <div className='flex items-center'>
-                                <CheckCircle className='w-4 h-4 text-green-400 mr-2' />
-                                <span>Expertise technique garantie</span>
-                            </div>
-                            <div className='flex items-center'>
-                                <CheckCircle className='w-4 h-4 text-green-400 mr-2' />
-                                <span>Livraison dans toute la France</span>
-                            </div>
-                            <div className='flex items-center'>
-                                <CheckCircle className='w-4 h-4 text-green-400 mr-2' />
-                                <span>Accompagnement personnalisé</span>
+                        {/* Trust Elements */}
+                        <div className='pt-8 border-t border-border'>
+                            <div className='flex flex-col sm:flex-row items-center justify-center gap-6 text-sm'>
+                                {trustElements.map((element, index) => (
+                                    <div
+                                        key={index}
+                                        className='flex items-center group'
+                                    >
+                                        <div className='p-1 bg-primary/20 rounded-full mr-3 group-hover:bg-primary/30 transition-colors duration-300'>
+                                            <CheckCircle className='w-4 h-4 text-primary' />
+                                        </div>
+                                        <span className='text-muted-foreground group-hover:text-foreground transition-colors duration-300'>
+                                            {element}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    </motion.div>
-                </motion.div>
+                    </div>
+
+                    {/* Subtle background glow */}
+                    <div className='absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/5 to-hexo-blue-light/5 blur-2xl'></div>
+                </div>
+
+                {/* Bottom decorative section */}
+                <div className='mt-16 text-center'>
+                    <p className='text-sm md:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed'>
+                        Rejoignez nos{' '}
+                        <span className='text-primary font-semibold'>
+                            500+ clients satisfaits
+                        </span>{' '}
+                        qui nous font confiance pour leurs projets d'impression
+                        3D.
+                    </p>
+                </div>
             </div>
         </section>
     );
