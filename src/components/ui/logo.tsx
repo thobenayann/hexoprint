@@ -25,7 +25,7 @@ export function Logo(props: LogoProps) {
             />
             <span className={cn('text-foreground', props.className)}>
                 Hexo
-                <span className='text-hexo-blue-light'>'print</span>
+                <span className='text-hexo-blue-light'>&apos;print</span>
             </span>
         </Link>
     );

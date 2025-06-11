@@ -4,19 +4,19 @@ export default function AboutPage() {
             <div className='container mx-auto px-4 py-16'>
                 <div className='max-w-4xl mx-auto'>
                     <h1 className='text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-primary mb-6 md:mb-8'>
-                        À propos d'Hexo'print
+                        À propos d&apos;Hexo&apos;print
                     </h1>
 
                     <div className='prose prose-lg max-w-none'>
                         <p className='text-base md:text-lg lg:text-xl text-muted-foreground mb-6'>
-                            Hexoprint, c'est avant tout une passion devenue
+                            Hexoprint, c&apos;est avant tout une passion devenue
                             métier. Fondée par Yann, un technicien passionné par
-                            l'impression 3D, l'entreprise mêle savoir-faire
+                            l&apos;impression 3D, l&apos;entreprise mêle savoir-faire
                             artisanal et rigueur technique.
                         </p>
 
                         <p className='mb-6'>
-                            De la création des plans jusqu'au produit final,
+                            De la création des plans jusqu&apos;au produit final,
                             chaque étape est maîtrisée et réalisée avec minutie.
                             Notre objectif est simple : vous proposer une
                             impression 3D de qualité, avec une vraie expertise
@@ -31,7 +31,7 @@ export default function AboutPage() {
                                 </h2>
                                 <p className='text-sm md:text-base text-muted-foreground'>
                                     Donner vie à vos projets grâce à
-                                    l'impression 3D artisanale et sur-mesure, en
+                                    l&apos;impression 3D artisanale et sur-mesure, en
                                     accompagnant chaque client avec soin, écoute
                                     et précision.
                                 </p>

@@ -181,7 +181,7 @@ export function Footer() {
                 <div className='flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 mb-8'>
                     {/* Copyright */}
                     <div className='text-muted-foreground text-sm'>
-                        © {currentYear} Hexo'print - Yann RAVARY. Tous droits
+                        © {currentYear} Hexo&apos;print - Yann RAVARY. Tous droits
                         réservés.
                     </div>
 

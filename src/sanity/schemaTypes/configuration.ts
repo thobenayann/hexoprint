@@ -71,9 +71,9 @@ export const configuration = defineType({
                                 ? material.toUpperCase()
                                 : 'Matériau';
                             const colorLabel = color ? ` - ${color}` : '';
-                            const priceLabel = pricePerKg
-                                ? ` (${pricePerKg}€/kg)`
-                                : '';
+                            // const priceLabel = pricePerKg
+                            //     ? ` (${pricePerKg}€/kg)`
+                            //     : '';
 
                             return {
                                 title: `${materialLabel}${colorLabel}`,

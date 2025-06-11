@@ -162,7 +162,7 @@ export function CallToAction() {
                         <span className='text-primary font-semibold'>
                             500+ clients satisfaits
                         </span>{' '}
-                        qui nous font confiance pour leurs projets d'impression
+                        qui nous font confiance pour leurs projets d&apos;impression
                         3D.
                     </p>
                 </div>
