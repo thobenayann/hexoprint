@@ -78,7 +78,7 @@ export function Testimonials() {
             <div className='container mx-auto px-4 relative z-10'>
                 {/* Header */}
                 <div className='text-center mb-20'>
-                    <h2 className='text-xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-foreground'>
+                    <h2 className='text-2xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-foreground'>
                         Ils nous font{' '}
                         <span className='text-primary'>confiance</span>
                     </h2>
