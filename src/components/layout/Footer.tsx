@@ -199,9 +199,9 @@ export function Footer() {
                         >
                             Politique de confidentialité
                         </Link>
-                        <div className='text-muted-foreground/70'>
+                        {/* <div className='text-muted-foreground/70'>
                             SIRET : À définir
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 

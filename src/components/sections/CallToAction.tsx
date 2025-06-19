@@ -53,7 +53,7 @@ export function CallToAction() {
                     <div className='relative z-10 p-8 md:p-16 text-center'>
                         {/* Header */}
                         <div className='mb-12'>
-                            <h2 className='text-xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-foreground'>
+                            <h2 className='text-2xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-foreground'>
                                 Prêt à concrétiser votre{' '}
                                 <span className='text-primary'>projet</span> ?
                             </h2>
