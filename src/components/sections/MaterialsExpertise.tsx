@@ -2,125 +2,90 @@
 
 import { GlareCard } from '@/components/ui/glare-card';
 import { motion } from 'framer-motion';
-import {
-    CheckCircle,
-    Droplets,
-    Layers,
-    Palette,
-    Shield,
-    Wrench,
-    Zap,
-} from 'lucide-react';
+import { Shield, Sparkles, Wrench, Zap } from 'lucide-react';
 
 const materials = [
     {
         id: 'pla',
         name: 'PLA',
         fullName: 'Acide Polylactique',
-        icon: Zap,
+        icon: Sparkles,
         description:
-            "Matériau biosourcé, facile à imprimer et respectueux de l'environnement. Idéal pour débuter et pour les objets décoratifs.",
+            'Matériau écologique et facile à imprimer, idéal pour débuter et créer des objets décoratifs avec une excellente qualité de surface.',
         properties: [
-            { label: "Facilité d'impression", value: 'Excellent' },
-            { label: 'Résistance mécanique', value: 'Moyenne' },
-            { label: "Température d'extrusion", value: '190-220°C' },
+            { label: 'Biodégradable', value: true },
+            { label: 'Facile à imprimer', value: true },
+            { label: 'Peu odorant', value: true },
+            { label: 'Température basse', value: '190-220°C' },
         ],
-        applications: [
-            'Prototypage',
-            'Objets décoratifs',
-            'Figurines',
-            'Jouets',
-        ],
+        applications: ['Prototypage', 'Déco', 'Figurines', 'Éducation'],
         color: 'from-green-500/20 to-emerald-500/20',
         iconBg: 'from-green-500/30 to-emerald-500/30',
         borderColor: 'border-green-500/30',
     },
     {
-        id: 'petg',
-        name: 'PETG',
-        fullName: 'Polyéthylène Téréphtalate Glycolisé',
+        id: 'abs',
+        name: 'ABS',
+        fullName: 'Acrylonitrile Butadiène Styrène',
         icon: Shield,
         description:
-            "Excellent compromis entre facilité d'impression et propriétés mécaniques. Transparent, résistant et sans odeur.",
+            'Plastique technique robuste et résistant aux chocs, parfait pour les pièces fonctionnelles nécessitant durabilité et résistance mécanique.',
         properties: [
-            { label: "Facilité d'impression", value: 'Bonne' },
-            { label: 'Résistance mécanique', value: 'Élevée' },
-            { label: "Température d'extrusion", value: '230-250°C' },
+            { label: 'Résistant aux chocs', value: true },
+            { label: 'Flexible', value: true },
+            { label: 'Résistant chaleur', value: '80-100°C' },
+            { label: 'Post-traitement', value: 'Ponçage, collage' },
         ],
         applications: [
+            'Pièces auto',
+            'Boîtiers',
+            'Outils',
             'Pièces mécaniques',
-            'Contenants',
-            'Prototypes fonctionnels',
-            'Outillage',
         ],
         color: 'from-blue-500/20 to-cyan-500/20',
         iconBg: 'from-blue-500/30 to-cyan-500/30',
         borderColor: 'border-blue-500/30',
     },
     {
-        id: 'abs',
-        name: 'ABS',
-        fullName: 'Acrylonitrile Butadiène Styrène',
-        icon: Wrench,
+        id: 'petg',
+        name: 'PETG',
+        fullName: 'Polyéthylène Téréphtalate Glycol',
+        icon: Zap,
         description:
-            "Plastique technique robuste et résistant aux chocs. Utilisé dans l'industrie automobile et électronique.",
+            'Combine facilité d&apos;impression du PLA et résistance de l&apos;ABS. Transparent, résistant chimiquement, idéal pour applications alimentaires.',
         properties: [
-            { label: "Facilité d'impression", value: 'Avancée' },
-            { label: 'Résistance mécanique', value: 'Très élevée' },
-            { label: "Température d'extrusion", value: '230-260°C' },
+            { label: 'Transparent', value: true },
+            { label: 'Résistant chimique', value: true },
+            { label: 'Alimentaire', value: 'Compatible' },
+            { label: 'Recyclable', value: true },
         ],
         applications: [
-            'Pièces industrielles',
-            'Boîtiers',
-            'Outils',
-            'Composants automobiles',
+            'Contenants',
+            'Pièces transparentes',
+            'Médical',
+            'Alimentaire',
         ],
-        color: 'from-red-500/20 to-orange-500/20',
-        iconBg: 'from-red-500/30 to-orange-500/30',
-        borderColor: 'border-red-500/30',
+        color: 'from-orange-500/20 to-amber-500/20',
+        iconBg: 'from-orange-500/30 to-amber-500/30',
+        borderColor: 'border-orange-500/30',
     },
     {
         id: 'resin',
         name: 'Résine',
         fullName: 'Résine Photopolymère',
-        icon: Droplets,
+        icon: Wrench,
         description:
-            'Impression haute précision avec des détails fins exceptionnels. Idéale pour les miniatures et bijoux.',
+            'Impression haute précision pour détails fins et surfaces lisses. Idéale pour bijoux, miniatures et prototypes nécessitant une finition parfaite.',
         properties: [
-            { label: 'Précision', value: 'Exceptionnelle' },
-            { label: 'Finition de surface', value: 'Très lisse' },
-            { label: 'Post-traitement', value: 'Nécessaire' },
+            { label: 'Haute précision', value: '0.01mm' },
+            { label: 'Surface lisse', value: true },
+            { label: 'Détails fins', value: true },
+            { label: 'Post-traitement', value: 'UV, ponçage' },
         ],
-        applications: [
-            'Miniatures',
-            'Bijoux',
-            'Dentaire',
-            'Prototypes détaillés',
-        ],
+        applications: ['Bijoux', 'Miniatures', 'Dentaire', 'Art'],
         color: 'from-purple-500/20 to-pink-500/20',
         iconBg: 'from-purple-500/30 to-pink-500/30',
         borderColor: 'border-purple-500/30',
-    },
-];
-
-const expertise = [
-    {
-        icon: Layers,
-        title: 'Maîtrise technique',
-        description:
-            "Configuration optimale des paramètres d'impression pour chaque matériau et application spécifique.",
-    },
-    {
-        icon: Palette,
-        title: 'Conseils personnalisés',
-        description:
-            'Aide au choix du matériau le plus adapté selon vos contraintes techniques, esthétiques et budgétaires.',
-    },
-    {
-        icon: CheckCircle,
-        title: 'Qualité garantie',
-        description:
-            'Tests et contrôles rigoureux pour assurer la conformité et la durabilité de vos pièces imprimées.',
     },
 ];
 
@@ -201,7 +166,7 @@ export function MaterialsExpertise() {
                     viewport={{ once: true, margin: '-100px' }}
                     className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6 justify-items-center'
                 >
-                    {materials.map((material, index) => {
+                    {materials.map((material) => {
                         const IconComponent = material.icon;
                         return (
                             <motion.div

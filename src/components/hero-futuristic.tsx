@@ -1,5 +1,8 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
+
 import { ScrollIndicator } from '@/components/ui/scroll-indicator';
 import { useAspect, useTexture } from '@react-three/drei';
 import { Canvas, extend, useFrame, useThree } from '@react-three/fiber';

@@ -106,7 +106,7 @@ export function ProcessusTravail() {
                     <p className='text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed'>
                         De votre première idée à la livraison finale, découvrez
                         les 6 étapes qui garantissent la réussite de votre
-                        projet d'impression 3D.
+                        projet d&apos;impression 3D.
                     </p>
                 </motion.div>
 
@@ -215,9 +215,9 @@ export function ProcessusTravail() {
                                 votre projet ?
                             </h3>
                             <p className='text-sm md:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed'>
-                                Contactez-nous dès aujourd'hui pour discuter de
-                                votre projet. La première consultation est
-                                gratuite et sans engagement.
+                                Contactez-nous dès aujourd&apos;hui pour
+                                discuter de votre projet. La première
+                                consultation est gratuite et sans engagement.
                             </p>
 
                             {/* Decorative elements */}
