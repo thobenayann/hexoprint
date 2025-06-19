@@ -92,7 +92,7 @@ export function TargetAudience() {
 
                 {/* Main Content - Split Screen Design */}
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-7xl mx-auto'>
-                    {audiences.map((audience, index) => {
+                    {audiences.map((audience) => {
                         const MainIcon = audience.icon;
 
                         return (

@@ -50,7 +50,7 @@ export function HeroSection() {
                     className='text-center opacity-[0.35]'
                 >
                     <div className='font-mono font-semibold text-lg md:text-3xl lg:text-4xl text-primary mb-1 md:mb-2 tracking-wider'>
-                        HEXO'PRINT
+                        HEXO&apos;PRINT
                     </div>
                     <div className='font-mono font-normal text-xs md:text-base lg:text-lg text-muted-foreground tracking-widest'>
                         IMPRESSION 3D

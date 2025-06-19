@@ -71,7 +71,7 @@ export function GalleryPreview() {
                     </h2>
                     <p className='text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed'>
                         Découvrez nos réalisations : chaque création reflète
-                        notre passion du détail et l'étendue de nos compétences
+                        notre passion du détail et l&apos;étendue de nos compétences
                         techniques.
                     </p>
                 </div>

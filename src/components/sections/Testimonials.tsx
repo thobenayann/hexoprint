@@ -83,14 +83,14 @@ export function Testimonials() {
                         <span className='text-primary'>confiance</span>
                     </h2>
                     <p className='text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed'>
-                        Découvrez l'expérience de nos clients et leur
+                        Découvrez l&apos;xpérience de nos clients et leur
                         satisfaction après avoir collaboré avec Hexoprint.
                     </p>
                 </div>
 
                 {/* Testimonials Grid */}
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-8 mb-20 max-w-6xl mx-auto'>
-                    {testimonials.map((testimonial, index) => (
+                    {testimonials.map((testimonial) => (
                         <div key={testimonial.id} className='group relative'>
                             {/* Glass morphism card */}
                             <Card className='relative border-0 bg-card/50 backdrop-blur-sm hover:bg-card/70 transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl overflow-hidden cursor-pointer'>
@@ -111,7 +111,7 @@ export function Testimonials() {
 
                                     {/* Testimonial content */}
                                     <blockquote className='text-lg text-muted-foreground leading-relaxed mb-6 group-hover:text-foreground transition-colors duration-300'>
-                                        "{testimonial.content}"
+                                    &ldquo;{testimonial.content}&ldquo;
                                     </blockquote>
 
                                     {/* Rating */}
