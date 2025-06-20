@@ -180,13 +180,13 @@ export function Footer() {
                 {/* Bottom Section */}
                 <div className='flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 mb-8'>
                     {/* Copyright */}
-                    <div className='text-muted-foreground text-sm'>
+                    <div className='text-muted-foreground text-sm max-sm:text-center'>
                         © {currentYear} Hexo&apos;print - Yann RAVARY. Tous
                         droits réservés.
                     </div>
 
                     {/* Legal Links */}
-                    <div className='flex items-center space-x-6 text-sm'>
+                    <div className='flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-6 text-sm max-sm:border-t max-sm:border-border max-sm:pt-4'>
                         <Link
                             href='/mentions-legales'
                             className='text-muted-foreground hover:text-foreground transition-colors duration-300'
