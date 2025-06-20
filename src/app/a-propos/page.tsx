@@ -1,57 +1,141 @@
+import { AboutContent } from '@/components/sections/AboutContent';
+import { AboutHero } from '@/components/sections/AboutHero';
+import { AboutInfos } from '@/components/sections/AboutInfos';
+import { CallToAction } from '@/components/sections/CallToAction';
+import type { Metadata } from 'next';
+import { ABOUT_PAGE_DATA, ABOUT_PAGE_SEO } from './constants';
+
+export const metadata: Metadata = {
+    title: ABOUT_PAGE_SEO.title,
+    description: ABOUT_PAGE_SEO.description,
+    keywords: ABOUT_PAGE_SEO.keywords,
+    openGraph: {
+        title: ABOUT_PAGE_SEO.title,
+        description: ABOUT_PAGE_SEO.description,
+        type: 'website',
+        locale: 'fr_FR',
+        siteName: "Hexo'print",
+        images: [
+            {
+                url: '/logos/hexoprint-logo-impression-3d-with-text-1200x628.png',
+                width: 1200,
+                height: 628,
+                alt: "Hexo'print - Spécialiste impression 3D",
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: ABOUT_PAGE_SEO.title,
+        description: ABOUT_PAGE_SEO.description,
+        images: ['/logos/hexoprint-logo-impression-3d-with-text-1200x628.png'],
+    },
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+        },
+    },
+    alternates: {
+        canonical: 'https://hexoprint.fr/a-propos',
+    },
+};
+
 export default function AboutPage() {
     return (
         <main className='min-h-screen pt-16'>
-            <div className='container mx-auto px-4 py-16'>
-                <div className='max-w-4xl mx-auto'>
-                    <h1 className='text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-primary mb-6 md:mb-8'>
-                        À propos d&apos;Hexo&apos;print
-                    </h1>
+            {/* Hero Section avec vidéo background */}
+            <AboutHero
+                title={ABOUT_PAGE_DATA.hero.title}
+                subtitle={ABOUT_PAGE_DATA.hero.subtitle}
+                description={ABOUT_PAGE_DATA.hero.description}
+            />
 
-                    <div className='prose prose-lg max-w-none'>
-                        <p className='text-base md:text-lg lg:text-xl text-muted-foreground mb-6'>
-                            Hexoprint, c&apos;est avant tout une passion devenue
-                            métier. Fondée par Yann, un technicien passionné par
-                            l&apos;impression 3D, l&apos;entreprise mêle savoir-faire
-                            artisanal et rigueur technique.
-                        </p>
+            {/* Contenu principal */}
+            <AboutContent
+                mainContent={ABOUT_PAGE_DATA.content.mainContent}
+                mission={ABOUT_PAGE_DATA.content.mission}
+                expertise={ABOUT_PAGE_DATA.content.expertise}
+            />
 
-                        <p className='mb-6'>
-                            De la création des plans jusqu&apos;au produit final,
-                            chaque étape est maîtrisée et réalisée avec minutie.
-                            Notre objectif est simple : vous proposer une
-                            impression 3D de qualité, avec une vraie expertise
-                            technique, une écoute attentive, et toujours avec le
-                            sourire !
-                        </p>
+            {/* Informations détaillées */}
+            <AboutInfos
+                values={ABOUT_PAGE_DATA.infos.values}
+                materials={ABOUT_PAGE_DATA.infos.materials}
+                location={ABOUT_PAGE_DATA.infos.location}
+            />
 
-                        <div className='grid md:grid-cols-2 gap-8 mt-12'>
-                            <div className='bg-card p-6 rounded-lg border'>
-                                <h2 className='text-lg md:text-xl lg:text-2xl font-semibold text-card-foreground mb-4'>
-                                    Notre Mission
-                                </h2>
-                                <p className='text-sm md:text-base text-muted-foreground'>
-                                    Donner vie à vos projets grâce à
-                                    l&apos;impression 3D artisanale et sur-mesure, en
-                                    accompagnant chaque client avec soin, écoute
-                                    et précision.
-                                </p>
-                            </div>
+            {/* Call to Action */}
+            <CallToAction />
 
-                            <div className='bg-card p-6 rounded-lg border'>
-                                <h2 className='text-lg md:text-xl lg:text-2xl font-semibold text-card-foreground mb-4'>
-                                    Notre Expertise
-                                </h2>
-                                <p className='text-sm md:text-base text-muted-foreground'>
-                                    Maîtrise avancée des matériaux (PLA, ABS,
-                                    PETG, résine) et capacité à fournir des
-                                    conseils techniques précis pour optimiser
-                                    vos projets.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* Schema.org JSON-LD pour le SEO */}
+            <script
+                type='application/ld+json'
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        '@context': 'https://schema.org',
+                        '@type': 'LocalBusiness',
+                        name: "Hexo'print",
+                        description:
+                            'Spécialiste en impression 3D artisanale et sur-mesure à Seysses, Haute-Garonne',
+                        url: 'https://hexoprint.fr',
+                        address: {
+                            '@type': 'PostalAddress',
+                            addressLocality: 'Seysses',
+                            addressRegion: 'Haute-Garonne',
+                            postalCode: '31600',
+                            addressCountry: 'FR',
+                        },
+                        founder: {
+                            '@type': 'Person',
+                            name: 'Yann',
+                        },
+                        serviceArea: {
+                            '@type': 'Country',
+                            name: 'France',
+                        },
+                        knowsAbout: [
+                            'Impression 3D',
+                            'Fabrication additive',
+                            'Prototypage rapide',
+                            'Modélisme',
+                            'Matériaux PLA',
+                            'Matériaux ABS',
+                            'Matériaux PETG',
+                            'Résine',
+                        ],
+                        hasOfferCatalog: {
+                            '@type': 'OfferCatalog',
+                            name: "Services d'impression 3D",
+                            itemListElement: [
+                                {
+                                    '@type': 'Offer',
+                                    itemOffered: {
+                                        '@type': 'Service',
+                                        name: 'Impression 3D pour professionnels',
+                                        description:
+                                            'Prototypage rapide et fabrication de pièces industrielles',
+                                    },
+                                },
+                                {
+                                    '@type': 'Offer',
+                                    itemOffered: {
+                                        '@type': 'Service',
+                                        name: 'Impression 3D pour particuliers',
+                                        description:
+                                            'Objets personnalisés, modélisme et créations sur-mesure',
+                                    },
+                                },
+                            ],
+                        },
+                    }),
+                }}
+            />
         </main>
     );
 }
