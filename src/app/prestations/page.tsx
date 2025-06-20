@@ -1,4 +1,3 @@
-import { Footer } from '@/components/layout/Footer';
 import { CallToAction } from '@/components/sections/CallToAction';
 import { MaterialsExpertise } from '@/components/sections/MaterialsExpertise';
 import { Prestations } from '@/components/sections/Prestations';
@@ -13,7 +12,6 @@ export default function PrestationsPage() {
             <ProcessusTravail />
             <MaterialsExpertise />
             <CallToAction />
-            <Footer />
         </main>
     );
 }
