@@ -1,3 +1,5 @@
+import { COMPANY_INFO } from '@/lib/company-info';
+
 export const ABOUT_PAGE_DATA = {
     hero: {
         title: 'La passion du détail au cœur de chaque impression',
@@ -38,18 +40,10 @@ export const ABOUT_PAGE_DATA = {
                     "Technique, passion et précision : la recette d'une impression réussie ! Vous avez un projet complexe ? C'est justement notre spécialité.",
             },
         ],
-        materials: [
-            'PLA',
-            'ABS',
-            'PETG',
-            'Résine',
-            'TPU',
-            'WOOD',
-            'Carbon',
-        ] as string[],
+        materials: COMPANY_INFO.expertise.materials,
         location: {
-            city: 'Seysses',
-            department: 'Haute-Garonne (31)',
+            city: COMPANY_INFO.contact.address.city,
+            department: COMPANY_INFO.contact.address.department,
         },
     },
 } as const;

@@ -1,5 +1,7 @@
 import { Footer } from '@/components/layout/Footer';
 import { Navigation } from '@/components/layout/navigation';
+import { COMPANY_INFO } from '@/lib/company-info';
+import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
 import { Open_Sans, Orbitron, Playfair_Display } from 'next/font/google';
 import './globals.css';
@@ -30,7 +32,7 @@ const orbitron = Orbitron({
 
 export const metadata: Metadata = {
     metadataBase: new URL(
-        process.env.NEXT_PUBLIC_SITE_URL || 'https://hexoprint.fr'
+        process.env.NEXT_PUBLIC_SITE_URL || COMPANY_INFO.siteUrl
     ),
     title: {
         default: "Hexo'print - Impression 3D artisanale à Seysses (31)",
@@ -63,7 +65,8 @@ export const metadata: Metadata = {
     openGraph: {
         type: 'website',
         locale: 'fr_FR',
-        siteName: "Hexo'print",
+        siteName: COMPANY_INFO.name,
+        url: COMPANY_INFO.siteUrl,
         title: "Hexo'print - Impression 3D artisanale à Seysses (31)",
         description:
             "Spécialiste de l'impression 3D pour professionnels et particuliers en Haute-Garonne.",
@@ -83,6 +86,9 @@ export const metadata: Metadata = {
             "Spécialiste de l'impression 3D pour professionnels et particuliers en Haute-Garonne.",
         images: ['/logos/hexoprint-logo-impression-3d-with-text-1200x628.png'],
     },
+    alternates: {
+        canonical: COMPANY_INFO.siteUrl,
+    },
 };
 
 export default function RootLayout({
@@ -98,6 +104,7 @@ export default function RootLayout({
                 <Navigation />
                 {children}
                 <Footer />
+                <Analytics />
             </body>
         </html>
     );

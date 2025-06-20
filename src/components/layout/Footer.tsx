@@ -1,3 +1,4 @@
+import { COMPANY_INFO, formatPhone } from '@/lib/company-info';
 import { Heart, Mail, MapPin, Phone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,20 +9,19 @@ const navigationLinks = [
     { href: '/prestations', label: 'Prestations' },
     { href: '/galerie', label: 'Galerie' },
     { href: '/blog', label: 'Blog' },
-    { href: '/devis', label: 'Demande de devis' },
     { href: '/contact', label: 'Contact' },
 ];
 
 const socialLinks = [
     {
-        href: 'https://www.instagram.com/hexoprint3d',
+        href: COMPANY_INFO.social.instagram,
         icon: 'instagram',
         label: 'Instagram',
         hoverColor:
             'hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-600',
     },
     {
-        href: 'mailto:contact@hexoprint.fr',
+        href: `mailto:${COMPANY_INFO.contact.email}`,
         icon: Mail,
         label: 'Email',
         hoverColor: 'hover:bg-primary',
@@ -31,18 +31,18 @@ const socialLinks = [
 const contactInfo = [
     {
         icon: MapPin,
-        title: 'Seysses',
-        subtitle: 'Haute-Garonne (31)',
+        title: COMPANY_INFO.contact.address.city,
+        subtitle: COMPANY_INFO.contact.address.department,
     },
     {
         icon: Phone,
-        title: 'Sur demande',
-        href: 'tel:+337 84 58 54 25',
+        title: formatPhone(COMPANY_INFO.contact.phone),
+        href: `tel:${COMPANY_INFO.contact.phone.replace(/\s/g, '')}`,
     },
     {
         icon: Mail,
-        title: 'contact@hexoprint.fr',
-        href: 'mailto:contact@hexoprint.fr',
+        title: COMPANY_INFO.contact.email,
+        href: `mailto:${COMPANY_INFO.contact.email}`,
     },
 ];
 
@@ -180,13 +180,13 @@ export function Footer() {
                 {/* Bottom Section */}
                 <div className='flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 mb-8'>
                     {/* Copyright */}
-                    <div className='text-muted-foreground text-sm'>
-                        © {currentYear} Hexo&apos;print - Yann RAVARY. Tous droits
-                        réservés.
+                    <div className='text-muted-foreground text-sm max-sm:text-center'>
+                        © {currentYear} Hexo&apos;print - Yann RAVARY. Tous
+                        droits réservés.
                     </div>
 
                     {/* Legal Links */}
-                    <div className='flex items-center space-x-6 text-sm'>
+                    <div className='flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-6 text-sm max-sm:border-t max-sm:border-border max-sm:pt-4'>
                         <Link
                             href='/mentions-legales'
                             className='text-muted-foreground hover:text-foreground transition-colors duration-300'
@@ -199,9 +199,9 @@ export function Footer() {
                         >
                             Politique de confidentialité
                         </Link>
-                        {/* <div className='text-muted-foreground/70'>
-                            SIRET : À définir
-                        </div> */}
+                        <div className='text-muted-foreground/70'>
+                            SIRET : {COMPANY_INFO.legal.siret}
+                        </div>
                     </div>
                 </div>
 
