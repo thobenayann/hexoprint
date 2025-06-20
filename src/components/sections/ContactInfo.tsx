@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { COMPANY_INFO, formatPhone } from '@/lib/company-info';
 import {
     CheckCircleIcon,
     ClockIcon,
@@ -14,21 +15,21 @@ const contactInfo = [
     {
         icon: MapPinIcon,
         title: 'Adresse',
-        content: 'Seysses, Haute-Garonne (31)',
+        content: `${COMPANY_INFO.contact.address.city}, ${COMPANY_INFO.contact.address.department}`,
         description: 'Déplacements possibles dans un rayon de 50km',
         color: 'text-primary',
     },
     {
         icon: PhoneIcon,
         title: 'Téléphone',
-        content: '06 XX XX XX XX',
+        content: formatPhone(COMPANY_INFO.contact.phone),
         description: 'Disponible du lundi au vendredi',
         color: 'text-primary',
     },
     {
         icon: MailIcon,
         title: 'Email',
-        content: 'contact@hexoprint.fr',
+        content: COMPANY_INFO.contact.email,
         description: 'Réponse sous 24h ouvrées',
         color: 'text-primary',
     },
@@ -133,27 +134,50 @@ export function ContactInfo() {
                                         </h4>
                                         <div className='space-y-2 text-sm'>
                                             <div className='flex justify-between'>
-                                                <span>Lundi - Vendredi</span>
+                                                <span>
+                                                    {
+                                                        COMPANY_INFO.schedule
+                                                            .weekdays.label
+                                                    }
+                                                </span>
                                                 <span className='font-medium'>
-                                                    9h00 - 18h00
+                                                    {
+                                                        COMPANY_INFO.schedule
+                                                            .weekdays.hours
+                                                    }
                                                 </span>
                                             </div>
                                             <div className='flex justify-between'>
-                                                <span>Samedi</span>
+                                                <span>
+                                                    {
+                                                        COMPANY_INFO.schedule
+                                                            .saturday.label
+                                                    }
+                                                </span>
                                                 <span className='font-medium'>
-                                                    9h00 - 12h00
+                                                    {
+                                                        COMPANY_INFO.schedule
+                                                            .saturday.hours
+                                                    }
                                                 </span>
                                             </div>
                                             <div className='flex justify-between'>
-                                                <span>Dimanche</span>
+                                                <span>
+                                                    {
+                                                        COMPANY_INFO.schedule
+                                                            .sunday.label
+                                                    }
+                                                </span>
                                                 <span className='text-muted-foreground'>
-                                                    Fermé
+                                                    {
+                                                        COMPANY_INFO.schedule
+                                                            .sunday.hours
+                                                    }
                                                 </span>
                                             </div>
                                         </div>
                                         <p className='text-xs text-muted-foreground mt-3'>
-                                            * Rendez-vous possibles en dehors
-                                            des horaires sur demande
+                                            * {COMPANY_INFO.schedule.note}
                                         </p>
                                     </div>
                                 </div>
@@ -235,7 +259,9 @@ export function ContactInfo() {
                             </p>
                             <div className='flex items-center space-x-2 text-sm font-medium text-primary'>
                                 <PhoneIcon className='w-4 h-4' />
-                                <span>06 XX XX XX XX</span>
+                                <span>
+                                    {formatPhone(COMPANY_INFO.contact.phone)}
+                                </span>
                             </div>
                         </div>
                     </div>

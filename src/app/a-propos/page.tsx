@@ -2,6 +2,7 @@ import { AboutContent } from '@/components/sections/AboutContent';
 import { AboutHero } from '@/components/sections/AboutHero';
 import { AboutInfos } from '@/components/sections/AboutInfos';
 import { CallToAction } from '@/components/sections/CallToAction';
+import { COMPANY_INFO } from '@/lib/company-info';
 import type { Metadata } from 'next';
 import { ABOUT_PAGE_DATA, ABOUT_PAGE_SEO } from './constants';
 
@@ -80,21 +81,25 @@ export default function AboutPage() {
                     __html: JSON.stringify({
                         '@context': 'https://schema.org',
                         '@type': 'LocalBusiness',
-                        name: "Hexo'print",
+                        name: COMPANY_INFO.name,
                         description:
                             'Spécialiste en impression 3D artisanale et sur-mesure à Seysses, Haute-Garonne',
-                        url: 'https://hexoprint.fr',
+                        url: COMPANY_INFO.website.url,
                         address: {
                             '@type': 'PostalAddress',
-                            addressLocality: 'Seysses',
-                            addressRegion: 'Haute-Garonne',
-                            postalCode: '31600',
+                            streetAddress: COMPANY_INFO.contact.address.street,
+                            addressLocality: COMPANY_INFO.contact.address.city,
+                            addressRegion:
+                                COMPANY_INFO.contact.address.department,
+                            postalCode: COMPANY_INFO.contact.address.postalCode,
                             addressCountry: 'FR',
                         },
                         founder: {
                             '@type': 'Person',
-                            name: 'Yann',
+                            name: COMPANY_INFO.founder,
                         },
+                        telephone: COMPANY_INFO.contact.phone,
+                        email: COMPANY_INFO.contact.email,
                         serviceArea: {
                             '@type': 'Country',
                             name: 'France',
