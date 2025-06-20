@@ -8,6 +8,7 @@ export const COMPANY_INFO = {
     name: "Hexo'print",
     legalName: "Hexo'print",
     founder: 'Yann RAVARY',
+    siteUrl: 'https://hexoprint.fr',
 
     // Informations de contact
     contact: {
