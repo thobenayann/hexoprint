@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { RubiksCube3D } from '@/components/ui/rubiks-cube-3d';
 import { MailIcon, PhoneIcon, PlusIcon } from 'lucide-react';
 
 export function ContactHero() {
@@ -74,13 +75,12 @@ export function ContactHero() {
                         </div>
                     </div>
 
-                    {/* Élément visuel décoratif */}
+                    {/* Élément visuel 3D - Rubik's Cube */}
                     <div className='hidden lg:block relative'>
-                        <div className='relative w-full h-96 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden'>
-                            <div className='absolute inset-0 bg-[radial-gradient(circle_at_center,theme(colors.primary/0.3)_0%,transparent_70%)]' />
-                            <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
-                                <div className='w-32 h-32 rounded-full bg-gradient-to-r from-primary to-accent opacity-80 animate-pulse' />
-                            </div>
+                        <div className='relative w-full h-96 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/5 to-accent/10 border border-border/20'>
+                            <RubiksCube3D />
+                            {/* Overlay subtil pour l'intégration */}
+                            <div className='absolute inset-0 bg-gradient-to-t from-background/10 via-transparent to-background/5 pointer-events-none' />
                         </div>
                     </div>
                 </div>
