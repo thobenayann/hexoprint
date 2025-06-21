@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ContactFormSchema, type ContactFormData } from '@/lib/email-schemas';
 import {
     AlertCircleIcon,
     BuildingIcon,
@@ -15,19 +16,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-type ContactFormData = {
-    type: 'particulier' | 'professionnel';
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone?: string;
-    company?: string;
-    projectType: string;
-    description: string;
-    files: File[];
-    budget?: string;
-    deadline?: string;
-};
+// Le type ContactFormData est maintenant importé depuis email-schemas
 
 export function ContactForm() {
     const [formData, setFormData] = useState<ContactFormData>({
@@ -46,17 +35,86 @@ export function ContactForm() {
 
     const [isDragOver, setIsDragOver] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitStatus, setSubmitStatus] = useState<{
+        type: 'success' | 'error' | null;
+        message: string;
+    }>({ type: null, message: '' });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setSubmitStatus({ type: null, message: '' });
 
-        // Simuler l'envoi du formulaire
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        try {
+            // Validation côté client avec Zod
+            const validationResult = ContactFormSchema.safeParse(formData);
 
-        setIsSubmitting(false);
-        // TODO: Implémenter la logique d'envoi réelle
-        console.log('Form submitted:', formData);
+            if (!validationResult.success) {
+                const errors = validationResult.error.errors.map(
+                    (err) => err.message
+                );
+                throw new Error(`Données invalides: ${errors.join(', ')}`);
+            }
+
+            // Préparation des données pour l'API (conversion des fichiers)
+            const formDataForApi = {
+                ...formData,
+                files: formData.files.map((file) => ({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                })),
+            };
+
+            // Envoi vers l'API
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formDataForApi),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Erreur lors de l'envoi");
+            }
+
+            // Succès
+            setSubmitStatus({
+                type: 'success',
+                message:
+                    result.message ||
+                    'Votre demande a été envoyée avec succès !',
+            });
+
+            // Reset du formulaire après succès
+            setFormData({
+                type: 'particulier',
+                firstName: '',
+                lastName: '',
+                email: '',
+                phone: '',
+                company: '',
+                projectType: '',
+                description: '',
+                files: [],
+                budget: '',
+                deadline: '',
+            });
+        } catch (error) {
+            console.error("Erreur lors de l'envoi:", error);
+            setSubmitStatus({
+                type: 'error',
+                message:
+                    error instanceof Error
+                        ? error.message
+                        : "Une erreur est survenue lors de l'envoi",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleFileUpload = (files: FileList | null) => {
@@ -387,7 +445,7 @@ export function ContactForm() {
                                             projectType: e.target.value,
                                         }))
                                     }
-                                    className='w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
+                                    className='w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground'
                                 >
                                     <option value=''>
                                         Sélectionnez le type de projet
@@ -541,7 +599,7 @@ export function ContactForm() {
                                                 budget: e.target.value,
                                             }))
                                         }
-                                        className='w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
+                                        className='w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground'
                                     >
                                         <option value=''>Non défini</option>
                                         <option value='0-50'>
@@ -577,7 +635,7 @@ export function ContactForm() {
                                                 deadline: e.target.value,
                                             }))
                                         }
-                                        className='w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
+                                        className='w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground'
                                     >
                                         <option value=''>Non défini</option>
                                         <option value='urgent'>
@@ -626,6 +684,28 @@ export function ContactForm() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Messages de statut */}
+                            {submitStatus.type && (
+                                <div
+                                    className={`p-4 rounded-lg border ${
+                                        submitStatus.type === 'success'
+                                            ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200'
+                                            : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                                    }`}
+                                >
+                                    <div className='flex items-start space-x-3'>
+                                        {submitStatus.type === 'success' ? (
+                                            <CheckCircleIcon className='w-5 h-5 mt-0.5' />
+                                        ) : (
+                                            <AlertCircleIcon className='w-5 h-5 mt-0.5' />
+                                        )}
+                                        <p className='font-medium'>
+                                            {submitStatus.message}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Bouton d'envoi */}
                             <div className='pt-4'>
