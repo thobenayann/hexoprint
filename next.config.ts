@@ -1,7 +1,99 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+    // Optimisations pour la production
+    experimental: {
+        // Support pour les Server Actions (si utilisées)
+        serverActions: {
+            bodySizeLimit: '10mb', // Pour l'upload de fichiers STL
+        },
+    },
+
+    // Configuration des images pour Sanity CDN
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'cdn.sanity.io',
+                pathname: '/images/**',
+            },
+        ],
+        // Optimisations d'images
+        formats: ['image/webp', 'image/avif'],
+        deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+        imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    },
+
+    // Headers de sécurité pour la production
+    async headers() {
+        return [
+            {
+                source: '/studio/:path*',
+                headers: [
+                    {
+                        key: 'X-Frame-Options',
+                        value: 'SAMEORIGIN',
+                    },
+                    {
+                        key: 'X-Content-Type-Options',
+                        value: 'nosniff',
+                    },
+                    {
+                        key: 'Referrer-Policy',
+                        value: 'strict-origin-when-cross-origin',
+                    },
+                ],
+            },
+            {
+                // Headers pour les assets statiques
+                source: '/(.*)',
+                headers: [
+                    {
+                        key: 'X-DNS-Prefetch-Control',
+                        value: 'on',
+                    },
+                ],
+            },
+        ];
+    },
+
+    // Redirections si nécessaire
+    async redirects() {
+        return [
+            // Exemple: redirection www vers non-www
+            {
+                source: '/:path*',
+                has: [
+                    {
+                        type: 'host',
+                        value: 'www.hexoprint.fr',
+                    },
+                ],
+                destination: 'https://hexoprint.fr/:path*',
+                permanent: true,
+            },
+        ];
+    },
+
+    // Configuration Turbopack (remplace webpack dans Next.js 15.3+)
+    turbopack: {
+        // Configuration pour Sanity si nécessaire
+        resolveAlias: {
+            // Aliases spécifiques si nécessaire
+        },
+    },
+
+    // Configuration TypeScript
+    typescript: {
+        // En production, ne pas ignorer les erreurs TypeScript
+        ignoreBuildErrors: false,
+    },
+
+    // Configuration ESLint
+    eslint: {
+        // En production, ne pas ignorer les erreurs ESLint
+        ignoreDuringBuilds: false,
+    },
 };
 
 export default nextConfig;
