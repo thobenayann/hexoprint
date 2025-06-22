@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
                 success: true,
                 message:
                     'Votre demande a été envoyée avec succès. Nous vous répondrons dans les plus brefs délais.',
-                emailId: emailResult.emailId,
+                adminEmailId: emailResult.adminEmailId,
+                clientEmailId: emailResult.clientEmailId,
             },
             { status: 200 }
         );

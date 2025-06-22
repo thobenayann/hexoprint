@@ -54,7 +54,8 @@ export class EmailService {
                 return {
                     success: true,
                     message: 'Emails simulés avec succès (mode développement)',
-                    emailId: 'dev-' + Date.now(),
+                    adminEmailId: 'dev-admin-' + Date.now(),
+                    clientEmailId: 'dev-client-' + Date.now(),
                 };
             }
 
@@ -85,7 +86,6 @@ export class EmailService {
                 ContactFormAdminEmail({
                     formData,
                     submittedAt,
-                    baseUrl: emailConfig.NEXT_PUBLIC_APP_URL,
                 })
             );
 
@@ -93,7 +93,6 @@ export class EmailService {
                 ContactFormConfirmationEmail({
                     formData,
                     submittedAt,
-                    baseUrl: emailConfig.NEXT_PUBLIC_APP_URL,
                 })
             );
 
@@ -127,7 +126,8 @@ export class EmailService {
             return {
                 success: true,
                 message: 'Emails envoyés avec succès',
-                emailId: adminEmailResult.data?.id || '',
+                adminEmailId: adminEmailResult.data?.id || '',
+                clientEmailId: confirmationEmailResult.data?.id || '',
             };
         } catch (error) {
             console.error("Erreur lors de l'envoi des emails:", error);
