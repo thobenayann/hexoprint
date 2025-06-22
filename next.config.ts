@@ -56,40 +56,6 @@ const nextConfig: NextConfig = {
             },
         ];
     },
-
-    // Redirections si nécessaire
-    async redirects() {
-        return [
-            // Exemple: redirection www vers non-www
-            {
-                source: '/:path*',
-                has: [
-                    {
-                        type: 'host',
-                        value: 'www.hexoprint.fr',
-                    },
-                ],
-                destination: 'https://hexoprint.fr/:path*',
-                permanent: true,
-            },
-        ];
-    },
-
-    // Note: Turbopack configuration retiré pour la production
-    // En dev: utiliser `next dev --turbo`
-    // En prod: utiliser `next build` (sans --turbo)
-
-    // Configuration TypeScript
-    typescript: {
-        // En production, ne pas ignorer les erreurs TypeScript
-        ignoreBuildErrors: false,
-    },
-
-    // Configuration ESLint
-    eslint: {
-        // En production, ne pas ignorer les erreurs ESLint
-        ignoreDuringBuilds: false,
-    },
 };
 
 export default nextConfig;
