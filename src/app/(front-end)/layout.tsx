@@ -1,10 +1,10 @@
+import '@/app/globals.css';
 import { Footer } from '@/components/layout/Footer';
 import { Navigation } from '@/components/layout/navigation';
 import { COMPANY_INFO } from '@/lib/company-info';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
 import { Open_Sans, Orbitron, Playfair_Display } from 'next/font/google';
-import './globals.css';
 
 const playfair = Playfair_Display({
     subsets: ['latin'],
@@ -97,7 +97,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang='fr' suppressHydrationWarning className='dark'>
+        <html lang="fr" suppressHydrationWarning className="dark">
             <body
                 className={`${playfair.variable} ${openSans.variable} ${orbitron.variable} antialiased dark`}
             >
