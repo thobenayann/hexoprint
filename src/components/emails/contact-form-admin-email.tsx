@@ -48,10 +48,10 @@ export function ContactFormAdminEmail({
                     {/* Logo Hexo'print */}
                     <Section style={logoSection}>
                         <Img
-                            src={`${baseUrl}/logos/hexo_print_logo-250px.png`}
+                            src={`${baseUrl}/logos/hexoprint-sans-text-no-bg-750x750.png`}
                             alt="Hexo'print - Impression 3D"
-                            width='120'
-                            height='120'
+                            width="150"
+                            height="150"
                             style={logo}
                         />
                     </Section>
@@ -66,7 +66,7 @@ export function ContactFormAdminEmail({
                     <Hr style={hr} />
 
                     <Section style={section}>
-                        <Heading as='h2' style={h2}>
+                        <Heading as="h2" style={h2}>
                             Informations du contact
                         </Heading>
                         <Text style={text}>
@@ -96,7 +96,7 @@ export function ContactFormAdminEmail({
                     <Hr style={hr} />
 
                     <Section style={section}>
-                        <Heading as='h2' style={h2}>
+                        <Heading as="h2" style={h2}>
                             Détails du projet
                         </Heading>
                         <Text style={text}>
@@ -127,7 +127,7 @@ export function ContactFormAdminEmail({
                         <>
                             <Hr style={hr} />
                             <Section style={section}>
-                                <Heading as='h2' style={h2}>
+                                <Heading as="h2" style={h2}>
                                     Fichiers joints ({files.length})
                                 </Heading>
                                 {files.map((file, index) => (
@@ -256,11 +256,14 @@ const footer = {
 
 const logoSection = {
     textAlign: 'center' as const,
-    marginBottom: '20px',
+    marginBottom: '30px',
+    padding: '20px 0',
 };
 
 const logo = {
-    width: '120px',
-    height: '120px',
+    width: '150px',
+    height: '150px',
     objectFit: 'contain' as const,
+    margin: '0 auto',
+    display: 'block',
 };

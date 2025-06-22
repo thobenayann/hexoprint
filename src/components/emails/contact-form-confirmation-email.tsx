@@ -37,10 +37,10 @@ export function ContactFormConfirmationEmail({
                     {/* Logo Hexo'print */}
                     <Section style={logoSection}>
                         <Img
-                            src={`${baseUrl}/logos/hexo_print_logo-250px.png`}
+                            src={`${baseUrl}/logos/hexoprint-sans-text-no-bg-750x750.png`}
                             alt="Hexo'print - Impression 3D"
-                            width='120'
-                            height='120'
+                            width="150"
+                            height="150"
                             style={logo}
                         />
                     </Section>
@@ -61,7 +61,7 @@ export function ContactFormConfirmationEmail({
                     <Hr style={hr} />
 
                     <Section style={section}>
-                        <Heading as='h2' style={h2}>
+                        <Heading as="h2" style={h2}>
                             Récapitulatif de votre demande
                         </Heading>
                         <Text style={text}>
@@ -82,7 +82,7 @@ export function ContactFormConfirmationEmail({
                     <Hr style={hr} />
 
                     <Section style={section}>
-                        <Heading as='h2' style={h2}>
+                        <Heading as="h2" style={h2}>
                             Prochaines étapes
                         </Heading>
                         <Text style={text}>
@@ -123,7 +123,7 @@ export function ContactFormConfirmationEmail({
                     </Section>
 
                     <Section style={buttonSection}>
-                        <Button style={button} href='https://hexoprint.fr'>
+                        <Button style={button} href="https://hexoprint.fr">
                             Visiter notre site
                         </Button>
                     </Section>
@@ -262,10 +262,13 @@ const footer = {
 const logoSection = {
     textAlign: 'center' as const,
     margin: '20px 0',
+    padding: '20px 0',
 };
 
 const logo = {
     borderRadius: '5px',
-    width: '120px',
-    height: '120px',
+    width: '150px',
+    height: '150px',
+    margin: '0 auto',
+    display: 'block',
 };
