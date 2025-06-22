@@ -16,13 +16,11 @@ import {
 type ContactFormConfirmationEmailProps = {
     formData: ContactFormData;
     submittedAt: string;
-    baseUrl: string;
 };
 
 export function ContactFormConfirmationEmail({
     formData,
     submittedAt,
-    baseUrl,
 }: ContactFormConfirmationEmailProps) {
     const { firstName, lastName, projectType, description } = formData;
 
@@ -37,10 +35,10 @@ export function ContactFormConfirmationEmail({
                     {/* Logo Hexo'print */}
                     <Section style={logoSection}>
                         <Img
-                            src={`${baseUrl}/logos/hexoprint-sans-text-no-bg-750x750.png`}
+                            src="https://hexoprint.fr/logos/hexoprint-sans-text-no-bg-250x250.png"
                             alt="Hexo'print - Impression 3D"
-                            width="150"
-                            height="150"
+                            width="120"
+                            height="120"
                             style={logo}
                         />
                     </Section>

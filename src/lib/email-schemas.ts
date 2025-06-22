@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+// Schéma pour les métadonnées de fichier dans les emails
+export const EmailFileSchema = z.object({
+    name: z.string(), // Nom original du fichier
+    size: z.number(),
+    type: z.string(),
+    url: z.string().optional(), // URL Vercel Blob pour télécharger le fichier
+});
+
 // Schéma de base pour les données de contact
 export const ContactFormSchema = z
     .object({
@@ -21,16 +29,7 @@ export const ContactFormSchema = z
             .min(4, 'La description doit contenir au moins 4 caractères'),
         budget: z.string().optional(),
         deadline: z.string().optional(),
-        files: z
-            .array(
-                z.object({
-                    name: z.string(),
-                    size: z.number(),
-                    type: z.string(),
-                })
-            )
-            .optional()
-            .default([]),
+        files: z.array(EmailFileSchema).optional().default([]),
     })
     .refine(
         (data) => {
@@ -64,7 +63,19 @@ export type EmailMetadata = z.infer<typeof EmailMetadataSchema>;
 export const EmailResponseSchema = z.object({
     success: z.boolean(),
     message: z.string(),
-    emailId: z.string().optional(),
+    adminEmailId: z.string().optional(),
+    clientEmailId: z.string().optional(),
+    errors: z.array(z.string()).optional(),
 });
 
 export type EmailResponse = z.infer<typeof EmailResponseSchema>;
+
+// Schéma pour la validation des fichiers uploadés (côté client)
+export const ClientFileSchema = z.object({
+    name: z.string(),
+    size: z.number(),
+    type: z.string(),
+    lastModified: z.number().optional(),
+});
+
+export type ClientFileData = z.infer<typeof ClientFileSchema>;

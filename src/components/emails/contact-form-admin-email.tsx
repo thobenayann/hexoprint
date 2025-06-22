@@ -15,13 +15,11 @@ import {
 type ContactFormAdminEmailProps = {
     formData: ContactFormData;
     submittedAt: string;
-    baseUrl: string;
 };
 
 export function ContactFormAdminEmail({
     formData,
     submittedAt,
-    baseUrl,
 }: ContactFormAdminEmailProps) {
     const {
         type,
@@ -48,10 +46,10 @@ export function ContactFormAdminEmail({
                     {/* Logo Hexo'print */}
                     <Section style={logoSection}>
                         <Img
-                            src={`${baseUrl}/logos/hexoprint-sans-text-no-bg-750x750.png`}
+                            src="https://hexoprint.fr/logos/hexoprint-sans-text-no-bg-250x250.png"
                             alt="Hexo'print - Impression 3D"
-                            width="150"
-                            height="150"
+                            width="120"
+                            height="120"
                             style={logo}
                         />
                     </Section>
@@ -132,9 +130,23 @@ export function ContactFormAdminEmail({
                                 </Heading>
                                 {files.map((file, index) => (
                                     <Text key={index} style={text}>
-                                        • {file.name} (
+                                        • <strong>{file.name}</strong> (
                                         {(file.size / 1024 / 1024).toFixed(2)}{' '}
                                         MB)
+                                        {file.url && (
+                                            <>
+                                                <br />
+                                                📥{' '}
+                                                <a
+                                                    href={file.url}
+                                                    style={linkStyle}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    Télécharger le fichier
+                                                </a>
+                                            </>
+                                        )}
                                     </Text>
                                 ))}
                             </Section>
@@ -261,9 +273,15 @@ const logoSection = {
 };
 
 const logo = {
-    width: '150px',
-    height: '150px',
+    width: '120px',
+    height: '120px',
     objectFit: 'contain' as const,
     margin: '0 auto',
     display: 'block',
+};
+
+const linkStyle = {
+    color: '#24556A',
+    textDecoration: 'underline',
+    fontWeight: 'bold',
 };
