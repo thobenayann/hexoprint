@@ -75,13 +75,9 @@ const nextConfig: NextConfig = {
         ];
     },
 
-    // Configuration Turbopack (remplace webpack dans Next.js 15.3+)
-    turbopack: {
-        // Configuration pour Sanity si nécessaire
-        resolveAlias: {
-            // Aliases spécifiques si nécessaire
-        },
-    },
+    // Note: Turbopack configuration retiré pour la production
+    // En dev: utiliser `next dev --turbo`
+    // En prod: utiliser `next build` (sans --turbo)
 
     // Configuration TypeScript
     typescript: {
