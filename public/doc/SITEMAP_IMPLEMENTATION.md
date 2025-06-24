@@ -11,15 +11,10 @@ Cette implémentation utilise l'**API native de Next.js 15** pour générer auto
 ```
 src/app/
 ├── sitemap.ts              # 🎯 Générateur de sitemap principal
-├── robots.ts               # 🤖 Configuration robots.txt
-└── api/sitemap-test/       # 🧪 Route de test (dev uniquement)
-    └── route.ts
+└── robots.ts               # 🤖 Configuration robots.txt
 
 src/lib/
 └── sitemap-utils.ts        # 🛠️ Utilitaires de validation
-
-scripts/
-└── test-sitemap.js         # 📊 Script de test local
 ```
 
 ## ✨ Fonctionnalités
@@ -42,28 +37,23 @@ scripts/
 
 ### **🛠️ Outils de Validation**
 
-- ✅ **Validation automatique** - Vérification des standards sitemap
-- ✅ **Statistiques détaillées** - Répartition par priorité/fréquence
-- ✅ **Détection de problèmes** - Doublons, URLs invalides
-- ✅ **Rapports complets** - Format Markdown lisible
+- ✅ **Validation intégrée** - Vérification des standards sitemap
+- ✅ **Utilitaires de debug** - Fonctions dans `sitemap-utils.ts`
+- ✅ **Tests manuels** - Accès direct aux endpoints
+- ✅ **Monitoring production** - Via Google Search Console
 
 ## 🚀 Utilisation
 
 ### **1. Développement**
 
-```bash
+````bash
 # Lancer le serveur de développement
 pnpm dev
 
-# Tester le sitemap
-node scripts/test-sitemap.js
-
 # Accéder au sitemap
 http://localhost:3000/sitemap.xml
+http://localhost:3000/robots.txt
 
-# Route de test (dev uniquement)
-http://localhost:3000/api/sitemap-test
-```
 
 ### **2. Production**
 
@@ -74,7 +64,7 @@ pnpm build
 # Le sitemap sera automatiquement disponible
 https://hexoprint.fr/sitemap.xml
 https://hexoprint.fr/robots.txt
-```
+````
 
 ## 📊 Configuration
 
@@ -106,8 +96,9 @@ https://hexoprint.fr/robots.txt
 ### **Monitoring :**
 
 1. **Google Search Console** - Soumission automatique du sitemap
-2. **Validation locale** - Script de test disponible
+2. **Validation directe** - Accès aux endpoints `/sitemap.xml` et `/robots.txt`
 3. **Logs d'erreur** - Fallback en cas de problème Sanity
+4. **Utilitaires de debug** - Fonctions disponibles dans `sitemap-utils.ts`
 
 ## 🎯 Avantages de cette implémentation
 
@@ -134,15 +125,16 @@ https://hexoprint.fr/robots.txt
 
 ## 🧪 Tests et Validation
 
-### **Tests automatiques :**
+### **Tests manuels :**
 
 ```bash
-# Test complet du sitemap
-node scripts/test-sitemap.js
-
-# Vérification manuelle
+# Vérification directe des endpoints
 curl http://localhost:3000/sitemap.xml
 curl http://localhost:3000/robots.txt
+
+# Ou via navigateur
+http://localhost:3000/sitemap.xml
+http://localhost:3000/robots.txt
 ```
 
 ### **Validation Google :**
