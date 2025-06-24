@@ -10,9 +10,20 @@ import {
     NavigationMenuList,
     NavigationMenuTrigger,
 } from '@/components/ui/navigation-menu';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useActivePath } from '@/hooks/use-active-path';
+import {
+    NavigationService,
+    type NavigationRoute,
+} from '@/lib/navigation-config';
 import { cn } from '@/lib/utils';
 import { useScroll } from 'framer-motion';
+import { Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -21,11 +32,116 @@ export function DesktopNavigation() {
     const [isScrolled, setIsScrolled] = useState(false);
     const { isActive } = useActivePath();
 
+    // Récupération des routes visibles (actives + coming-soon) depuis la configuration
+    const visibleRoutes = NavigationService.getVisibleRoutes();
+
     useEffect(() => {
         return scrollY.on('change', (latest: number) => {
             setIsScrolled(latest > 10);
         });
     }, [scrollY]);
+
+    const renderNavigationItem = (route: NavigationRoute) => {
+        const hasSubRoutes = NavigationService.hasActiveSubRoutes(route.id);
+        const isComingSoon = route.status === 'coming-soon';
+
+        const linkClassName = cn(
+            'px-4 py-2 text-sm font-medium transition-colors hover:text-primary flex items-center gap-1',
+            isActive(route.path)
+                ? !isScrolled
+                    ? 'text-blue-300 font-semibold'
+                    : 'text-primary font-semibold'
+                : !isScrolled
+                  ? 'text-white hover:text-blue-300'
+                  : 'hover:text-primary',
+            isComingSoon && 'opacity-70'
+        );
+
+        if (hasSubRoutes) {
+            const activeSubRoutes = NavigationService.getActiveSubRoutes(
+                route.id
+            );
+
+            return (
+                <NavigationMenuItem key={route.id}>
+                    <NavigationMenuTrigger
+                        className={cn(
+                            'px-4 py-2 text-sm font-medium transition-colors hover:text-primary bg-transparent border-none shadow-none flex items-center gap-1',
+                            isActive(route.path)
+                                ? !isScrolled
+                                    ? 'text-blue-300 font-semibold'
+                                    : 'text-primary font-semibold'
+                                : !isScrolled
+                                  ? 'text-white hover:text-blue-300'
+                                  : 'hover:text-primary',
+                            isComingSoon && 'opacity-70'
+                        )}
+                    >
+                        {route.title}
+                        {isComingSoon && (
+                            <Clock className="w-3 h-3 ml-1 text-blue-400" />
+                        )}
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                        <ul className="grid w-[400px] gap-3 p-4">
+                            {activeSubRoutes.map((subRoute) => (
+                                <li key={subRoute.id}>
+                                    <NavigationMenuLink asChild>
+                                        <Link
+                                            href={subRoute.path}
+                                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                        >
+                                            <div className="text-sm font-medium leading-none">
+                                                {subRoute.title}
+                                            </div>
+                                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                                {subRoute.description}
+                                            </p>
+                                        </Link>
+                                    </NavigationMenuLink>
+                                </li>
+                            ))}
+                        </ul>
+                    </NavigationMenuContent>
+                </NavigationMenuItem>
+            );
+        }
+
+        const content = (
+            <>
+                {route.title}
+                {isComingSoon && (
+                    <Clock className="w-3 h-3 ml-1 text-blue-400" />
+                )}
+            </>
+        );
+
+        // Si coming-soon, désactiver le lien avec tooltip
+        if (isComingSoon) {
+            return (
+                <NavigationMenuItem key={route.id}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className={linkClassName}>{content}</div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p className="text-sm">Bientôt disponible</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </NavigationMenuItem>
+            );
+        }
+
+        return (
+            <NavigationMenuItem key={route.id}>
+                <NavigationMenuLink asChild>
+                    <Link href={route.path} className={linkClassName}>
+                        {content}
+                    </Link>
+                </NavigationMenuLink>
+            </NavigationMenuItem>
+        );
+    };
 
     return (
         <header
@@ -49,164 +165,14 @@ export function DesktopNavigation() {
                 />
 
                 {/* Navigation au centre */}
-                <NavigationMenu className='hidden md:flex'>
-                    <NavigationMenuList
-                        className={!isScrolled ? 'text-white' : ''}
-                    >
-                        <NavigationMenuItem>
-                            <NavigationMenuLink asChild>
-                                <Link
-                                    href='/'
-                                    className={cn(
-                                        'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        isActive('/')
-                                            ? !isScrolled
-                                                ? 'text-blue-300 font-semibold'
-                                                : 'text-primary font-semibold'
-                                            : !isScrolled
-                                            ? 'text-white hover:text-blue-300'
-                                            : 'hover:text-primary'
-                                    )}
-                                >
-                                    Accueil
-                                </Link>
-                            </NavigationMenuLink>
-                        </NavigationMenuItem>
-
-                        <NavigationMenuItem>
-                            <NavigationMenuLink asChild>
-                                <Link
-                                    href='/a-propos'
-                                    className={cn(
-                                        'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        isActive('/a-propos')
-                                            ? !isScrolled
-                                                ? 'text-blue-300 font-semibold'
-                                                : 'text-primary font-semibold'
-                                            : !isScrolled
-                                            ? 'text-white hover:text-blue-300'
-                                            : 'hover:text-primary'
-                                    )}
-                                >
-                                    À propos
-                                </Link>
-                            </NavigationMenuLink>
-                        </NavigationMenuItem>
-
-                        <NavigationMenuItem>
-                            <NavigationMenuTrigger
-                                className={cn(
-                                    'px-4 py-2 text-sm font-medium transition-colors hover:text-primary bg-transparent border-none shadow-none',
-                                    isActive('/prestations')
-                                        ? !isScrolled
-                                            ? 'text-blue-300 font-semibold'
-                                            : 'text-primary font-semibold'
-                                        : !isScrolled
-                                        ? 'text-white hover:text-blue-300'
-                                        : 'hover:text-primary'
-                                )}
-                            >
-                                Prestations
-                            </NavigationMenuTrigger>
-                            <NavigationMenuContent>
-                                <ul className='grid w-[400px] gap-3 p-4'>
-                                    <li>
-                                        <NavigationMenuLink asChild>
-                                            <Link
-                                                href='/prestations'
-                                                className='block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
-                                            >
-                                                <div className='text-sm font-medium leading-none'>
-                                                    Professionnels
-                                                </div>
-                                                <p className='line-clamp-2 text-sm leading-snug text-muted-foreground'>
-                                                    Prototypage rapide,
-                                                    réparation industrielle et
-                                                    pièces sur-mesure
-                                                </p>
-                                            </Link>
-                                        </NavigationMenuLink>
-                                    </li>
-                                    <li>
-                                        <NavigationMenuLink asChild>
-                                            <Link
-                                                href='/prestations'
-                                                className='block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
-                                            >
-                                                <div className='text-sm font-medium leading-none'>
-                                                    Particuliers
-                                                </div>
-                                                <p className='line-clamp-2 text-sm leading-snug text-muted-foreground'>
-                                                    Modélisme, déco, bricolage
-                                                    et créations personnalisées
-                                                </p>
-                                            </Link>
-                                        </NavigationMenuLink>
-                                    </li>
-                                </ul>
-                            </NavigationMenuContent>
-                        </NavigationMenuItem>
-
-                        <NavigationMenuItem>
-                            <NavigationMenuLink asChild>
-                                <Link
-                                    href='/galerie'
-                                    className={cn(
-                                        'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        isActive('/galerie')
-                                            ? !isScrolled
-                                                ? 'text-blue-300 font-semibold'
-                                                : 'text-primary font-semibold'
-                                            : !isScrolled
-                                            ? 'text-white hover:text-blue-300'
-                                            : 'hover:text-primary'
-                                    )}
-                                >
-                                    Galerie
-                                </Link>
-                            </NavigationMenuLink>
-                        </NavigationMenuItem>
-
-                        <NavigationMenuItem>
-                            <NavigationMenuLink asChild>
-                                <Link
-                                    href='/blog'
-                                    className={cn(
-                                        'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        isActive('/blog')
-                                            ? !isScrolled
-                                                ? 'text-blue-300 font-semibold'
-                                                : 'text-primary font-semibold'
-                                            : !isScrolled
-                                            ? 'text-white hover:text-blue-300'
-                                            : 'hover:text-primary'
-                                    )}
-                                >
-                                    Blog
-                                </Link>
-                            </NavigationMenuLink>
-                        </NavigationMenuItem>
-
-                        <NavigationMenuItem>
-                            <NavigationMenuLink asChild>
-                                <Link
-                                    href='/contact'
-                                    className={cn(
-                                        'px-4 py-2 text-sm font-medium transition-colors hover:text-primary',
-                                        isActive('/contact')
-                                            ? !isScrolled
-                                                ? 'text-blue-300 font-semibold'
-                                                : 'text-primary font-semibold'
-                                            : !isScrolled
-                                            ? 'text-white hover:text-blue-300'
-                                            : 'hover:text-primary'
-                                    )}
-                                >
-                                    Contact
-                                </Link>
-                            </NavigationMenuLink>
-                        </NavigationMenuItem>
-                    </NavigationMenuList>
+                <NavigationMenu className="hidden md:flex">
+                    <TooltipProvider>
+                        <NavigationMenuList
+                            className={!isScrolled ? 'text-white' : ''}
+                        >
+                            {visibleRoutes.map(renderNavigationItem)}
+                        </NavigationMenuList>
+                    </TooltipProvider>
                 </NavigationMenu>
 
                 {/* Bouton devis à droite */}
