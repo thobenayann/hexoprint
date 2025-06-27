@@ -92,7 +92,7 @@ export const gallery = defineType({
         defineField({
             name: 'createdAt',
             title: 'Date de création',
-            type: 'datetime',
+            type: 'date',
             validation: (rule) => rule.required(),
         }),
     ],

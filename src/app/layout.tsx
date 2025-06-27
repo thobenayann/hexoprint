@@ -1,5 +1,6 @@
 import '@/app/globals.css';
 import { COMPANY_INFO } from '@/lib/company-info';
+import { SanityLive } from '@/sanity/lib/live';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
 import { Open_Sans, Orbitron, Playfair_Display } from 'next/font/google';
@@ -101,6 +102,7 @@ export default function RootLayout({
             >
                 {children}
                 <Analytics />
+                <SanityLive />
             </body>
         </html>
     );
