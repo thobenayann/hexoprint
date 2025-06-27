@@ -1,12 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import {
-    BookOpen,
-    Image as Gallery,
-    Home,
-    Mail,
-    Printer,
-    User,
-} from 'lucide-react';
+import { BookOpen, Image as Gallery, Home, Printer, User } from 'lucide-react';
 
 /**
  * Status des routes de navigation
@@ -106,13 +99,6 @@ export const NAVIGATION_CONFIG: NavigationRoute[] = [
         path: '/blog',
         icon: BookOpen,
         status: 'coming-soon',
-    },
-    {
-        id: 'contact',
-        title: 'Contact',
-        path: '/contact',
-        icon: Mail,
-        status: 'active',
     },
 ];
 
