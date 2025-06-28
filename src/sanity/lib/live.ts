@@ -19,10 +19,10 @@ type SanityFetchResult<T> = {
 // Fonction de fallback qui retourne des données vides
 const createFallbackSanityFetch = () => {
     return async function fallbackSanityFetch<T>(
-        _options: SanityFetchOptions
+        options: SanityFetchOptions
     ): Promise<SanityFetchResult<T>> {
         console.warn(
-            '[Sanity] sanityFetch appelé sans configuration Sanity, retour de données vides'
+            `[Sanity] sanityFetch appelé sans configuration Sanity pour la requête: ${options.query.slice(0, 50)}...`
         );
         return { data: null };
     };
