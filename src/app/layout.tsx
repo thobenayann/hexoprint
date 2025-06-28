@@ -4,6 +4,7 @@ import { SanityLive } from '@/sanity/lib/live';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
 import { Open_Sans, Orbitron, Playfair_Display } from 'next/font/google';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 const playfair = Playfair_Display({
     subsets: ['latin'],
@@ -100,7 +101,7 @@ export default function RootLayout({
             <body
                 className={`${playfair.variable} ${openSans.variable} ${orbitron.variable} antialiased dark`}
             >
-                {children}
+                <NuqsAdapter>{children}</NuqsAdapter>
                 <Analytics />
                 <SanityLive />
             </body>

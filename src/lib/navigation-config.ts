@@ -91,7 +91,7 @@ export const NAVIGATION_CONFIG: NavigationRoute[] = [
         title: 'Galerie',
         path: '/galerie',
         icon: Gallery,
-        status: 'coming-soon',
+        status: 'active',
     },
     {
         id: 'blog',

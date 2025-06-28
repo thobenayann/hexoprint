@@ -24,6 +24,18 @@ export type GalleryItemType = {
             url: string;
         };
         alt: string;
+        crop?: {
+            top: number;
+            bottom: number;
+            left: number;
+            right: number;
+        };
+        hotspot?: {
+            x: number;
+            y: number;
+            height: number;
+            width: number;
+        };
     };
     description: string;
     category: GalleryCategory;
