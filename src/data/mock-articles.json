@@ -1,0 +1,212 @@
+[
+    {
+        "_id": "article-1",
+        "_type": "article",
+        "title": "Les secrets d'une impression 3D réussie : guide complet des matériaux",
+        "slug": {
+            "current": "secrets-impression-3d-reussie-guide-materiaux"
+        },
+        "publishedAt": "2025-01-10T10:00:00.000Z",
+        "mainImage": {
+            "asset": {
+                "_id": "image-1",
+                "url": "/gallerie/IMG_20210712_151205-removebg-preview.png"
+            },
+            "alt": "Comparaison de différents matériaux d'impression 3D : PLA, ABS, PETG",
+            "crop": null,
+            "hotspot": null
+        },
+        "body": [
+            {
+                "_type": "block",
+                "style": "normal",
+                "children": [
+                    {
+                        "_type": "span",
+                        "text": "L'impression 3D est un art qui demande de la précision et une bonne connaissance des matériaux. Dans ce guide complet, nous allons explorer les différents filaments disponibles et vous donner tous les conseils pour réussir vos impressions."
+                    }
+                ]
+            }
+        ],
+        "categories": ["technique", "materiaux"],
+        "seo": {
+            "metaTitle": "Guide complet des matériaux d'impression 3D - PLA, ABS, PETG",
+            "metaDescription": "Découvrez les secrets pour choisir le bon matériau d'impression 3D. Guide complet sur PLA, ABS, PETG avec conseils pratiques et astuces pro."
+        }
+    },
+    {
+        "_id": "article-2",
+        "_type": "article",
+        "title": "Réparer plutôt que jeter : l'impression 3D au service de l'économie circulaire",
+        "slug": {
+            "current": "reparer-plutot-que-jeter-impression-3d-economie-circulaire"
+        },
+        "publishedAt": "2025-01-05T14:30:00.000Z",
+        "mainImage": {
+            "asset": {
+                "_id": "image-2",
+                "url": "/gallerie/IMG_20210805_182151-removebg-preview.png"
+            },
+            "alt": "Pièce réparée grâce à l'impression 3D - économie circulaire",
+            "crop": null,
+            "hotspot": null
+        },
+        "body": [
+            {
+                "_type": "block",
+                "style": "normal",
+                "children": [
+                    {
+                        "_type": "span",
+                        "text": "L'impression 3D révolutionne notre rapport aux objets cassés. Fini le temps où il fallait tout jeter ! Découvrez comment cette technologie permet de donner une seconde vie à vos objets du quotidien."
+                    }
+                ]
+            }
+        ],
+        "categories": ["reparation", "technique"],
+        "seo": {
+            "metaTitle": "Réparation d'objets par impression 3D - Économie circulaire",
+            "metaDescription": "L'impression 3D pour réparer vos objets cassés. Découvrez comment prolonger la vie de vos appareils grâce à la fabrication de pièces sur-mesure."
+        }
+    },
+    {
+        "_id": "article-3",
+        "_type": "article",
+        "title": "Modélisme et impression 3D : créer des pièces détaillées comme un pro",
+        "slug": {
+            "current": "modelisme-impression-3d-pieces-detaillees-pro"
+        },
+        "publishedAt": "2025-01-01T09:15:00.000Z",
+        "mainImage": {
+            "asset": {
+                "_id": "image-3",
+                "url": "/gallerie/petit-bonhomme-no-bg.png"
+            },
+            "alt": "Figurine détaillée créée par impression 3D pour le modélisme",
+            "crop": null,
+            "hotspot": null
+        },
+        "body": [
+            {
+                "_type": "block",
+                "style": "normal",
+                "children": [
+                    {
+                        "_type": "span",
+                        "text": "Le modélisme trouve une nouvelle dimension avec l'impression 3D. Que vous soyez passionné de trains miniatures, de voitures RC ou de figurines, découvrez les techniques pour créer des pièces d'un réalisme saisissant."
+                    }
+                ]
+            }
+        ],
+        "categories": ["modelisme", "technique"],
+        "seo": {
+            "metaTitle": "Modélisme et impression 3D - Créer des pièces détaillées",
+            "metaDescription": "Guide complet pour le modélisme en impression 3D : techniques, astuces et conseils pour créer des pièces détaillées et réalistes pour vos projets."
+        }
+    },
+    {
+        "_id": "article-4",
+        "_type": "article",
+        "title": "Prototypage rapide : accélérer votre développement produit avec l'impression 3D",
+        "slug": {
+            "current": "prototypage-rapide-developpement-produit-impression-3d"
+        },
+        "publishedAt": "2024-12-28T16:45:00.000Z",
+        "mainImage": {
+            "asset": {
+                "_id": "image-4",
+                "url": "/gallerie/ball-gccf2f1951_1920.jpg"
+            },
+            "alt": "Prototype industriel créé par impression 3D - développement produit",
+            "crop": null,
+            "hotspot": null
+        },
+        "body": [
+            {
+                "_type": "block",
+                "style": "normal",
+                "children": [
+                    {
+                        "_type": "span",
+                        "text": "Dans le monde industriel, la vitesse de développement est cruciale. L'impression 3D révolutionne le prototypage en permettant de tester rapidement vos idées et d'itérer sans contraintes. Découvrez comment optimiser votre processus de développement."
+                    }
+                ]
+            }
+        ],
+        "categories": ["prototypage", "technique"],
+        "seo": {
+            "metaTitle": "Prototypage rapide par impression 3D - Développement produit",
+            "metaDescription": "Accélérez votre développement produit avec le prototypage rapide par impression 3D. Conseils, avantages et méthodes pour optimiser vos projets industriels."
+        }
+    },
+    {
+        "_id": "article-5",
+        "_type": "article",
+        "title": "Du fichier STL à l'objet fini : comprendre le processus d'impression 3D",
+        "slug": {
+            "current": "fichier-stl-objet-fini-processus-impression-3d"
+        },
+        "publishedAt": "2024-12-20T11:20:00.000Z",
+        "mainImage": {
+            "asset": {
+                "_id": "image-5",
+                "url": "/gallerie/IMG_20210712_151205-removebg-preview.png"
+            },
+            "alt": "Processus d'impression 3D - du fichier STL à l'objet fini",
+            "crop": null,
+            "hotspot": null
+        },
+        "body": [
+            {
+                "_type": "block",
+                "style": "normal",
+                "children": [
+                    {
+                        "_type": "span",
+                        "text": "Vous vous demandez comment votre fichier 3D se transforme en objet physique ? Plongez dans les coulisses de l'impression 3D et découvrez toutes les étapes, du slicing à la post-production."
+                    }
+                ]
+            }
+        ],
+        "categories": ["technique"],
+        "seo": {
+            "metaTitle": "Processus d'impression 3D - Du fichier STL à l'objet fini",
+            "metaDescription": "Découvrez le processus complet d'impression 3D : préparation fichier STL, slicing, impression et finition. Guide technique détaillé pour comprendre chaque étape."
+        }
+    },
+    {
+        "_id": "article-6",
+        "_type": "article",
+        "title": "Personnalisation et décoration : créer des objets uniques avec l'impression 3D",
+        "slug": {
+            "current": "personnalisation-decoration-objets-uniques-impression-3d"
+        },
+        "publishedAt": "2024-12-15T13:10:00.000Z",
+        "mainImage": {
+            "asset": {
+                "_id": "image-6",
+                "url": "/gallerie/petit-bonhomme-no-bg.png"
+            },
+            "alt": "Objets décoratifs personnalisés créés par impression 3D",
+            "crop": null,
+            "hotspot": null
+        },
+        "body": [
+            {
+                "_type": "block",
+                "style": "normal",
+                "children": [
+                    {
+                        "_type": "span",
+                        "text": "L'impression 3D ouvre un monde de possibilités créatives infinies. Que ce soit pour personnaliser votre intérieur ou créer des cadeaux uniques, découvrez comment donner vie à vos idées les plus originales."
+                    }
+                ]
+            }
+        ],
+        "categories": ["decoration"],
+        "seo": {
+            "metaTitle": "Objets décoratifs personnalisés par impression 3D",
+            "metaDescription": "Créez des objets décoratifs uniques avec l'impression 3D. Inspiration, conseils et techniques pour personnaliser votre intérieur avec des créations sur-mesure."
+        }
+    }
+]
