@@ -72,20 +72,3 @@ function getEnvironmentValue(
 
     return null;
 }
-
-// Version améliorée de assertValue qui ne throw pas en production
-function assertValue<T>(v: T | undefined, errorMessage: string): T {
-    if (v === undefined) {
-        if (isProduction || isPreview) {
-            // En production/preview, log l'erreur mais ne crash pas
-            console.error(`[Sanity Error] ${errorMessage}`);
-            // Retourner une valeur par défaut ou null selon le contexte
-            return '' as T;
-        } else {
-            // En développement, throw l'erreur pour alerter le développeur
-            throw new Error(errorMessage);
-        }
-    }
-
-    return v;
-}

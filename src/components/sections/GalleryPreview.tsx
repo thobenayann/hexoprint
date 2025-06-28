@@ -3,30 +3,50 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 import { featuredGalleryQuery } from '@/lib/sanity-queries';
 import { urlFor } from '@/sanity/lib/image';
 import { sanityFetch } from '@/sanity/lib/live';
-import {
-    GalleryItemType,
-    categoryLabels,
-    isForProfessionals,
-    materialLabels,
-} from '@/types/gallery';
-import { Clock, Crosshair, Eye, Layers, Timer, Zap } from 'lucide-react';
+import type { GalleryItemType } from '@/types/gallery';
+import { Clock, Eye, Layers, Target, Zap } from 'lucide-react';
 import Image from 'next/image';
+
+// Mappings pour les catégories et matériaux
+const categoryLabels: Record<string, string> = {
+    decoration: 'Décoration',
+    modelisme: 'Modélisme',
+    reparation: 'Réparation',
+    prototype: 'Prototype',
+    outillage: 'Outillage',
+    art: 'Art & Design',
+    fonctionnel: 'Fonctionnel',
+    educatif: 'Éducatif',
+};
+
+const materialLabels: Record<string, string> = {
+    pla: 'PLA',
+    abs: 'ABS',
+    petg: 'PETG',
+    tpu: 'TPU',
+    resin: 'Résine',
+    wood: 'Bois',
+};
+
+const isForProfessionals = (category: string): boolean => {
+    return ['reparation', 'prototype', 'outillage'].includes(category);
+};
 
 const stats = [
     {
-        icon: Layers,
-        value: '500+',
-        label: 'Projets réalisés',
+        icon: Target,
+        value: '98%',
+        label: 'Satisfaction',
         color: 'primary',
     },
     {
-        icon: Crosshair,
-        value: '99%',
-        label: 'Clients satisfaits',
+        icon: Layers,
+        value: '200+',
+        label: 'Projets réalisés',
         color: 'hexo-blue-light',
     },
     {
-        icon: Timer,
+        icon: Clock,
         value: '48h',
         label: 'Délai moyen',
         color: 'primary',
@@ -38,8 +58,9 @@ export async function GalleryPreview() {
         query: featuredGalleryQuery,
     });
 
-    // Si aucun élément mis en avant, on affiche les 4 premiers éléments
-    const displayItems = galleryItems?.slice(0, 4) || [];
+    // Typage et vérification sécurisée des données
+    const typedGalleryItems = (galleryItems as GalleryItemType[] | null) ?? [];
+    const displayItems = typedGalleryItems.slice(0, 4);
 
     return (
         <section className="relative py-24 overflow-hidden bg-gradient-to-br from-muted/20 via-background to-muted/30">
@@ -234,26 +255,17 @@ export async function GalleryPreview() {
                                         <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary mb-2 group-hover:scale-110 transition-transform duration-300">
                                             {stat.value}
                                         </div>
-                                        <div className="text-base md:text-lg text-muted-foreground group-hover:text-foreground transition-colors duration-300">
+                                        <div className="text-base md:text-lg text-foreground font-medium mb-1">
                                             {stat.label}
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
-
-                        {/* Message du bas */}
-                        <div className="mt-12 text-center border-t border-border pt-8">
-                            <p className="text-sm md:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                                Chaque projet est une nouvelle opportunité de
-                                repousser les limites de la créativité et de la
-                                précision technique.
-                            </p>
-                        </div>
                     </div>
 
                     {/* Subtle background glow */}
-                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/5 to-hexo-blue-light/5 blur-2xl"></div>
+                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/5 to-hexo-blue-light/5 opacity-60"></div>
                 </div>
             </div>
         </section>

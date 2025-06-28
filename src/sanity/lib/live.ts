@@ -4,13 +4,23 @@
 import { defineLive } from 'next-sanity';
 import { client, isSanityAvailable } from './client';
 
+// Type pour les options de sanityFetch
+type SanityFetchOptions = {
+    query: string;
+    params?: Record<string, unknown>;
+    tags?: string[];
+};
+
+// Type pour le retour de sanityFetch
+type SanityFetchResult<T> = {
+    data: T | null;
+};
+
 // Fonction de fallback qui retourne des données vides
 const createFallbackSanityFetch = () => {
-    return async function fallbackSanityFetch<T>(options: {
-        query: string;
-        params?: any;
-        tags?: string[];
-    }): Promise<{ data: T | null }> {
+    return async function fallbackSanityFetch<T>(
+        _options: SanityFetchOptions
+    ): Promise<SanityFetchResult<T>> {
         console.warn(
             '[Sanity] sanityFetch appelé sans configuration Sanity, retour de données vides'
         );
@@ -29,8 +39,10 @@ const FallbackSanityLive = () => {
 };
 
 // Configuration conditionnelle
-let sanityFetch: any;
-let SanityLive: any;
+let sanityFetch: <T>(
+    options: SanityFetchOptions
+) => Promise<SanityFetchResult<T>>;
+let SanityLive: React.ComponentType;
 
 if (isSanityAvailable() && client) {
     try {

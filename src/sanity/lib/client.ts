@@ -1,4 +1,4 @@
-import { createClient } from 'next-sanity';
+import { createClient, type ClientConfig } from 'next-sanity';
 
 import {
     apiVersion,
@@ -13,7 +13,7 @@ import {
 } from '../env';
 
 // Fonction helper pour créer un client seulement si configuré
-function createSanityClient(config: any) {
+function createSanityClient(config: ClientConfig) {
     if (!isSanityConfigured()) {
         console.warn('[Sanity] Configuration manquante, client désactivé');
         return null;
@@ -23,8 +23,8 @@ function createSanityClient(config: any) {
 
 // Client principal pour les requêtes publiques
 export const client = createSanityClient({
-    projectId,
-    dataset,
+    projectId: projectId || undefined,
+    dataset: dataset || undefined,
     apiVersion,
     useCdn: isProduction, // CDN seulement en production pour les performances
     perspective: 'published', // Utilise les données publiées
@@ -36,8 +36,8 @@ export const client = createSanityClient({
 
 // Client avec token pour les requêtes privées (côté serveur)
 export const clientWithToken = createSanityClient({
-    projectId,
-    dataset,
+    projectId: projectId || undefined,
+    dataset: dataset || undefined,
     apiVersion,
     useCdn: false, // Jamais de CDN pour les requêtes avec token
     token: readToken,
@@ -50,8 +50,8 @@ export const clientWithToken = createSanityClient({
 
 // Client pour les mutations (écriture)
 export const writeClient = createSanityClient({
-    projectId,
-    dataset,
+    projectId: projectId || undefined,
+    dataset: dataset || undefined,
     apiVersion,
     useCdn: false,
     token: writeToken,
@@ -60,8 +60,8 @@ export const writeClient = createSanityClient({
 
 // Client pour les previews/drafts (développement)
 export const previewClient = createSanityClient({
-    projectId,
-    dataset,
+    projectId: projectId || undefined,
+    dataset: dataset || undefined,
     apiVersion,
     useCdn: false,
     token: readToken,

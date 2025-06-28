@@ -9,7 +9,9 @@ export async function GalleryContentWrapper() {
         tags: ['gallery'],
     });
 
-    const galleryItems: GalleryItemType[] = items || [];
+    // Vérification et typage correct des données avec fallback sécurisé
+    const galleryItems: GalleryItemType[] =
+        (items as GalleryItemType[] | null) ?? [];
 
     return (
         <div data-gallery-section>
