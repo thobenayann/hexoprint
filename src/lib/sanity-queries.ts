@@ -14,7 +14,9 @@ export const articlesQuery = groq`
         _id,
         url
       },
-      alt
+      alt,
+      crop,
+      hotspot
     },
     categories,
     seo {
@@ -36,7 +38,9 @@ export const articleBySlugQuery = groq`
         _id,
         url
       },
-      alt
+      alt,
+      crop,
+      hotspot
     },
     body,
     categories,
@@ -58,7 +62,9 @@ export const galleryQuery = groq`
         _id,
         url
       },
-      alt
+      alt,
+      crop,
+      hotspot
     },
     description,
     category,
@@ -79,7 +85,9 @@ export const featuredGalleryQuery = groq`
         _id,
         url
       },
-      alt
+      alt,
+      crop,
+      hotspot
     },
     description,
     category,
@@ -88,6 +96,9 @@ export const featuredGalleryQuery = groq`
     createdAt
   }
 `;
+
+// Alias pour la compatibilité
+export const allGalleryQuery = galleryQuery;
 
 // Requête pour la configuration
 export const configurationQuery = groq`

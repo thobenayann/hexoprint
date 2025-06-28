@@ -83,6 +83,10 @@ export function DesktopNavigation() {
                         )}
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
+                        {/* Titre d'accessibilité caché pour éviter l'erreur DialogContent requires a DialogTitle */}
+                        <div className="sr-only" role="heading" aria-level={2}>
+                            Menu {route.title}
+                        </div>
                         <ul className="grid w-[400px] gap-3 p-4">
                             {activeSubRoutes.map((subRoute) => (
                                 <li key={subRoute.id}>

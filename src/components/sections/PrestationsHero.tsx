@@ -1,14 +1,14 @@
 'use client';
 
-import { Html as HeroFuturistic } from '@/components/hero-futuristic';
+import { Html as HeroFuturistic } from '@/components/ui/hero-futuristic';
 
 export function PrestationsHero() {
     return (
-        <section className='relative'>
+        <section className="relative">
             <HeroFuturistic
-                title='NOS PRESTATIONS'
+                title="NOS PRESTATIONS"
                 subtitle="De l'idée à la réalisation, une expertise complète."
-                buttonText='Découvrez nos services'
+                buttonText="Découvrez nos services"
             />
         </section>
     );

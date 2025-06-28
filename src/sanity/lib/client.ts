@@ -1,20 +1,30 @@
-import { createClient } from 'next-sanity';
+import { createClient, type ClientConfig } from 'next-sanity';
 
 import {
     apiVersion,
     dataset,
     isDevelopment,
     isProduction,
+    isSanityConfigured,
     projectId,
     readToken,
     shouldUseToken,
     writeToken,
 } from '../env';
 
+// Fonction helper pour créer un client seulement si configuré
+function createSanityClient(config: ClientConfig) {
+    if (!isSanityConfigured()) {
+        console.warn('[Sanity] Configuration manquante, client désactivé');
+        return null;
+    }
+    return createClient(config);
+}
+
 // Client principal pour les requêtes publiques
-export const client = createClient({
-    projectId,
-    dataset,
+export const client = createSanityClient({
+    projectId: projectId || undefined,
+    dataset: dataset || undefined,
     apiVersion,
     useCdn: isProduction, // CDN seulement en production pour les performances
     perspective: 'published', // Utilise les données publiées
@@ -25,9 +35,9 @@ export const client = createClient({
 });
 
 // Client avec token pour les requêtes privées (côté serveur)
-export const clientWithToken = createClient({
-    projectId,
-    dataset,
+export const clientWithToken = createSanityClient({
+    projectId: projectId || undefined,
+    dataset: dataset || undefined,
     apiVersion,
     useCdn: false, // Jamais de CDN pour les requêtes avec token
     token: readToken,
@@ -39,9 +49,9 @@ export const clientWithToken = createClient({
 });
 
 // Client pour les mutations (écriture)
-export const writeClient = createClient({
-    projectId,
-    dataset,
+export const writeClient = createSanityClient({
+    projectId: projectId || undefined,
+    dataset: dataset || undefined,
     apiVersion,
     useCdn: false,
     token: writeToken,
@@ -49,9 +59,9 @@ export const writeClient = createClient({
 });
 
 // Client pour les previews/drafts (développement)
-export const previewClient = createClient({
-    projectId,
-    dataset,
+export const previewClient = createSanityClient({
+    projectId: projectId || undefined,
+    dataset: dataset || undefined,
     apiVersion,
     useCdn: false,
     token: readToken,
@@ -64,6 +74,13 @@ export const previewClient = createClient({
 
 // Helper pour obtenir le bon client selon le contexte
 export const getClient = (preview = false) => {
+    if (!isSanityConfigured()) {
+        console.warn(
+            "[Sanity] Tentative d'utilisation du client sans configuration"
+        );
+        return null;
+    }
+
     if (preview && isDevelopment) {
         return previewClient;
     }
@@ -73,4 +90,9 @@ export const getClient = (preview = false) => {
     }
 
     return client;
+};
+
+// Helper pour vérifier si Sanity est disponible
+export const isSanityAvailable = () => {
+    return isSanityConfigured() && client !== null;
 };

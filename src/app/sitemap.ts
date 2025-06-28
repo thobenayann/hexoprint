@@ -1,6 +1,6 @@
 import { COMPANY_INFO } from '@/lib/company-info';
 import { NavigationService } from '@/lib/navigation-config';
-import { client } from '@/sanity/lib/client';
+import { client, isSanityAvailable } from '@/sanity/lib/client';
 import type { MetadataRoute } from 'next';
 import { groq } from 'next-sanity';
 
@@ -75,6 +75,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.3,
         },
     ];
+
+    // Vérifier si Sanity est disponible
+    if (!isSanityAvailable() || !client) {
+        console.warn(
+            'Sanity non configuré, génération du sitemap avec pages statiques uniquement'
+        );
+        return [...staticPages, ...legalPages];
+    }
 
     try {
         // 3. Articles de blog depuis Sanity
