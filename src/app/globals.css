@@ -9,6 +9,7 @@
     --font-sans: var(--font-open-sans);
     --font-serif: var(--font-playfair);
     --font-mono: var(--font-orbitron);
+    --font-oxanium: var(--font-oxanium);
     --animate-logo-aura: logo-aura 2s ease 0.75s 1 forwards;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);

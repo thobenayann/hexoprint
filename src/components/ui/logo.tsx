@@ -10,22 +10,29 @@ type LogoProps = {
 export function Logo(props: LogoProps) {
     return (
         <Link
-            href='/'
+            href="/"
             className={cn(
                 'flex items-center gap-3 font-bold text-xl transition-colors hover:opacity-80',
                 props.className
             )}
         >
             <Image
-                src='/logos/logo-hexoprint-svg-sans-texte.svg'
-                alt='Logo Hexoprint'
+                src="/logos/logo-hexoprint-svg-sans-texte.svg"
+                alt="Logo Hexoprint"
                 width={32}
                 height={32}
-                className='w-8 h-8'
+                className="w-8 h-8"
             />
-            <span className={cn('text-foreground', props.className)}>
+            <span
+                className={cn(
+                    'text-foreground font-mono uppercase',
+                    props.className
+                )}
+            >
                 Hexo
-                <span className='text-hexo-blue-light'>&apos;print</span>
+                <span className="text-hexo-blue-light font-mono uppercase">
+                    &apos;print
+                </span>
             </span>
         </Link>
     );
