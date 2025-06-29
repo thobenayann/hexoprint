@@ -1,3 +1,9 @@
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import {
     Tooltip,
     TooltipContent,
@@ -6,9 +12,10 @@ import {
 } from '@/components/ui/tooltip';
 import { COMPANY_INFO, formatPhone } from '@/lib/company-info';
 import { NavigationService } from '@/lib/navigation-config';
-import { Clock, Heart, Mail, MapPin, Phone } from 'lucide-react';
+import { Clock, CodeXml, Heart, Mail, MapPin, Phone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { StarBorder } from '../ui/star-border';
 
 const socialLinks = [
     {
@@ -267,6 +274,56 @@ export function Footer() {
                                     <Heart className="w-3 h-3 text-red-500" /> à
                                     Seysses
                                 </span>
+                                <span className="hidden md:inline">•</span>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <button className="flex items-center gap-2 hover:text-primary transition-colors duration-300 cursor-pointer">
+                                            <CodeXml className="w-3 h-3" />
+                                            <span>Développeur du site</span>
+                                        </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent
+                                        side="top"
+                                        className="w-80 p-4"
+                                        sideOffset={10}
+                                    >
+                                        <div className="flex flex-col items-center text-center space-y-3">
+                                            <Avatar className="w-16 h-16 border-2 border-hexo-blue-dark">
+                                                <AvatarImage
+                                                    src="/img/yanndevweb.png"
+                                                    alt="Yann THOBENA"
+                                                />
+                                                <AvatarFallback>
+                                                    YT
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="space-y-2">
+                                                <p className="text-sm text-foreground leading-relaxed">
+                                                    Ce site vous plaît ? Je suis{' '}
+                                                    <span className="font-semibold text-primary">
+                                                        Yann THOBENA
+                                                    </span>
+                                                    , concepteur développeur
+                                                    web, contactez-moi ! 😉
+                                                </p>
+                                                <Link
+                                                    href="https://www.yanndevweb.com/"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    <StarBorder
+                                                        color="#96CFE7"
+                                                        speed="4s"
+                                                        size="sm"
+                                                        className="font-medium"
+                                                    >
+                                                        Voir mon portfolio
+                                                    </StarBorder>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         </div>
                     </div>

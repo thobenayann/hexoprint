@@ -5,11 +5,22 @@ interface StarBorderProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     color?: string;
     speed?: string;
     children: React.ReactNode;
+    size?: 'sm' | 'md' | 'lg';
 }
 
 export const StarBorder = forwardRef<HTMLButtonElement, StarBorderProps>(
-    ({ className, color, speed = '6s', children, ...props }, ref) => {
+    (
+        { className, color, speed = '6s', size = 'md', children, ...props },
+        ref
+    ) => {
         const defaultColor = color || 'hsl(var(--foreground))';
+
+        // Size variants
+        const sizeVariants = {
+            sm: 'py-2 px-4 text-xs',
+            md: 'py-4 px-8 text-base',
+            lg: 'py-6 px-12 text-lg',
+        };
 
         return (
             <button
@@ -42,13 +53,16 @@ export const StarBorder = forwardRef<HTMLButtonElement, StarBorderProps>(
                 />
                 <div
                     className={cn(
-                        'relative z-1 border text-center text-base py-4 px-8 rounded-[20px] cursor-pointer',
+                        // Base styles
+                        'relative z-1 border text-center rounded-[20px] cursor-pointer',
                         'bg-gradient-to-b from-hexo-blue-dark to-hexo-blue-dark/80 border-hexo-blue-light/50',
                         'text-white font-semibold shadow-lg backdrop-blur-sm',
                         'hover:from-hexo-blue-light hover:to-hexo-blue-dark hover:shadow-xl',
                         'hover:border-hexo-blue-light hover:text-hexo-black',
                         'transition-all duration-300 ease-out',
-                        'active:scale-95'
+                        'active:scale-95',
+                        // Size variant
+                        sizeVariants[size]
                     )}
                 >
                     {children}
