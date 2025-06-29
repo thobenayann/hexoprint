@@ -18,8 +18,8 @@ const EmailConfigSchema = z.object({
 function getEmailConfig() {
     const config = {
         RESEND_API_KEY: process.env.RESEND_API_KEY,
-        EMAIL_FROM: process.env.EMAIL_FROM || 'contact@hexoprint.fr',
-        EMAIL_TO: process.env.EMAIL_TO || 'yann@hexoprint.fr',
+        EMAIL_FROM: process.env.EMAIL_FROM || 'admin@hexoprint.fr',
+        EMAIL_TO: process.env.EMAIL_TO || 'hexoprint3d@gmail.com',
         EMAIL_TO_ADMIN: process.env.EMAIL_TO_ADMIN, // Deuxième destinataire optionnel
         NODE_ENV: process.env.NODE_ENV as 'development' | 'production' | 'test',
         NEXT_PUBLIC_APP_URL:
