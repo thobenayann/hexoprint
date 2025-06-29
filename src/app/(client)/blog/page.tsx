@@ -34,6 +34,26 @@ function BlogContentFallback() {
     );
 }
 
+// Composant de fallback pour les filtres
+function BlogFiltersFallback() {
+    return (
+        <section className="py-8 md:py-12 border-b border-border">
+            <div className="container mx-auto px-4">
+                <div className="max-w-6xl mx-auto">
+                    <div className="flex flex-wrap gap-3 justify-center">
+                        {[...Array(5)].map((_, i) => (
+                            <div
+                                key={i}
+                                className="h-10 bg-muted rounded-full w-24 animate-pulse"
+                            ></div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
 // Métadonnées de la page
 export const metadata: Metadata = {
     title: `Blog d'expertise en impression 3D - ${COMPANY_INFO.name}`,
@@ -105,7 +125,9 @@ export default function BlogPage() {
             <BlogHero />
 
             {/* Filtres de blog */}
-            <BlogFilters />
+            <Suspense fallback={<BlogFiltersFallback />}>
+                <BlogFilters />
+            </Suspense>
 
             {/* Contenu principal avec Suspense pour le chargement */}
             <Suspense fallback={<BlogContentFallback />}>
