@@ -43,13 +43,13 @@ export const metadata: Metadata = {
         },
     },
     alternates: {
-        canonical: 'https://hexoprint.fr/a-propos',
+        canonical: `${COMPANY_INFO.siteUrl}/a-propos`,
     },
 };
 
 export default function AboutPage() {
     return (
-        <main className='min-h-screen pt-16'>
+        <main className="min-h-screen pt-16">
             {/* Hero Section avec vidéo background */}
             <AboutHero
                 title={ABOUT_PAGE_DATA.hero.title}
@@ -76,7 +76,7 @@ export default function AboutPage() {
 
             {/* Schema.org JSON-LD pour le SEO */}
             <script
-                type='application/ld+json'
+                type="application/ld+json"
                 dangerouslySetInnerHTML={{
                     __html: JSON.stringify({
                         '@context': 'https://schema.org',

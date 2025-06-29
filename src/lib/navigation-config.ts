@@ -98,7 +98,7 @@ export const NAVIGATION_CONFIG: NavigationRoute[] = [
         title: 'Blog',
         path: '/blog',
         icon: BookOpen,
-        status: 'coming-soon',
+        status: 'active',
     },
 ];
 
