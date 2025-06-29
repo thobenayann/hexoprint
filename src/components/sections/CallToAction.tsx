@@ -106,7 +106,7 @@ export function CallToAction() {
 
                         {/* Main CTA Button */}
                         <div className="mb-8">
-                            <PrimaryButton href="/devis" icon={Star}>
+                            <PrimaryButton href="/contact" icon={Star}>
                                 Demander mon devis gratuit
                             </PrimaryButton>
                         </div>
