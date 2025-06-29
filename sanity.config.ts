@@ -7,6 +7,7 @@
 import { visionTool } from '@sanity/vision';
 import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
+import { StudioLogo } from './src/components/studio/studio-logo';
 
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import {
@@ -22,6 +23,14 @@ export default defineConfig({
     basePath: '/studio',
     projectId: projectId || '',
     dataset: dataset || '',
+
+    // Logo personnalisé pour Hexo'print
+    icon: StudioLogo,
+
+    // Titre personnalisé
+    title: "Hexo'print - Administration",
+    subtitle: 'Gestion de contenu',
+
     // Add and edit the content schema in the './sanity/schemaTypes' folder
     schema,
     plugins: [
