@@ -28,7 +28,7 @@ const highlights = [
     },
     {
         icon: ThumbsUp,
-        value: '200+',
+        value: '3/3',
         label: 'Avis positifs',
         description: 'depuis 3 ans',
     },
