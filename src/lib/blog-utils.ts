@@ -1,136 +1,156 @@
-import mockArticles from '@/data/mock-articles.json';
+import { sanityFetch } from '@/sanity/lib/live';
 import type { Article, ArticleCategory, ArticleSummary } from '@/types/blog';
+import { notFound } from 'next/navigation';
+import { cache } from 'react';
+import { articleBySlugQuery, articlesQuery } from './sanity-queries';
+
+// ==========================================
+// FONCTIONS AVEC CACHE ET OPTIMISATIONS (SERVER-SIDE)
+// ==========================================
 
 /**
- * Charge tous les articles depuis le fichier JSON
+ * Charge tous les articles depuis Sanity
+ * Utilise React cache() pour éviter les requêtes dupliquées
  * @returns Promise avec la liste des articles
  */
-export async function getAllArticles(): Promise<Article[]> {
-    // Simule un délai d'API pour un comportement réaliste
-    await new Promise((resolve) => setTimeout(resolve, 100));
+export const getAllArticles = cache(async (): Promise<Article[]> => {
+    try {
+        const { data: articles } = await sanityFetch({
+            query: articlesQuery,
+        });
 
-    // Tri par date de publication décroissante
-    return (mockArticles as Article[]).sort(
-        (a, b) =>
-            new Date(b.publishedAt).getTime() -
-            new Date(a.publishedAt).getTime()
-    );
-}
+        if (!articles || !Array.isArray(articles)) {
+            console.warn('[Blog] Aucun article trouvé dans Sanity');
+            return [];
+        }
+
+        return articles;
+    } catch (error) {
+        console.error('[Blog] Erreur lors du chargement des articles:', error);
+        // En cas d'erreur, retourner un tableau vide plutôt que de faire planter l'app
+        return [];
+    }
+});
 
 /**
  * Charge les articles résumés (sans body) pour la liste
+ * Optimisé pour les performances avec cache React
  * @returns Promise avec la liste des résumés d'articles
  */
-export async function getArticleSummaries(): Promise<ArticleSummary[]> {
-    const articles = await getAllArticles();
+export const getArticleSummaries = cache(
+    async (): Promise<ArticleSummary[]> => {
+        try {
+            const articles = await getAllArticles();
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return articles.map(({ body: _, ...article }) => article);
-}
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            return articles.map(({ body: _, ...article }) => article);
+        } catch (error) {
+            console.error(
+                '[Blog] Erreur lors du chargement des résumés:',
+                error
+            );
+            return [];
+        }
+    }
+);
 
 /**
  * Récupère un article par son slug
+ * Utilise cache() et gère automatiquement notFound()
  * @param slug - Le slug de l'article
- * @returns Promise avec l'article ou undefined
+ * @returns Promise avec l'article
  */
-export async function getArticleBySlug(
-    slug: string
-): Promise<Article | undefined> {
-    const articles = await getAllArticles();
+export const getArticleBySlug = cache(
+    async (slug: string): Promise<Article> => {
+        try {
+            if (!slug || typeof slug !== 'string') {
+                console.error('[Blog] Slug invalide:', slug);
+                notFound();
+            }
 
-    return articles.find((article) => article.slug.current === slug);
-}
+            const { data: article } = await sanityFetch({
+                query: articleBySlugQuery,
+                params: { slug },
+            });
 
-/**
- * Filtre les articles par catégorie
- * @param articles - Liste des articles
- * @param category - Catégorie à filtrer
- * @returns Articles filtrés
- */
-export function filterArticlesByCategory(
-    articles: ArticleSummary[],
-    category: ArticleCategory | 'all'
-): ArticleSummary[] {
-    if (category === 'all') {
-        return articles;
-    }
+            if (!article) {
+                console.warn(`[Blog] Article non trouvé pour le slug: ${slug}`);
+                notFound();
+            }
 
-    return articles.filter((article) => article.categories.includes(category));
-}
-
-/**
- * Récupère les catégories uniques des articles
- * @param articles - Liste des articles
- * @returns Liste des catégories présentes
- */
-export function getUniqueCategories(
-    articles: ArticleSummary[]
-): ArticleCategory[] {
-    const categories = new Set<ArticleCategory>();
-
-    articles.forEach((article) => {
-        article.categories.forEach((category) => {
-            categories.add(category);
-        });
-    });
-
-    return Array.from(categories);
-}
-
-/**
- * Formate une date pour l'affichage
- * @param dateString - Date au format ISO
- * @returns Date formatée en français
- */
-export function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-
-    return new Intl.DateTimeFormat('fr-FR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    }).format(date);
-}
-
-/**
- * Calcule le temps de lecture estimé
- * @param bodyBlocks - Contenu de l'article
- * @returns Temps de lecture en minutes
- */
-export function calculateReadingTime(bodyBlocks: Article['body']): number {
-    const wordsPerMinute = 200;
-
-    const totalWords = bodyBlocks.reduce((count, block) => {
-        if (block._type === 'block') {
-            const blockText = block.children
-                .map((child) => child.text)
-                .join(' ');
-            return count + blockText.split(/\s+/).length;
+            return article as Article;
+        } catch (error) {
+            console.error(
+                `[Blog] Erreur lors du chargement de l'article ${slug}:`,
+                error
+            );
+            notFound();
         }
-        return count;
-    }, 0);
+    }
+);
 
-    return Math.max(1, Math.ceil(totalWords / wordsPerMinute));
-}
+// ==========================================
+// FONCTIONS DE RECOMMANDATION (SERVER-SIDE)
+// ==========================================
 
 /**
- * Génère un extrait de l'article
- * @param bodyBlocks - Contenu de l'article
- * @param maxLength - Longueur maximale de l'extrait
- * @returns Extrait de l'article
+ * Obtient les articles recommandés (même catégorie ou récents)
+ * @param currentArticleId - ID de l'article actuel
+ * @param currentCategories - Catégories de l'article actuel
+ * @param maxResults - Nombre maximum de résultats
+ * @returns Promise avec les articles recommandés
  */
-export function generateExcerpt(
-    bodyBlocks: Article['body'],
-    maxLength: number = 150
-): string {
-    const fullText = bodyBlocks
-        .filter((block) => block._type === 'block')
-        .map((block) => block.children.map((child) => child.text).join(' '))
-        .join(' ');
+export const getRelatedArticles = cache(
+    async (
+        currentArticleId: string,
+        currentCategories: ArticleCategory[],
+        maxResults: number = 3
+    ): Promise<ArticleSummary[]> => {
+        try {
+            const allArticles = await getArticleSummaries();
 
-    if (fullText.length <= maxLength) {
-        return fullText;
+            if (!allArticles || allArticles.length === 0) {
+                return [];
+            }
+
+            // Filtrer l'article actuel
+            const otherArticles = allArticles.filter(
+                (article) => article._id !== currentArticleId
+            );
+
+            if (otherArticles.length === 0) {
+                return [];
+            }
+
+            // Articles de même catégorie
+            const sameCategory = otherArticles.filter((article) =>
+                article.categories?.some((cat) =>
+                    currentCategories.includes(cat as ArticleCategory)
+                )
+            );
+
+            // Compléter avec des articles récents si nécessaire
+            const recentArticles = otherArticles
+                .sort(
+                    (a, b) =>
+                        new Date(b.publishedAt).getTime() -
+                        new Date(a.publishedAt).getTime()
+                )
+                .slice(0, maxResults);
+
+            // Combiner et dédupliquer
+            const related = [...sameCategory];
+            for (const recent of recentArticles) {
+                if (related.length >= maxResults) break;
+                if (!related.find((r) => r._id === recent._id)) {
+                    related.push(recent);
+                }
+            }
+
+            return related.slice(0, maxResults);
+        } catch (error) {
+            console.error('[Blog] Erreur articles recommandés:', error);
+            return [];
+        }
     }
-
-    return fullText.substring(0, maxLength).trim() + '...';
-}
+);

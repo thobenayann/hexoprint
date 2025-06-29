@@ -201,6 +201,16 @@
     }
 }
 
+/* Animation fade-in pour les transitions de page */
+@keyframes page-fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 @keyframes fade-in-subtitle {
     0% {
         opacity: 0;
@@ -298,8 +308,21 @@
         animation: logo-aura 2s ease 0.75s 1 forwards;
     }
 
+    .animate-fade-in {
+        animation: page-fade-in 0.4s ease-in forwards;
+    }
+
     /* Safe area support for mobile navigation */
     .safe-area-pb {
         padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+
+    /* Styles pour les listes numérotées personnalisées */
+    .numbered-list-item {
+        counter-increment: list-counter;
+    }
+
+    .numbered-list-item .counter-number::before {
+        content: counter(list-counter);
     }
 }

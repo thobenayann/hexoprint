@@ -1,13 +1,18 @@
 'use client';
 
 import { useBlogFilters } from '@/hooks/use-blog-filters';
-import { getArticleSummaries } from '@/lib/blog-utils';
+import { filterArticlesByCategory } from '@/lib/blog-client-utils';
 import type { ArticleSummary } from '@/types/blog';
 import { ARTICLE_CATEGORIES, type ArticleCategory } from '@/types/blog';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Filter } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { BlogCard } from './BlogCard';
+
+// Types pour les props
+type BlogGridProps = {
+    articles: ArticleSummary[];
+};
 
 // Animation variants
 const containerVariants = {
@@ -81,7 +86,7 @@ function EmptyState() {
                 <h3 className="text-xl font-semibold mb-3 text-foreground">
                     Aucun article trouvé
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-6">
                     Aucun article ne correspond à votre sélection. Essayez de
                     changer de catégorie ou revenez plus tard pour découvrir de
                     nouveaux contenus.
@@ -91,51 +96,15 @@ function EmptyState() {
     );
 }
 
-export function BlogGrid() {
+export function BlogGrid({ articles }: BlogGridProps) {
     const { category } = useBlogFilters();
-    const [articles, setArticles] = useState<ArticleSummary[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
-    // Charger les articles
-    useEffect(() => {
-        async function loadArticles() {
-            try {
-                setIsLoading(true);
-                const allArticles = await getArticleSummaries();
-                setArticles(allArticles);
-            } catch (error) {
-                console.error('Erreur lors du chargement des articles:', error);
-                setArticles([]);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        loadArticles();
-    }, []);
-
-    // Filtrer les articles selon la catégorie sélectionnée
+    // Filtrer les articles selon la catégorie sélectionnée (côté client)
     const filteredArticles = useMemo(() => {
-        if (category === 'all') {
-            return articles;
-        }
-        return articles.filter((article) =>
-            article.categories.includes(category)
-        );
+        return filterArticlesByCategory(articles, category);
     }, [articles, category]);
 
-    if (isLoading) {
-        return (
-            <section className="py-16 md:py-24">
-                <div className="container mx-auto px-4">
-                    <div className="max-w-6xl mx-auto">
-                        <BlogSkeleton />
-                    </div>
-                </div>
-            </section>
-        );
-    }
-
+    // Aucun article trouvé après filtrage
     if (filteredArticles.length === 0) {
         return (
             <section className="py-16 md:py-24">
@@ -205,6 +174,28 @@ export function BlogGrid() {
                             ))}
                         </motion.div>
                     </AnimatePresence>
+
+                    {/* Message informatif si pas d'articles en base */}
+                    {articles.length === 0 && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-center mt-12 p-6 bg-muted/30 rounded-lg"
+                        >
+                            <p className="text-muted-foreground">
+                                💡 <strong>Astuce :</strong> Pour voir des
+                                articles, ajoutez-en dans le{' '}
+                                <a
+                                    href="/studio"
+                                    className="text-primary hover:underline"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Sanity Studio
+                                </a>
+                            </p>
+                        </motion.div>
+                    )}
                 </div>
             </div>
         </section>

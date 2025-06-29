@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDate } from '@/lib/blog-utils';
+import { formatDate } from '@/lib/blog-client-utils';
 import {
     ARTICLE_CATEGORIES,
     type ArticleCategory,
@@ -12,52 +12,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 type RelatedArticlesProps = {
-    currentArticle: ArticleSummary;
-    allArticles: ArticleSummary[];
+    articles: ArticleSummary[];
 };
 
-function getRelatedArticles(
-    currentArticle: ArticleSummary,
-    allArticles: ArticleSummary[],
-    limit: number = 3
-) {
-    // Exclure l'article actuel
-    const otherArticles = allArticles.filter(
-        (article) => article._id !== currentArticle._id
-    );
-
-    // Articles de la même catégorie en priorité
-    const sameCategory = otherArticles.filter((article) =>
-        article.categories.some((cat) =>
-            currentArticle.categories.includes(cat)
-        )
-    );
-
-    // Articles récents si pas assez d'articles de même catégorie
-    const recentArticles = otherArticles.sort(
-        (a, b) =>
-            new Date(b.publishedAt).getTime() -
-            new Date(a.publishedAt).getTime()
-    );
-
-    // Combiner et prendre les premiers articles uniques
-    const relatedArticles = [...sameCategory];
-    for (const article of recentArticles) {
-        if (relatedArticles.length >= limit) break;
-        if (!relatedArticles.find((related) => related._id === article._id)) {
-            relatedArticles.push(article);
-        }
-    }
-
-    return relatedArticles.slice(0, limit);
-}
-
 export function RelatedArticles({
-    currentArticle,
-    allArticles,
+    articles: relatedArticles,
 }: RelatedArticlesProps) {
-    const relatedArticles = getRelatedArticles(currentArticle, allArticles, 3);
-
     if (relatedArticles.length === 0) {
         return null;
     }

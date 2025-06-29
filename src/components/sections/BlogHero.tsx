@@ -69,7 +69,9 @@ const statsVariants = {
 export function BlogHero() {
     // Fonction pour scroller vers les filtres de blog
     const scrollToFilters = () => {
-        const filtersSection = document.querySelector('[data-filters-section]');
+        const filtersSection = document.querySelector(
+            '[data-blog-filters-section]'
+        );
         if (filtersSection) {
             filtersSection.scrollIntoView({
                 behavior: 'smooth',

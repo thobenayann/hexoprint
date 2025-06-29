@@ -1,10 +1,14 @@
+import { getArticleSummaries } from '@/lib/blog-utils';
 import { BlogGrid } from './BlogGrid';
 
-export function BlogContent() {
+export async function BlogContent() {
+    // Charger les données côté serveur
+    const articles = await getArticleSummaries();
+
     return (
         <div className="min-h-screen bg-background" data-blog-grid-section>
-            {/* Grille d'articles */}
-            <BlogGrid />
+            {/* Passer les données au composant client */}
+            <BlogGrid articles={articles} />
         </div>
     );
 }
