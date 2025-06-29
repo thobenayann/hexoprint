@@ -154,7 +154,7 @@ export const article = defineType({
                 }),
                 defineField({
                     name: 'metaDescription',
-                    title: 'Description SEO',
+                    title: "Résumé de l'article pour le SEO",
                     type: 'text',
                     validation: (rule) =>
                         rule
