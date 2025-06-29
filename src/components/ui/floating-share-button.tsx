@@ -34,18 +34,33 @@ export function FloatingShareButton(props: FloatingShareButtonProps) {
             setTimeout(() => setIsCopied(false), 2000);
         } catch (error) {
             console.log(
-                'Erreur clipboard, utilisation du fallback textArea:',
+                'Clipboard API non disponible, utilisation du fallback moderne:',
                 error
             );
-            // Fallback ultime pour les anciens navigateurs
-            const textArea = document.createElement('textarea');
-            textArea.value = props.url;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
+            // Fallback moderne avec Selection API
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = props.url;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                // Utiliser l'API Selection moderne
+                const range = document.createRange();
+                range.selectNodeContents(textArea);
+                const selection = window.getSelection();
+                selection?.removeAllRanges();
+                selection?.addRange(range);
+
+                document.body.removeChild(textArea);
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000);
+            } catch (fallbackError) {
+                console.warn('Impossible de copier le lien:', fallbackError);
+            }
         }
     };
 
