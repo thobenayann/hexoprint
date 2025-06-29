@@ -19,13 +19,27 @@ const categoryLabels: Record<string, string> = {
     educatif: 'Éducatif',
 };
 
-const materialLabels: Record<string, string> = {
+// Mapping pour rétrocompatibilité avec les anciens codes matériaux
+const legacyMaterialLabels: Record<string, string> = {
     pla: 'PLA',
     abs: 'ABS',
     petg: 'PETG',
     tpu: 'TPU',
     resin: 'Résine',
     wood: 'Bois',
+};
+
+/**
+ * Retourne le label d'affichage pour un matériau
+ * Compatible avec les anciens codes ET les nouveaux noms en texte libre
+ */
+const getMaterialDisplayName = (material: string): string => {
+    // Si c'est un ancien code, utiliser le mapping
+    if (legacyMaterialLabels[material.toLowerCase()]) {
+        return legacyMaterialLabels[material.toLowerCase()];
+    }
+    // Sinon, retourner le nom tel quel (nouveau format texte libre)
+    return material;
 };
 
 const isForProfessionals = (category: string): boolean => {
@@ -135,11 +149,9 @@ export async function GalleryPreview() {
                                                 <div className="bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">
                                                     <Zap className="w-3 h-3 text-yellow-400" />
                                                     <span className="text-xs text-white font-medium">
-                                                        {
-                                                            materialLabels[
-                                                                item.material
-                                                            ]
-                                                        }
+                                                        {getMaterialDisplayName(
+                                                            item.material
+                                                        )}
                                                     </span>
                                                 </div>
 
@@ -179,12 +191,9 @@ export async function GalleryPreview() {
                                                     <div className="flex items-center gap-1">
                                                         <Zap className="w-3 h-3" />
                                                         <span>
-                                                            {
-                                                                materialLabels[
-                                                                    item
-                                                                        .material
-                                                                ]
-                                                            }
+                                                            {getMaterialDisplayName(
+                                                                item.material
+                                                            )}
                                                         </span>
                                                     </div>
                                                     {item.printTime && (

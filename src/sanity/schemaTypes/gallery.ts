@@ -64,16 +64,10 @@ export const gallery = defineType({
             name: 'material',
             title: 'Matériau utilisé',
             type: 'string',
-            options: {
-                list: [
-                    { title: 'PLA', value: 'pla' },
-                    { title: 'PETG', value: 'petg' },
-                    { title: 'ABS', value: 'abs' },
-                    { title: 'Résine', value: 'resine' },
-                    { title: 'TPU', value: 'tpu' },
-                    { title: 'Autres', value: 'autres' },
-                ],
-            },
+            description:
+                'Nom du matériau utilisé (ex: PLA, ABS, PETG, TPU, Résine, etc.)',
+            placeholder: 'Saisissez le matériau utilisé',
+            validation: (rule) => rule.min(1).max(50),
         }),
         defineField({
             name: 'printTime',
@@ -108,7 +102,7 @@ export const gallery = defineType({
             const categoryLabel = category
                 ? category.charAt(0).toUpperCase() + category.slice(1)
                 : '';
-            const materialLabel = material ? material.toUpperCase() : '';
+            const materialLabel = material || '';
 
             const subtitle = [categoryLabel, materialLabel]
                 .filter(Boolean)

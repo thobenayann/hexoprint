@@ -156,6 +156,15 @@ export const configurationQuery = groq`
   }
 `;
 
+// Requête spécifique pour récupérer uniquement les matériaux
+export const materialsQuery = groq`
+  *[_type == "configuration"][0] {
+    filaments[] {
+      material
+    }
+  }
+`;
+
 // ==========================================
 // TYPES POUR FUTURE INTÉGRATION SANITY
 // ==========================================
