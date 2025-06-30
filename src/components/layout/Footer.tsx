@@ -226,8 +226,11 @@ export function Footer() {
                 <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 mb-8">
                     {/* Copyright */}
                     <div className="text-muted-foreground text-sm max-sm:text-center">
-                        © {currentYear} Hexo&apos;print - Yann RAVARY. Tous
-                        droits réservés.
+                        © {currentYear}{' '}
+                        <span className="font-mono uppercase">
+                            Hexo&apos;print
+                        </span>{' '}
+                        - Yann RAVARY. Tous droits réservés.
                     </div>
 
                     {/* Legal Links */}

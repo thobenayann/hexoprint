@@ -83,15 +83,7 @@ export const COMPANY_INFO = {
 
     // Spécialités techniques
     expertise: {
-        materials: [
-            'PLA',
-            'ABS',
-            'PETG',
-            'Résine',
-            'TPU',
-            'WOOD',
-            'Carbon',
-        ] as const,
+        materials: ['PLA', 'ABS', 'PETG', 'Résine', 'TPU', 'Carbon'] as const,
         services: [
             'Impression 3D',
             'Fabrication additive',

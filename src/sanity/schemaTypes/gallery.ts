@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity';
+import MaterialAutocompleteInput from '../../components/sanity/MaterialAutocompleteInput';
 
 export const gallery = defineType({
     name: 'gallery',
@@ -51,36 +52,41 @@ export const gallery = defineType({
             type: 'string',
             options: {
                 list: [
-                    { title: 'Modélisme', value: 'modelisme' },
                     { title: 'Prototypage', value: 'prototypage' },
-                    { title: 'Réparation', value: 'reparation' },
+                    {
+                        title: 'Pièce fonctionnelle',
+                        value: 'piece-fonctionnelle',
+                    },
                     { title: 'Décoration', value: 'decoration' },
-                    { title: 'Pièce fonctionnelle', value: 'fonctionnel' },
-                    { title: 'Autres', value: 'autres' },
+                    { title: 'Modélisme', value: 'modelisme' },
+                    { title: 'Réparation', value: 'reparation' },
+                    { title: 'Autre', value: 'autre' },
                 ],
             },
+            validation: (rule) => rule.required(),
         }),
         defineField({
             name: 'material',
             title: 'Matériau utilisé',
             type: 'string',
             description:
-                'Nom du matériau utilisé (ex: PLA, ABS, PETG, TPU, Résine, etc.)',
-            placeholder: 'Saisissez le matériau utilisé',
+                'Saisissez le matériau (ex: PLA, ABS, PETG, Résine, TPU, Carbon). Les suggestions apparaîtront basées sur les matériaux déjà utilisés.',
+            components: {
+                input: MaterialAutocompleteInput,
+            },
             validation: (rule) => rule.min(1).max(50),
         }),
         defineField({
             name: 'printTime',
-            title: "Temps d'impression (heures)",
-            type: 'number',
-            validation: (rule) => rule.min(0),
+            title: "Temps d'impression",
+            type: 'string',
+            placeholder: 'Ex: 2h30, 45min...',
+            validation: (rule) => rule.required(),
         }),
         defineField({
             name: 'featured',
-            title: 'Mise en avant',
+            title: 'À la une',
             type: 'boolean',
-            description:
-                "Cocher pour mettre cette réalisation en avant sur la page d'accueil",
             initialValue: false,
         }),
         defineField({
@@ -94,24 +100,16 @@ export const gallery = defineType({
         select: {
             title: 'title',
             media: 'image',
-            category: 'category',
             material: 'material',
         },
         prepare(selection) {
-            const { title, media, category, material } = selection;
-            const categoryLabel = category
-                ? category.charAt(0).toUpperCase() + category.slice(1)
-                : '';
-            const materialLabel = material || '';
-
-            const subtitle = [categoryLabel, materialLabel]
-                .filter(Boolean)
-                .join(' • ');
-
+            const { title, media, material } = selection;
             return {
-                title,
-                subtitle: subtitle || 'Réalisation',
-                media,
+                title: title,
+                subtitle: material
+                    ? `Matériau: ${material}`
+                    : 'Pas de matériau',
+                media: media,
             };
         },
     },

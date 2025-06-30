@@ -17,9 +17,9 @@ type SanityMaterialResult = {
 // FALLBACKS
 // ==========================================
 
-// Matériaux par défaut (COMPANY_INFO sans WOOD comme demandé)
+// Matériaux par défaut (COMPANY_INFO)
 const FALLBACK_MATERIALS: ReadonlyArray<string> =
-    COMPANY_INFO.expertise.materials.filter((material) => material !== 'WOOD');
+    COMPANY_INFO.expertise.materials;
 
 // ==========================================
 // FONCTIONS UTILITAIRES
@@ -61,6 +61,7 @@ export const getMaterials = cache(async (): Promise<ReadonlyArray<string>> => {
         // Fallback vers les matériaux par défaut
         return FALLBACK_MATERIALS;
     } catch (error) {
+        console.log('Erreur lors du chargement des matériaux:', error);
         // En cas d'erreur, utiliser le fallback
         return FALLBACK_MATERIALS;
     }
@@ -68,7 +69,7 @@ export const getMaterials = cache(async (): Promise<ReadonlyArray<string>> => {
 
 /**
  * Retourne les matériaux par défaut (pour tests ou utilisation directe)
- * @returns Liste des matériaux par défaut sans WOOD
+ * @returns Liste des matériaux par défaut
  */
 export const getFallbackMaterials = (): ReadonlyArray<string> => {
     return FALLBACK_MATERIALS;
