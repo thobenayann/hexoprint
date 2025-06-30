@@ -6,22 +6,14 @@ import { useCallback, useEffect, useState } from 'react';
 // Types pour les filtres
 export type CategoryFilter =
     | 'all'
-    | 'prototypes'
-    | 'pieces-detachees'
+    | 'prototypage'
+    | 'piece-fonctionnelle'
     | 'decoration'
-    | 'outillage'
-    | 'modeles-reduits'
-    | 'art-creatif'
+    | 'modelisme'
     | 'reparation'
     | 'autre';
-export type MaterialFilter =
-    | 'all'
-    | 'pla'
-    | 'abs'
-    | 'petg'
-    | 'tpu'
-    | 'resine'
-    | 'autre';
+
+export type MaterialFilter = string; // Maintenant dynamique basé sur les données réelles
 export type ViewType = 'grid' | 'list';
 
 // Hook principal pour gérer les filtres de la galerie

@@ -6,14 +6,6 @@ export type GalleryCategory =
     | 'fonctionnel'
     | 'autres';
 
-export type GalleryMaterial =
-    | 'pla'
-    | 'petg'
-    | 'abs'
-    | 'resine'
-    | 'tpu'
-    | 'autres';
-
 export type GalleryItemType = {
     _id: string;
     _type: 'gallery';
@@ -39,8 +31,9 @@ export type GalleryItemType = {
     };
     description: string;
     category: GalleryCategory;
-    material: GalleryMaterial;
-    printTime: number;
+    material?: string | null;
+    printTime: string;
+    featured: boolean;
     createdAt: string;
 };
 
@@ -51,16 +44,6 @@ export const categoryLabels: Record<GalleryCategory, string> = {
     reparation: 'Réparation',
     decoration: 'Décoration',
     fonctionnel: 'Pièce fonctionnelle',
-    autres: 'Autres',
-};
-
-// Mapping des matériaux pour l'affichage
-export const materialLabels: Record<GalleryMaterial, string> = {
-    pla: 'PLA',
-    petg: 'PETG',
-    abs: 'ABS',
-    resine: 'Résine',
-    tpu: 'TPU',
     autres: 'Autres',
 };
 

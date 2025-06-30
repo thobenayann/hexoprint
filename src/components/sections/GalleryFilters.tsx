@@ -1,10 +1,11 @@
 'use client';
 
+import { getLabelFromFilterValue } from '@/hooks/use-dynamic-materials';
 import {
     useGalleryFilters,
     useStickyFilters,
 } from '@/hooks/use-gallery-filters';
-import { categoryLabels, materialLabels } from '@/types/gallery';
+import { categoryLabels } from '@/types/gallery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Filter, Grid3X3, List, Settings, X } from 'lucide-react';
 import { useState } from 'react';
@@ -54,7 +55,7 @@ const mobileFilterVariants = {
     },
 };
 
-export function GalleryFilters() {
+export function GalleryFilters(props: { materials: string[] }) {
     const { category, material, view, setFilter, setView, clearFilters } =
         useGalleryFilters();
 
@@ -68,12 +69,11 @@ export function GalleryFilters() {
         })
     );
 
-    const materialOptions = Object.entries(materialLabels).map(
-        ([value, label]) => ({
-            value,
-            label,
-        })
-    );
+    const materialOptions: { value: string; label: string }[] =
+        props.materials.map((mat) => ({
+            value: mat.toLowerCase().replace(/\s+/g, '-'),
+            label: mat,
+        }));
 
     const hasActiveFilter = category !== 'all' || material !== 'all';
 
@@ -83,7 +83,7 @@ export function GalleryFilters() {
             return categoryLabels[category as keyof typeof categoryLabels];
         }
         if (material !== 'all') {
-            return materialLabels[material as keyof typeof materialLabels];
+            return getLabelFromFilterValue(material, materialOptions);
         }
         return 'Tous';
     };
@@ -187,10 +187,18 @@ export function GalleryFilters() {
                                         {/* Filtres par matériau */}
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs text-muted-foreground font-medium">
-                                                Matériau :
+                                                Matériau : (
+                                                {materialOptions.length} trouvé
+                                                {materialOptions.length > 1
+                                                    ? 's'
+                                                    : ''}
+                                                )
                                             </span>
                                             {materialOptions.map(
-                                                (materialOption) => (
+                                                (materialOption: {
+                                                    value: string;
+                                                    label: string;
+                                                }) => (
                                                     <button
                                                         key={
                                                             materialOption.value
@@ -441,7 +449,10 @@ export function GalleryFilters() {
                                             </h3>
                                             <div className="flex flex-wrap gap-2">
                                                 {materialOptions.map(
-                                                    (materialOption) => (
+                                                    (materialOption: {
+                                                        value: string;
+                                                        label: string;
+                                                    }) => (
                                                         <button
                                                             key={
                                                                 materialOption.value

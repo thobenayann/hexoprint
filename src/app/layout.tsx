@@ -3,7 +3,12 @@ import { COMPANY_INFO } from '@/lib/company-info';
 import { SanityLive } from '@/sanity/lib/live';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
-import { Open_Sans, Orbitron, Playfair_Display } from 'next/font/google';
+import {
+    Open_Sans,
+    Orbitron,
+    Oxanium,
+    Playfair_Display,
+} from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 const playfair = Playfair_Display({
@@ -28,6 +33,15 @@ const orbitron = Orbitron({
     subsets: ['latin'],
     weight: ['400', '700', '900'],
     variable: '--font-orbitron',
+    display: 'swap',
+    preload: true,
+    fallback: ['monospace'],
+});
+
+const oxanium = Oxanium({
+    subsets: ['latin'],
+    weight: ['200', '300', '400', '500', '600', '700', '800'],
+    variable: '--font-oxanium',
     display: 'swap',
     preload: true,
     fallback: ['monospace'],
@@ -225,7 +239,7 @@ export default function RootLayout({
                 />
             </head>
             <body
-                className={`${playfair.variable} ${openSans.variable} ${orbitron.variable} antialiased dark`}
+                className={`${playfair.variable} ${openSans.variable} ${orbitron.variable} ${oxanium.variable} antialiased dark`}
             >
                 <NuqsAdapter>{children}</NuqsAdapter>
                 <Analytics />

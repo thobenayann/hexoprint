@@ -457,8 +457,11 @@ export default function MentionsLegalesPage() {
                             </p>
                             <div className="mt-4 pt-4 border-t border-border/50">
                                 <p className="text-xs text-muted-foreground">
-                                    © {currentYear} {COMPANY_INFO.name} -{' '}
-                                    {COMPANY_INFO.founder}. Tous droits
+                                    © {currentYear}{' '}
+                                    <span className="font-mono uppercase">
+                                        {COMPANY_INFO.name}
+                                    </span>{' '}
+                                    - {COMPANY_INFO.founder}. Tous droits
                                     réservés. |
                                     <span className="ml-2">
                                         Spécialiste impression 3D Seysses |

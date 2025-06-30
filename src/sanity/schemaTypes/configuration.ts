@@ -24,17 +24,11 @@ export const configuration = defineType({
                             name: 'material',
                             title: 'Matériau',
                             type: 'string',
-                            options: {
-                                list: [
-                                    { title: 'PLA', value: 'pla' },
-                                    { title: 'PETG', value: 'petg' },
-                                    { title: 'ABS', value: 'abs' },
-                                    { title: 'TPU', value: 'tpu' },
-                                    { title: 'Résine', value: 'resine' },
-                                    { title: 'Autres', value: 'autres' },
-                                ],
-                            },
-                            validation: (rule) => rule.required(),
+                            description:
+                                'Nom du matériau (ex: PLA, ABS, PETG, TPU, Résine, etc.)',
+                            placeholder: 'Saisissez le nom du matériau',
+                            validation: (rule) =>
+                                rule.required().min(1).max(50),
                         }),
                         defineField({
                             name: 'pricePerKg',
@@ -67,13 +61,8 @@ export const configuration = defineType({
                         },
                         prepare(selection) {
                             const { material, pricePerKg, color } = selection;
-                            const materialLabel = material
-                                ? material.toUpperCase()
-                                : 'Matériau';
+                            const materialLabel = material || 'Matériau';
                             const colorLabel = color ? ` - ${color}` : '';
-                            // const priceLabel = pricePerKg
-                            //     ? ` (${pricePerKg}€/kg)`
-                            //     : '';
 
                             return {
                                 title: `${materialLabel}${colorLabel}`,

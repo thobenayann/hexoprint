@@ -2,11 +2,12 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { useGalleryFilters } from '@/hooks/use-gallery-filters';
+import { filterGalleryItems } from '@/lib/gallery-filter-utils';
+import { getMaterialDisplayName } from '@/lib/gallery-utils';
 import { urlFor } from '@/sanity/lib/image';
 import {
     categoryLabels,
     isForProfessionals,
-    materialLabels,
     type GalleryItemType,
 } from '@/types/gallery';
 import { motion } from 'framer-motion';
@@ -44,19 +45,9 @@ type GalleryContentProps = {
 export function GalleryContent({ items }: GalleryContentProps) {
     const { category, material, view } = useGalleryFilters();
 
-    // Filtrer les éléments
+    // Filtrer les éléments en utilisant la nouvelle fonction utilitaire
     const filteredItems = useMemo(() => {
-        if (!items.length) return [];
-
-        return items.filter((item) => {
-            if (category !== 'all' && item.category !== category) {
-                return false;
-            }
-            if (material !== 'all' && item.material !== material) {
-                return false;
-            }
-            return true;
-        });
+        return filterGalleryItems(items, category, material);
     }, [items, category, material]);
 
     if (!filteredItems.length) {
@@ -137,10 +128,12 @@ export function GalleryContent({ items }: GalleryContentProps) {
                                                 {categoryLabels[item.category]}
                                             </span>
                                             <span className="truncate">
-                                                {materialLabels[item.material]}
+                                                {getMaterialDisplayName(
+                                                    item.material
+                                                )}
                                             </span>
                                             {item.printTime && (
-                                                <span>{item.printTime}h</span>
+                                                <span>{item.printTime}</span>
                                             )}
                                         </div>
                                     </div>
@@ -183,11 +176,9 @@ export function GalleryContent({ items }: GalleryContentProps) {
                                             <div className="bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">
                                                 <Zap className="w-3 h-3 text-yellow-400" />
                                                 <span className="text-xs text-white font-medium">
-                                                    {
-                                                        materialLabels[
-                                                            item.material
-                                                        ]
-                                                    }
+                                                    {getMaterialDisplayName(
+                                                        item.material
+                                                    )}
                                                 </span>
                                             </div>
 
@@ -195,7 +186,7 @@ export function GalleryContent({ items }: GalleryContentProps) {
                                                 <div className="bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">
                                                     <Clock className="w-3 h-3 text-blue-400" />
                                                     <span className="text-xs text-white font-medium">
-                                                        {item.printTime}h
+                                                        {item.printTime}
                                                     </span>
                                                 </div>
                                             )}
@@ -226,18 +217,16 @@ export function GalleryContent({ items }: GalleryContentProps) {
                                                 <div className="flex items-center gap-1">
                                                     <Zap className="w-3 h-3" />
                                                     <span>
-                                                        {
-                                                            materialLabels[
-                                                                item.material
-                                                            ]
-                                                        }
+                                                        {getMaterialDisplayName(
+                                                            item.material
+                                                        )}
                                                     </span>
                                                 </div>
                                                 {item.printTime && (
                                                     <div className="flex items-center gap-1">
                                                         <Clock className="w-3 h-3" />
                                                         <span>
-                                                            {item.printTime}h
+                                                            {item.printTime}
                                                         </span>
                                                     </div>
                                                 )}

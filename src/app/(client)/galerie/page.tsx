@@ -3,6 +3,7 @@ import { GalleryContentWrapper } from '@/components/sections/GalleryContentWrapp
 import { GalleryFilters } from '@/components/sections/GalleryFilters';
 import { GalleryHero } from '@/components/sections/GalleryHero';
 import { COMPANY_INFO } from '@/lib/company-info';
+import { sanityFetch } from '@/sanity/lib/live';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
@@ -94,7 +95,22 @@ function GalleryContentFallback() {
     );
 }
 
-export default function GalleriePage() {
+export default async function GalleriePage() {
+    // Récupération des matériaux côté serveur
+    const query = `*[_type == "gallery" && defined(material) && material != null && material != ""]{material}`;
+    const { data } = await sanityFetch({ query });
+    const materials = Array.isArray(data)
+        ? Array.from(
+              new Set(
+                  data
+                      .map((m: { material?: string } | string) =>
+                          typeof m === 'string' ? m : m.material || ''
+                      )
+                      .filter(Boolean)
+              )
+          )
+        : [];
+
     return (
         <main className="min-h-screen">
             {/* Hero Section */}
@@ -102,7 +118,7 @@ export default function GalleriePage() {
 
             {/* Contenu principal avec filtres et galerie */}
             <Suspense fallback={<GalleryContentFallback />}>
-                <GalleryFilters />
+                <GalleryFilters materials={materials} />
                 <GalleryContentWrapper />
             </Suspense>
 

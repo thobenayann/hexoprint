@@ -3,6 +3,7 @@ import { AboutHero } from '@/components/sections/AboutHero';
 import { AboutInfos } from '@/components/sections/AboutInfos';
 import { CallToAction } from '@/components/sections/CallToAction';
 import { COMPANY_INFO } from '@/lib/company-info';
+import { getMaterials } from '@/lib/materials-utils';
 import type { Metadata } from 'next';
 import { ABOUT_PAGE_DATA, ABOUT_PAGE_SEO } from './constants';
 
@@ -47,7 +48,10 @@ export const metadata: Metadata = {
     },
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+    // Récupération des matériaux depuis Sanity avec fallback
+    const materials = await getMaterials();
+
     return (
         <main className="min-h-screen pt-16">
             {/* Hero Section avec vidéo background */}
@@ -67,7 +71,7 @@ export default function AboutPage() {
             {/* Informations détaillées */}
             <AboutInfos
                 values={ABOUT_PAGE_DATA.infos.values}
-                materials={ABOUT_PAGE_DATA.infos.materials}
+                materials={materials}
                 location={ABOUT_PAGE_DATA.infos.location}
             />
 
@@ -109,10 +113,9 @@ export default function AboutPage() {
                             'Fabrication additive',
                             'Prototypage rapide',
                             'Modélisme',
-                            'Matériaux PLA',
-                            'Matériaux ABS',
-                            'Matériaux PETG',
-                            'Résine',
+                            ...materials.map(
+                                (material) => `Matériaux ${material}`
+                            ),
                         ],
                         hasOfferCatalog: {
                             '@type': 'OfferCatalog',
