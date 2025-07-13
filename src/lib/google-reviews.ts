@@ -28,7 +28,7 @@ export interface GooglePlacesApiResponse {
 export interface HexoprintTestimonial {
     id: string;
     name: string;
-    role: string;
+    role?: string;
     company: string;
     content: string;
     rating: number;
@@ -94,18 +94,26 @@ export class GoogleReviewsService {
     ): HexoprintTestimonial[] {
         return reviews
             .filter((review) => review.rating >= 4) // Seulement les avis 4-5 étoiles
-            .map((review, index) => ({
-                id: `google-${review.time}-${index}`,
-                name: review.author_name,
-                role: this.inferRoleFromReview(review.text),
-                company: this.inferCompanyTypeFromReview(review.text),
-                content: this.cleanReviewText(review.text),
-                rating: review.rating,
-                category: this.categorizeReview(review.text),
-                avatar: review.profile_photo_url,
-                date: this.formatRelativeTime(review.relative_time_description),
-                isVerifiedGoogle: true,
-            }))
+            .map((review, index) => {
+                const inferredRole = this.inferRoleFromReview(review.text);
+                return {
+                    id: `google-${review.time}-${index}`,
+                    name: review.author_name,
+                    role:
+                        inferredRole !== 'Client satisfait'
+                            ? inferredRole
+                            : undefined, // Rôle optionnel
+                    company: this.inferCompanyTypeFromReview(review.text),
+                    content: this.cleanReviewText(review.text),
+                    rating: review.rating,
+                    category: this.categorizeReview(review.text),
+                    avatar: review.profile_photo_url,
+                    date: this.formatRelativeTime(
+                        review.relative_time_description
+                    ),
+                    isVerifiedGoogle: true,
+                };
+            })
             .slice(0, 6); // Limite à 6 avis maximum
     }
 

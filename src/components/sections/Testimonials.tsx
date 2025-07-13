@@ -28,7 +28,7 @@ const highlights = [
     },
     {
         icon: ThumbsUp,
-        value: '3/3',
+        value: '4/4',
         label: 'Avis positifs',
         description: 'depuis 3 ans',
     },
@@ -226,10 +226,19 @@ export function Testimonials() {
                                                             {testimonial.name}
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            {testimonial.role} •{' '}
-                                                            {
+                                                            {testimonial.role ? (
+                                                                <>
+                                                                    {
+                                                                        testimonial.role
+                                                                    }{' '}
+                                                                    •{' '}
+                                                                    {
+                                                                        testimonial.company
+                                                                    }
+                                                                </>
+                                                            ) : (
                                                                 testimonial.company
-                                                            }
+                                                            )}
                                                         </div>
                                                         {testimonial.date && (
                                                             <div className="text-xs text-muted-foreground/70 mt-1">
