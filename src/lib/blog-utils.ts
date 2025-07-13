@@ -55,6 +55,60 @@ export const getArticleSummaries = cache(
 );
 
 /**
+ * Type pour les statistiques du blog
+ */
+export type BlogStats = {
+    totalArticles: number;
+    totalCategories: number;
+    categories: ArticleCategory[];
+};
+
+/**
+ * Récupère les statistiques du blog (nombre d'articles, catégories)
+ * Utilise cache() pour optimiser les performances
+ * @returns Promise avec les statistiques du blog
+ */
+export const getBlogStats = cache(async (): Promise<BlogStats> => {
+    try {
+        const articles = await getArticleSummaries();
+
+        if (!articles || articles.length === 0) {
+            return {
+                totalArticles: 0,
+                totalCategories: 0,
+                categories: [],
+            };
+        }
+
+        // Récupérer toutes les catégories uniques
+        const uniqueCategories = new Set<ArticleCategory>();
+
+        articles.forEach((article) => {
+            if (article.categories && Array.isArray(article.categories)) {
+                article.categories.forEach((category) => {
+                    uniqueCategories.add(category as ArticleCategory);
+                });
+            }
+        });
+
+        const categoriesArray = Array.from(uniqueCategories);
+
+        return {
+            totalArticles: articles.length,
+            totalCategories: categoriesArray.length,
+            categories: categoriesArray,
+        };
+    } catch (error) {
+        console.error('[Blog] Erreur lors du calcul des statistiques:', error);
+        return {
+            totalArticles: 0,
+            totalCategories: 0,
+            categories: [],
+        };
+    }
+});
+
+/**
  * Récupère un article par son slug
  * Utilise cache() et gère automatiquement notFound()
  * @param slug - Le slug de l'article

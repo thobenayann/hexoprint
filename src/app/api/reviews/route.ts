@@ -46,6 +46,17 @@ const fallbackTestimonials: HexoprintTestimonial[] = [
         date: 'Il y a 3 ans',
         isVerifiedGoogle: false,
     },
+    {
+        id: 'fallback-4',
+        name: 'Sam ROELENS',
+        company: 'Particulier',
+        content:
+            'Un énorme merci à Yann de la société Hexoprint qui a reproduit un collier et une bague de fixation pour une clôture de piscine. Personne très pro qui aime faire les choses bien. Tarif très correct. Allez y les yeux fermés.',
+        rating: 5,
+        category: 'Particulier',
+        date: 'Le 12 juillet 2024',
+        isVerifiedGoogle: false,
+    },
 ];
 
 export async function GET() {
