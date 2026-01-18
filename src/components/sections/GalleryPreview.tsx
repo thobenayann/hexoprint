@@ -4,25 +4,15 @@ import { getMaterialDisplayName } from '@/lib/gallery-utils';
 import { featuredGalleryQuery } from '@/lib/sanity-queries';
 import { urlFor } from '@/sanity/lib/image';
 import { sanityFetch } from '@/sanity/lib/live';
-import type { GalleryItemType } from '@/types/gallery';
+import {
+    getCategoryLabel,
+    isForProfessionals,
+    normalizeCategory,
+    toGalleryCategory,
+    type GalleryItemType,
+} from '@/types/gallery';
 import { Clock, Eye, Layers, Target, Zap } from 'lucide-react';
 import Image from 'next/image';
-
-// Mappings pour les catégories et matériaux
-const categoryLabels: Record<string, string> = {
-    decoration: 'Décoration',
-    modelisme: 'Modélisme',
-    reparation: 'Réparation',
-    prototype: 'Prototype',
-    outillage: 'Outillage',
-    art: 'Art & Design',
-    fonctionnel: 'Fonctionnel',
-    educatif: 'Éducatif',
-};
-
-const isForProfessionals = (category: string): boolean => {
-    return ['reparation', 'prototype', 'outillage'].includes(category);
-};
 
 const stats = [
     {
@@ -50,8 +40,19 @@ export async function GalleryPreview() {
         query: featuredGalleryQuery,
     });
 
-    // Typage et vérification sécurisée des données
-    const typedGalleryItems = (galleryItems as GalleryItemType[] | null) ?? [];
+    // Normaliser et valider les données depuis Sanity
+    // Supprime les caractères invisibles qui peuvent être présents dans les données
+    const typedGalleryItems = (
+        (galleryItems as GalleryItemType[] | null) ?? []
+    ).map((item) => {
+        // Normaliser la catégorie pour supprimer les caractères invisibles
+        const normalizedCategory = normalizeCategory(item.category);
+        return {
+            ...item,
+            category: toGalleryCategory(normalizedCategory),
+        };
+    });
+    
     const displayItems = typedGalleryItems.slice(0, 4);
 
     return (
@@ -113,11 +114,7 @@ export async function GalleryPreview() {
                                                             : 'bg-hexo-blue-light/20 text-hexo-blue-light border-hexo-blue-light/30'
                                                     }`}
                                                 >
-                                                    {
-                                                        categoryLabels[
-                                                            item.category
-                                                        ]
-                                                    }
+                                                    {getCategoryLabel(item.category)}
                                                 </span>
                                             </div>
 

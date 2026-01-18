@@ -1,6 +1,7 @@
 import { allGalleryQuery } from '@/lib/sanity-queries';
 import { sanityFetch } from '@/sanity/lib/live';
 import type { GalleryItemType } from '@/types/gallery';
+import { normalizeCategory, toGalleryCategory } from '@/types/gallery';
 import { GalleryContent } from './GalleryContent';
 
 export async function GalleryContentWrapper() {
@@ -9,9 +10,18 @@ export async function GalleryContentWrapper() {
         tags: ['gallery'],
     });
 
-    // Vérification et typage correct des données avec fallback sécurisé
-    const galleryItems: GalleryItemType[] =
-        (items as GalleryItemType[] | null) ?? [];
+    // Normaliser et valider les données depuis Sanity
+    // Supprime les caractères invisibles qui peuvent être présents dans les données
+    const galleryItems: GalleryItemType[] = (
+        (items as GalleryItemType[] | null) ?? []
+    ).map((item) => {
+        // Normaliser la catégorie pour supprimer les caractères invisibles
+        const normalizedCategory = normalizeCategory(item.category);
+        return {
+            ...item,
+            category: toGalleryCategory(normalizedCategory),
+        };
+    });
 
     return (
         <div data-gallery-section>

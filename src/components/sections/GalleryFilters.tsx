@@ -5,7 +5,7 @@ import {
     useGalleryFilters,
     useStickyFilters,
 } from '@/hooks/use-gallery-filters';
-import { categoryLabels } from '@/types/gallery';
+import { categoryLabels, getCategoryLabel } from '@/types/gallery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Filter, Grid3X3, List, Settings, X } from 'lucide-react';
 import { useState } from 'react';
@@ -80,7 +80,7 @@ export function GalleryFilters(props: { materials: string[] }) {
     // Obtenir le label du filtre actif pour l'affichage mobile
     const getActiveFilterLabel = () => {
         if (category !== 'all') {
-            return categoryLabels[category as keyof typeof categoryLabels];
+            return getCategoryLabel(category);
         }
         if (material !== 'all') {
             return getLabelFromFilterValue(material, materialOptions);
