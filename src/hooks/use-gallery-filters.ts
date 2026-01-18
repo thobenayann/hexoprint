@@ -2,18 +2,10 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import type { CategoryFilter, GalleryCategory } from '@/types/gallery';
+import { isValidCategory } from '@/types/gallery';
 
-// Types pour les filtres
-export type CategoryFilter =
-    | 'all'
-    | 'prototypage'
-    | 'piece-fonctionnelle'
-    | 'decoration'
-    | 'modelisme'
-    | 'reparation'
-    | 'autre';
-
-export type MaterialFilter = string; // Maintenant dynamique basé sur les données réelles
+export type MaterialFilter = string; // Dynamique basé sur les données réelles
 export type ViewType = 'grid' | 'list';
 
 // Hook principal pour gérer les filtres de la galerie
@@ -21,7 +13,14 @@ export function useGalleryFilters() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const category = (searchParams.get('category') as CategoryFilter) || 'all';
+    // Validation stricte de la catégorie depuis l'URL
+    const categoryParam = searchParams.get('category');
+    const category: CategoryFilter = 
+        categoryParam === 'all' || !categoryParam
+            ? 'all'
+            : isValidCategory(categoryParam)
+            ? categoryParam
+            : 'all'; // Fallback si invalide
     const material = (searchParams.get('material') as MaterialFilter) || 'all';
     const view = (searchParams.get('view') as ViewType) || 'grid';
 

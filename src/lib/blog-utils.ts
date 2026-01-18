@@ -1,5 +1,10 @@
 import { sanityFetch } from '@/sanity/lib/live';
 import type { Article, ArticleCategory, ArticleSummary } from '@/types/blog';
+import {
+    ARTICLE_CATEGORIES,
+    normalizeArticleCategory,
+    toArticleCategory,
+} from '@/types/blog';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { articleBySlugQuery, articlesQuery } from './sanity-queries';
@@ -24,7 +29,29 @@ export const getAllArticles = cache(async (): Promise<Article[]> => {
             return [];
         }
 
-        return articles;
+        // Normaliser et valider les catégories depuis Sanity
+        // Supprime les caractères invisibles qui peuvent être présents dans les données
+        return articles.map((article) => {
+            if (article.categories && Array.isArray(article.categories)) {
+                const normalizedCategories = article.categories
+                    .map((cat: string | ArticleCategory) => {
+                        if (typeof cat === 'string') {
+                            const normalized = normalizeArticleCategory(cat);
+                            return toArticleCategory(normalized);
+                        }
+                        return cat;
+                    })
+                    .filter((cat: string | ArticleCategory): cat is ArticleCategory => 
+                        typeof cat === 'string' && cat in ARTICLE_CATEGORIES
+                    );
+                
+                return {
+                    ...article,
+                    categories: normalizedCategories,
+                };
+            }
+            return article;
+        });
     } catch (error) {
         console.error('[Blog] Erreur lors du chargement des articles:', error);
         // En cas d'erreur, retourner un tableau vide plutôt que de faire planter l'app
@@ -132,7 +159,29 @@ export const getArticleBySlug = cache(
                 notFound();
             }
 
-            return article as Article;
+            const typedArticle = article as Article;
+
+            // Normaliser et valider les catégories depuis Sanity
+            if (typedArticle.categories && Array.isArray(typedArticle.categories)) {
+                const normalizedCategories = typedArticle.categories
+                    .map((cat: string | ArticleCategory) => {
+                        if (typeof cat === 'string') {
+                            const normalized = normalizeArticleCategory(cat);
+                            return toArticleCategory(normalized);
+                        }
+                        return cat;
+                    })
+                    .filter((cat: string | ArticleCategory): cat is ArticleCategory => 
+                        typeof cat === 'string' && cat in ARTICLE_CATEGORIES
+                    );
+                
+                return {
+                    ...typedArticle,
+                    categories: normalizedCategories,
+                };
+            }
+
+            return typedArticle;
         } catch (error) {
             console.error(
                 `[Blog] Erreur lors du chargement de l'article ${slug}:`,

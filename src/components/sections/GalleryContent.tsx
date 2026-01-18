@@ -6,7 +6,7 @@ import { filterGalleryItems } from '@/lib/gallery-filter-utils';
 import { getMaterialDisplayName } from '@/lib/gallery-utils';
 import { urlFor } from '@/sanity/lib/image';
 import {
-    categoryLabels,
+    getCategoryLabel,
     isForProfessionals,
     type GalleryItemType,
 } from '@/types/gallery';
@@ -125,7 +125,7 @@ export function GalleryContent({ items }: GalleryContentProps) {
                                         </p>
                                         <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs text-muted-foreground">
                                             <span className="truncate">
-                                                {categoryLabels[item.category]}
+                                                {getCategoryLabel(item.category)}
                                             </span>
                                             <span className="truncate">
                                                 {getMaterialDisplayName(
@@ -167,7 +167,7 @@ export function GalleryContent({ items }: GalleryContentProps) {
                                                         : 'bg-hexo-blue-light/20 text-hexo-blue-light border-hexo-blue-light/30'
                                                 }`}
                                             >
-                                                {categoryLabels[item.category]}
+                                                {getCategoryLabel(item.category)}
                                             </span>
                                         </div>
 

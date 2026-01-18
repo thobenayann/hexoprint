@@ -1,4 +1,5 @@
 import type { Article, ArticleCategory, ArticleSummary } from '@/types/blog';
+import { normalizeArticleCategory } from '@/types/blog';
 
 // ==========================================
 // FONCTIONS UTILITAIRES (CLIENT-SIDE UNIQUEMENT)
@@ -22,9 +23,19 @@ export function filterArticlesByCategory(
         return articles;
     }
 
-    return articles.filter(
-        (article) => article.categories && article.categories.includes(category)
-    );
+    // Normaliser la catégorie de filtre pour la comparaison
+    const normalizedFilterCategory = normalizeArticleCategory(category);
+    
+    return articles.filter((article) => {
+        if (!article.categories || !Array.isArray(article.categories)) {
+            return false;
+        }
+        // Normaliser chaque catégorie de l'article pour la comparaison
+        return article.categories.some((cat) => {
+            const normalized = normalizeArticleCategory(cat);
+            return normalized === normalizedFilterCategory;
+        });
+    });
 }
 
 /**
