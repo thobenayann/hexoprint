@@ -1,7 +1,6 @@
-// Querying with "sanityFetch" will keep content automatically updated
-// Before using it, import and render "<SanityLive />" in your layout, see
-// https://github.com/sanity-io/next-sanity#live-content-api for more information.
-import { defineLive } from 'next-sanity';
+// Note: next-sanity@12+ utilise une approche différente pour le contenu live
+// L'API defineLive a été remplacée par Visual Editing et Loaders APIs
+// Pour l'instant, nous fournissons un wrapper simple qui utilise le client Sanity standard
 import { client, isSanityAvailable } from './client';
 
 // Type pour les options de sanityFetch
@@ -28,13 +27,8 @@ const createFallbackSanityFetch = () => {
     };
 };
 
-// Composant de fallback pour SanityLive
+// Composant de fallback pour SanityLive (conservé pour rétrocompatibilité)
 const FallbackSanityLive = () => {
-    if (process.env.NODE_ENV === 'development') {
-        console.warn(
-            '[Sanity] SanityLive désactivé - configuration Sanity manquante'
-        );
-    }
     return null;
 };
 
@@ -45,27 +39,33 @@ let sanityFetch: <T>(
 let SanityLive: React.ComponentType;
 
 if (isSanityAvailable() && client) {
-    try {
-        const liveConfig = defineLive({
-            client: client.withConfig({
-                // Live content is currently only available on the experimental API
-                // https://www.sanity.io/docs/api-versioning
-                apiVersion: 'vX',
-            }),
-            serverToken: process.env.SANITY_API_READ_TOKEN,
-            browserToken: process.env.NEXT_PUBLIC_SANITY_BROWSER_TOKEN,
-        });
-
-        sanityFetch = liveConfig.sanityFetch;
-        SanityLive = liveConfig.SanityLive;
-    } catch (error) {
-        console.error(
-            '[Sanity] Erreur lors de la configuration de defineLive:',
-            error
-        );
-        sanityFetch = createFallbackSanityFetch();
-        SanityLive = FallbackSanityLive;
-    }
+    const sanityClient = client; // Capture du client pour éviter les problèmes de null
+    
+    // Utilisation du client Sanity standard pour le fetching
+    sanityFetch = async function <T>(
+        options: SanityFetchOptions
+    ): Promise<SanityFetchResult<T>> {
+        try {
+            const data = await sanityClient.fetch<T>(
+                options.query,
+                options.params || {},
+                {
+                    cache: 'force-cache',
+                    next: {
+                        tags: options.tags || [],
+                    },
+                }
+            );
+            return { data };
+        } catch (error) {
+            console.error('[Sanity] Erreur lors du fetch:', error);
+            return { data: null };
+        }
+    };
+    
+    // Pour le contenu live, utilisez la nouvelle approche Visual Editing
+    // Voir: https://www.sanity.io/docs/visual-editing
+    SanityLive = FallbackSanityLive;
 } else {
     // Fallback si Sanity n'est pas configuré
     sanityFetch = createFallbackSanityFetch();
