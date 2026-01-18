@@ -4,6 +4,7 @@ import { useBlogFilters, useBlogStickyFilters } from '@/hooks/use-blog-filters';
 import {
     ARTICLE_CATEGORIES,
     FILTER_COLORS,
+    getArticleCategoryLabel,
     type ArticleCategory,
 } from '@/types/blog';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -72,7 +73,7 @@ export function BlogFilters() {
     // Obtenir le label du filtre actif pour l'affichage mobile
     const getActiveFilterLabel = () => {
         if (category !== 'all') {
-            return ARTICLE_CATEGORIES[category];
+            return getArticleCategoryLabel(category);
         }
         return 'Toutes les catégories';
     };

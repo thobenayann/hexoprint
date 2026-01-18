@@ -5,8 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/lib/blog-client-utils';
 import { cn } from '@/lib/utils';
 import {
-    ARTICLE_CATEGORIES,
     CATEGORY_COLORS,
+    getArticleCategoryLabel,
     type ArticleCategory,
     type ArticleSummary,
 } from '@/types/blog';
@@ -66,16 +66,10 @@ export function BlogCard({ article, priority = false }: BlogCardProps) {
                                         key={category}
                                         className={cn(
                                             'text-xs font-medium backdrop-blur-md border border-white/20 shadow-lg',
-                                            CATEGORY_COLORS[
-                                                category as ArticleCategory
-                                            ]
+                                            CATEGORY_COLORS[category]
                                         )}
                                     >
-                                        {
-                                            ARTICLE_CATEGORIES[
-                                                category as ArticleCategory
-                                            ]
-                                        }
+                                        {getArticleCategoryLabel(category)}
                                     </Badge>
                                 ))}
                             {article.categories.length > 2 && (
