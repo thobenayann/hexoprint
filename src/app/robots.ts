@@ -25,14 +25,20 @@ export default function robots(): MetadataRoute.Robots {
         rules: [
             {
                 userAgent: '*',
-                allow: '/',
+                allow: [
+                    '/',             // toutes les pages publiques
+                    '/manifest.json',
+                    '/favicon.ico',
+                    '/_next/static/', // permet les JS/CSS
+                    '/_next/image/',  // permet les images optimisées
+                  ],
                 disallow: [
-                    '/api/', // Routes API Next.js
-                    '/_next/', // Fichiers build Next.js
-                    '/studio/', // Sanity Studio
-                    '/studio/*', // Toutes les routes du studio
-                    '/_vercel/', // Fichiers Vercel
-                    '/admin/', // Routes d'administration (si applicable)
+                '/api/',
+                '/studio/',
+                '/studio/*',
+                '/_vercel/',
+                '/admin/',
+                '/_next/data/',  // bloque uniquement les données internes
                 ],
             },
             // Règles spécifiques pour les bots de réseaux sociaux
