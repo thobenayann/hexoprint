@@ -6,10 +6,12 @@
         "dev": "next dev --turbopack",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit",
         "typegen": "sanity typegen generate",
         "typegen:watch": "sanity typegen generate --watch",
-        "seo:validate": "node scripts/validate-seo.js"
+        "seo:validate": "node scripts/validate-seo.js",
+        "verify": "pnpm lint && pnpm typecheck && pnpm seo:validate && pnpm build"
     },
     "dependencies": {
         "@portabletext/react": "^3.2.1",
@@ -53,7 +55,6 @@
         "zod": "^3.25.67"
     },
     "devDependencies": {
-        "@eslint/eslintrc": "^3",
         "@sanity/codegen": "^5.2.0",
         "@tailwindcss/postcss": "^4",
         "@types/node": "^25.0.6",

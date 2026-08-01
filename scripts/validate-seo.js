@@ -5,13 +5,13 @@
  * Vérifie automatiquement les optimisations SEO du site
  */
 
+// This CLI is intentionally CommonJS because it is executed directly by Node.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const fs = require('fs');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require('path');
 
 // Configuration des chemins
-const SRC_DIR = path.join(__dirname, '..', 'src');
-const APP_DIR = path.join(SRC_DIR, 'app');
-
 // Couleurs pour les logs
 const colors = {
     green: '\x1b[32m',

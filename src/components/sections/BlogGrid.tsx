@@ -3,11 +3,7 @@
 import { useBlogFilters } from '@/hooks/use-blog-filters';
 import { filterArticlesByCategory } from '@/lib/blog-client-utils';
 import type { ArticleSummary } from '@/types/blog';
-import {
-    ARTICLE_CATEGORIES,
-    getArticleCategoryLabel,
-    type ArticleCategory,
-} from '@/types/blog';
+import { getArticleCategoryLabel } from '@/types/blog';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Filter } from 'lucide-react';
 import { useMemo } from 'react';

@@ -439,15 +439,18 @@ async function RelatedArticlesWrapper({
     articleId: string;
     categories: ArticleCategory[];
 }) {
+    let relatedArticles: Awaited<ReturnType<typeof getRelatedArticles>>;
+
     try {
-        const relatedArticles = await getRelatedArticles(
+        relatedArticles = await getRelatedArticles(
             articleId,
             categories,
             3
         );
-        return <RelatedArticles articles={relatedArticles} />;
     } catch (error) {
         console.error('[RelatedArticles] Erreur chargement:', error);
         return null; // Pas d'articles recommandés en cas d'erreur
     }
+
+    return <RelatedArticles articles={relatedArticles} />;
 }

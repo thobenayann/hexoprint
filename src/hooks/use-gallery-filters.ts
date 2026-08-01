@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import type { CategoryFilter, GalleryCategory } from '@/types/gallery';
+import type { CategoryFilter } from '@/types/gallery';
 import { isValidCategory } from '@/types/gallery';
 
 export type MaterialFilter = string; // Dynamique basé sur les données réelles
