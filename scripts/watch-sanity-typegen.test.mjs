@@ -198,6 +198,18 @@ test('POSIX termination kills a resistant descendant after the leader closes', a
     ]);
 });
 
+test('process-tree termination rejects non-positive and unsafe PIDs', async () => {
+    for (const pid of [0, -1, Number.MAX_SAFE_INTEGER + 1, 1.5]) {
+        const terminated = await terminateProcessTree(new FakeChild(pid), {
+            platform: 'win32',
+            spawnProcess: () => {
+                throw new Error('invalid PID must not spawn a command');
+            },
+        });
+        assert.equal(terminated, false);
+    }
+});
+
 test('Windows taskkill timeout is bounded and falls back without hanging', async () => {
     const leader = new FakeChild(4_300);
     const taskkillChildren = [];
@@ -340,6 +352,155 @@ test('Windows fallback kills captured descendants bottom-up after taskkill fails
     assert.equal(terminated, true);
     assert.deepEqual(killed, [4_702, 4_701, 4_700]);
     assert.deepEqual([...alive], []);
+});
+
+test('Windows fallback rescans dead parent seeds and kills a late child', async () => {
+    const leader = new FakeChild(7_000);
+    const alive = new Set([7_000, 7_001]);
+    const parents = new Map([[7_001, 7_000]]);
+    const killed = [];
+    let lateChildSpawned = false;
+    let clock = 0;
+    const spawnProcess = () => {
+        const command = new FakeChild(7_100);
+        queueMicrotask(() => {
+            command.emit('error', new Error('taskkill unavailable'));
+            command.emit('close', 1, null);
+        });
+        return command;
+    };
+    const captureDescendantPids = async (seedPids) => {
+        const seeds = new Set(
+            Array.isArray(seedPids) ? seedPids : [seedPids]
+        );
+        const discovered = [];
+        let added;
+        do {
+            added = false;
+            for (const pid of alive) {
+                if (seeds.has(pid)) continue;
+                const parentPid = parents.get(pid);
+                if (seeds.has(parentPid)) {
+                    seeds.add(pid);
+                    discovered.push(pid);
+                    added = true;
+                }
+            }
+        } while (added);
+        return discovered;
+    };
+    const killProcess = (pid, signal) => {
+        if (signal === 0) {
+            if (alive.has(pid)) return;
+            const error = new Error('process is gone');
+            error.code = 'ESRCH';
+            throw error;
+        }
+        killed.push(pid);
+        alive.delete(pid);
+        if (pid === 7_001 && !lateChildSpawned) {
+            lateChildSpawned = true;
+            parents.set(7_002, 7_001);
+            alive.add(7_002);
+        }
+        if (pid === leader.pid) {
+            leader.signalCode = signal;
+            queueMicrotask(() => leader.emit('close', null, signal));
+        }
+    };
+
+    const terminated = await terminateProcessTree(leader, {
+        captureDescendantPids,
+        commandTimeoutMs: 10,
+        fallbackPollIntervalMs: 5,
+        fallbackTimeoutMs: 100,
+        finalWaitMs: 20,
+        killProcess,
+        now: () => clock,
+        platform: 'win32',
+        requiredStableScans: 2,
+        spawnProcess,
+        wait: async (milliseconds) => {
+            clock += milliseconds;
+        },
+    });
+
+    assert.equal(terminated, true);
+    assert.deepEqual(killed, [7_001, 7_000, 7_002]);
+    assert.deepEqual([...alive], []);
+});
+
+test('Windows fallback times out when descendants fork continuously', async () => {
+    const leader = new FakeChild(7_200);
+    const alive = new Set([7_200, 7_201]);
+    const parents = new Map([[7_201, 7_200]]);
+    let nextPid = 7_202;
+    let clock = 0;
+    const spawnProcess = () => {
+        const command = new FakeChild(7_300);
+        queueMicrotask(() => {
+            command.emit('error', new Error('taskkill unavailable'));
+            command.emit('close', 1, null);
+        });
+        return command;
+    };
+    const captureDescendantPids = async (seedPids) => {
+        const seeds = new Set(
+            Array.isArray(seedPids) ? seedPids : [seedPids]
+        );
+        const discovered = [];
+        let added;
+        do {
+            added = false;
+            for (const pid of alive) {
+                if (seeds.has(pid)) continue;
+                if (seeds.has(parents.get(pid))) {
+                    seeds.add(pid);
+                    discovered.push(pid);
+                    added = true;
+                }
+            }
+        } while (added);
+        return discovered;
+    };
+    const killProcess = (pid, signal) => {
+        if (signal === 0) {
+            if (alive.has(pid)) return;
+            const error = new Error('process is gone');
+            error.code = 'ESRCH';
+            throw error;
+        }
+        alive.delete(pid);
+        if (pid !== leader.pid) {
+            const childPid = nextPid;
+            nextPid += 1;
+            parents.set(childPid, pid);
+            alive.add(childPid);
+        } else {
+            leader.signalCode = signal;
+            queueMicrotask(() => leader.emit('close', null, signal));
+        }
+    };
+
+    const terminated = await terminateProcessTree(leader, {
+        captureDescendantPids,
+        commandTimeoutMs: 10,
+        fallbackPollIntervalMs: 5,
+        fallbackTimeoutMs: 20,
+        finalWaitMs: 20,
+        killProcess,
+        now: () => clock,
+        platform: 'win32',
+        requiredStableScans: 2,
+        spawnProcess,
+        wait: async (milliseconds) => {
+            clock += milliseconds;
+        },
+    });
+
+    assert.equal(terminated, false);
+    assert.equal(alive.size > 0, true);
+    assert.equal(clock, 20);
 });
 
 test('Windows fallback returns false and supervisor fails when a descendant survives', async () => {

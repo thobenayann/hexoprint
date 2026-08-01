@@ -144,16 +144,17 @@ function runProcessWithOutput(spawnProcess, command, args, timeoutMs) {
 }
 
 async function captureWindowsDescendantPids(
-    rootPid,
+    seedPids,
     spawnProcess,
     timeoutMs
 ) {
+    const seedList = seedPids.join(', ');
     const script = [
         "$ErrorActionPreference = 'Stop'",
-        `$rootProcessId = ${rootPid}`,
+        `$seedProcessIds = @(${seedList})`,
         '$processes = @(Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId)',
         '$known = @{}',
-        '$known[$rootProcessId] = $true',
+        '$seedProcessIds | ForEach-Object { $known[[int]$_] = $true }',
         '$ordered = @()',
         'do { $added = $false; foreach ($process in $processes) { $candidateId = [int]$process.ProcessId; $parentId = [int]$process.ParentProcessId; if ($known.ContainsKey($parentId) -and -not $known.ContainsKey($candidateId)) { $known[$candidateId] = $true; $ordered += $candidateId; $added = $true } } } while ($added)',
         '$ordered -join [Environment]::NewLine',
@@ -218,22 +219,7 @@ async function waitForProcessGroupToStop(
     return true;
 }
 
-async function waitForProcessesToStop(pids, timeoutMs, killProcess) {
-    const remaining = new Set(pids);
-    const deadline = Date.now() + timeoutMs;
-
-    while (remaining.size > 0) {
-        for (const pid of remaining) {
-            if (!signalProcess(pid, 0, killProcess)) remaining.delete(pid);
-        }
-        if (remaining.size === 0) return true;
-        if (Date.now() >= deadline) return false;
-        await delay(Math.min(25, Math.max(1, deadline - Date.now())));
-    }
-    return true;
-}
-
-function normalizeDescendantPids(pids, rootPid) {
+function normalizeDescendantPids(pids) {
     if (!Array.isArray(pids)) {
         throw new TypeError('Windows descendant capture must return an array.');
     }
@@ -241,7 +227,7 @@ function normalizeDescendantPids(pids, rootPid) {
     const seen = new Set();
     const normalized = [];
     for (const pid of pids) {
-        if (!Number.isSafeInteger(pid) || pid <= 0 || pid === rootPid) {
+        if (!Number.isSafeInteger(pid) || pid <= 0) {
             throw new TypeError(`Invalid Windows descendant PID: ${pid}`);
         }
         if (!seen.has(pid)) {
@@ -250,6 +236,126 @@ function normalizeDescendantPids(pids, rootPid) {
         }
     }
     return normalized;
+}
+
+function killKnownProcessesBottomUp(orderedPids, killProcess) {
+    let succeeded = true;
+    for (let index = orderedPids.length - 1; index >= 0; index -= 1) {
+        const pid = orderedPids[index];
+        try {
+            if (signalProcess(pid, 0, killProcess)) {
+                signalProcess(pid, 'SIGKILL', killProcess);
+            }
+        } catch {
+            succeeded = false;
+        }
+    }
+    return succeeded;
+}
+
+function forceKillKnownProcessesBottomUp(orderedPids, killProcess) {
+    for (let index = orderedPids.length - 1; index >= 0; index -= 1) {
+        try {
+            signalProcess(orderedPids[index], 'SIGKILL', killProcess);
+        } catch {
+            // The caller still fails closed after every best-effort kill is tried.
+        }
+    }
+}
+
+function allKnownProcessesStopped(orderedPids, killProcess) {
+    for (const pid of orderedPids) {
+        if (signalProcess(pid, 0, killProcess)) return false;
+    }
+    return true;
+}
+
+async function terminateWindowsTreeAtFixedPoint({
+    captureDescendantPids,
+    captureTimeoutMs,
+    killProcess,
+    leaderPid,
+    now,
+    pollIntervalMs,
+    requiredStableScans,
+    timeoutMs,
+    wait,
+}) {
+    if (
+        !Number.isSafeInteger(timeoutMs) ||
+        timeoutMs <= 0 ||
+        !Number.isSafeInteger(pollIntervalMs) ||
+        pollIntervalMs <= 0 ||
+        !Number.isSafeInteger(requiredStableScans) ||
+        requiredStableScans <= 0
+    ) {
+        return false;
+    }
+
+    const deadline = now() + timeoutMs;
+    const knownPids = new Set([leaderPid]);
+    const orderedPids = [leaderPid];
+    let stableScans = 0;
+    const maximumScans =
+        Math.ceil(timeoutMs / pollIntervalMs) + requiredStableScans;
+
+    for (let scan = 0; scan < maximumScans && now() < deadline; scan += 1) {
+        const remainingMs = deadline - now();
+        const captureResult = await settleWithin(
+            Promise.resolve().then(() =>
+                captureDescendantPids([...knownPids])
+            ),
+            Math.max(1, Math.min(captureTimeoutMs, remainingMs))
+        );
+
+        let capturedPids;
+        try {
+            if (captureResult.status !== 'fulfilled') {
+                throw captureResult.error ?? new Error('Capture timed out.');
+            }
+            capturedPids = normalizeDescendantPids(captureResult.value);
+        } catch {
+            forceKillKnownProcessesBottomUp(orderedPids, killProcess);
+            return false;
+        }
+
+        let discoveredNewPid = false;
+        for (const pid of capturedPids) {
+            if (!knownPids.has(pid)) {
+                knownPids.add(pid);
+                orderedPids.push(pid);
+                discoveredNewPid = true;
+            }
+        }
+
+        if (!killKnownProcessesBottomUp(orderedPids, killProcess)) {
+            return false;
+        }
+
+        let allStopped;
+        try {
+            allStopped = allKnownProcessesStopped(orderedPids, killProcess);
+        } catch {
+            return false;
+        }
+
+        if (allStopped && !discoveredNewPid) {
+            stableScans += 1;
+            if (stableScans >= requiredStableScans) return true;
+        } else {
+            stableScans = 0;
+        }
+
+        const waitMs = Math.min(pollIntervalMs, deadline - now());
+        if (waitMs <= 0) break;
+        try {
+            await wait(waitMs);
+        } catch {
+            return false;
+        }
+    }
+
+    return false;
 }
 
 function settleWithin(promise, timeoutMs) {
@@ -321,14 +427,20 @@ export async function terminateProcessTree(
     {
         captureDescendantPids,
         commandTimeoutMs = 2_000,
+        fallbackPollIntervalMs = 50,
+        fallbackTimeoutMs = 8_000,
         finalWaitMs = 2_000,
         gracePeriodMs = 2_000,
         killProcess = process.kill,
+        now = Date.now,
         platform = process.platform,
+        requiredStableScans = 3,
         spawnProcess = spawn,
+        wait = delay,
     } = {}
 ) {
-    if (!child?.pid) return true;
+    if (!child) return true;
+    if (!Number.isSafeInteger(child.pid) || child.pid <= 0) return false;
 
     if (platform === 'win32') {
         for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -344,52 +456,23 @@ export async function terminateProcessTree(
         }
 
         const capture = captureDescendantPids ??
-            ((rootPid) =>
+            ((seedPids) =>
                 captureWindowsDescendantPids(
-                    rootPid,
+                    seedPids,
                     spawnProcess,
                     commandTimeoutMs
                 ));
-        const captureResult = await settleWithin(
-            Promise.resolve().then(() => capture(child.pid)),
-            commandTimeoutMs
-        );
-        let descendants = [];
-        let captureSucceeded = captureResult.status === 'fulfilled';
-        if (captureSucceeded) {
-            try {
-                descendants = normalizeDescendantPids(
-                    captureResult.value,
-                    child.pid
-                );
-            } catch {
-                captureSucceeded = false;
-            }
-        }
-
-        const capturedTree = [...descendants].reverse();
-        capturedTree.push(child.pid);
-        let killsSucceeded = captureSucceeded;
-        for (const pid of capturedTree) {
-            try {
-                signalProcess(pid, 'SIGKILL', killProcess);
-            } catch {
-                killsSucceeded = false;
-            }
-        }
-
-        const processesStopped = await waitForProcessesToStop(
-            capturedTree,
-            finalWaitMs,
-            killProcess
-        );
-        const leaderStopped = await waitForChildToStop(child, finalWaitMs);
-        return (
-            captureSucceeded &&
-            killsSucceeded &&
-            processesStopped &&
-            leaderStopped
-        );
+        return terminateWindowsTreeAtFixedPoint({
+            captureDescendantPids: capture,
+            captureTimeoutMs: commandTimeoutMs,
+            killProcess,
+            leaderPid: child.pid,
+            now,
+            pollIntervalMs: fallbackPollIntervalMs,
+            requiredStableScans,
+            timeoutMs: fallbackTimeoutMs,
+            wait,
+        });
     }
 
     signalProcessGroup(child.pid, 'SIGTERM', killProcess);
@@ -413,7 +496,7 @@ export function createSanityWatchSupervisor({
     sanityBin,
     schemaPath,
     schemaTimeoutMs = 30_000,
-    shutdownTimeoutMs = 7_000,
+    shutdownTimeoutMs = 15_000,
     signals = process,
     spawnProcess = spawn,
     stablePolls = 3,
