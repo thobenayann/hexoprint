@@ -49,3 +49,4 @@ prompts/
 
 # Generated Sanity types
 sanity.types.ts
+schema.json

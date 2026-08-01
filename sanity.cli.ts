@@ -9,4 +9,15 @@ const projectId =
 const dataset =
     process.env.NEXT_PUBLIC_SANITY_DATASET || process.env.SANITY_DATASET;
 
-export default defineCliConfig({ api: { projectId, dataset } });
+export default defineCliConfig({
+    api: { projectId, dataset },
+    schemaExtraction: {
+        path: './schema.json',
+    },
+    typegen: {
+        path: './src/**/*.{ts,tsx,js,jsx}',
+        schema: './schema.json',
+        generates: './sanity.types.ts',
+        overloadClientMethods: false,
+    },
+});
