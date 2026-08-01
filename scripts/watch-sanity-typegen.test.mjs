@@ -8,6 +8,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createInterface } from 'node:readline';
 import test from 'node:test';
 
 import {
@@ -20,6 +21,16 @@ class FakeChild extends EventEmitter {
     constructor(pid) {
         super();
         this.pid = pid;
+        this.exitCode = null;
+        this.signalCode = null;
+        this.killCalls = [];
+    }
+
+    kill(signal) {
+        this.killCalls.push(signal);
+        this.signalCode = signal;
+        queueMicrotask(() => this.emit('close', null, signal));
+        return true;
     }
 }
 
@@ -46,6 +57,14 @@ function processExists(pid) {
         return true;
     } catch (error) {
         return error.code === 'EPERM';
+    }
+}
+
+function killIgnoringMissing(pid) {
+    try {
+        process.kill(pid, 'SIGKILL');
+    } catch (error) {
+        if (error.code !== 'ESRCH') throw error;
     }
 }
 
@@ -139,6 +158,110 @@ test('unexpected successful child exit becomes a supervisor failure', async () =
     assert.equal(await supervisor.done, 1);
 });
 
+test('POSIX termination kills a resistant descendant after the leader closes', async () => {
+    const leader = new FakeChild(4_200);
+    let groupAlive = true;
+    const signals = [];
+    const killProcess = (pid, signal) => {
+        signals.push([pid, signal]);
+
+        if (signal === 'SIGTERM') {
+            leader.exitCode = 0;
+            queueMicrotask(() => leader.emit('close', 0, 'SIGTERM'));
+            return;
+        }
+        if (signal === 'SIGKILL') {
+            groupAlive = false;
+            return;
+        }
+        if (signal === 0 && !groupAlive) {
+            const error = new Error('process group is gone');
+            error.code = 'ESRCH';
+            throw error;
+        }
+    };
+
+    const terminated = await terminateProcessTree(leader, {
+        finalWaitMs: 20,
+        gracePeriodMs: 1,
+        killProcess,
+        platform: 'linux',
+    });
+
+    assert.equal(terminated, true);
+    assert.deepEqual(signals, [
+        [-4_200, 'SIGTERM'],
+        [-4_200, 0],
+        [-4_200, 'SIGKILL'],
+        [-4_200, 0],
+    ]);
+});
+
+test('Windows taskkill timeout is bounded and falls back without hanging', async () => {
+    const leader = new FakeChild(4_300);
+    const taskkillChildren = [];
+    const spawnProcess = () => {
+        const taskkill = new FakeChild(5_000 + taskkillChildren.length);
+        taskkillChildren.push(taskkill);
+        return taskkill;
+    };
+
+    const outcome = await Promise.race([
+        terminateProcessTree(leader, {
+            commandTimeoutMs: 5,
+            finalWaitMs: 20,
+            platform: 'win32',
+            spawnProcess,
+        }),
+        new Promise((resolve) => setTimeout(() => resolve('timed out'), 100)),
+    ]);
+
+    assert.equal(outcome, false);
+    assert.equal(taskkillChildren.length, 2);
+    assert.deepEqual(
+        taskkillChildren.map((child) => child.killCalls),
+        [['SIGKILL'], ['SIGKILL']]
+    );
+    assert.deepEqual(leader.killCalls, ['SIGKILL']);
+});
+
+test('shutdown resolves with failure when child close never arrives', async () => {
+    const child = new FakeChild(4_400);
+    const supervisor = createSanityWatchSupervisor({
+        logger: createLogger(),
+        schemaPath: join(tmpdir(), 'missing-sanity-schema.json'),
+        shutdownTimeoutMs: 10,
+        spawnProcess: () => child,
+        terminateTree: async () => true,
+    });
+
+    const result = await Promise.race([
+        supervisor.shutdown(0),
+        new Promise((resolve) => setTimeout(() => resolve('timed out'), 100)),
+    ]);
+
+    assert.equal(result, 1);
+    assert.strictEqual(supervisor.shutdown(0), supervisor.shutdown(0));
+});
+
+test('shutdown resolves with failure when tree termination never settles', async () => {
+    const child = new FakeChild(4_500);
+    const supervisor = createSanityWatchSupervisor({
+        logger: createLogger(),
+        schemaPath: join(tmpdir(), 'missing-sanity-schema.json'),
+        shutdownTimeoutMs: 10,
+        spawnProcess: () => child,
+        terminateTree: () => new Promise(() => {}),
+    });
+
+    const result = await Promise.race([
+        supervisor.shutdown(0),
+        new Promise((resolve) => setTimeout(() => resolve('timed out'), 100)),
+    ]);
+
+    assert.equal(result, 1);
+});
+
 test('process-tree termination leaves no child process behind', async () => {
     const parentSource = [
         "const {spawn} = require('node:child_process')",
@@ -150,10 +273,11 @@ test('process-tree termination leaves no child process behind', async () => {
         detached: process.platform !== 'win32',
         stdio: ['ignore', 'pipe', 'inherit'],
     });
-    const chunks = [];
-    parent.stdout.on('data', (chunk) => chunks.push(chunk));
-    await once(parent.stdout, 'data');
-    const childPid = Number(Buffer.concat(chunks).toString().trim());
+    const lines = createInterface({ input: parent.stdout });
+    const [pidLine] = await once(lines, 'line');
+    lines.close();
+    const childPid = Number(pidLine);
+    assert.equal(Number.isSafeInteger(childPid), true);
 
     try {
         assert.equal(processExists(parent.pid), true);
@@ -168,7 +292,7 @@ test('process-tree termination leaves no child process behind', async () => {
         assert.equal(processExists(parent.pid), false);
         assert.equal(processExists(childPid), false);
     } finally {
-        if (processExists(parent.pid)) parent.kill('SIGKILL');
-        if (processExists(childPid)) process.kill(childPid, 'SIGKILL');
+        killIgnoringMissing(parent.pid);
+        killIgnoringMissing(childPid);
     }
 });

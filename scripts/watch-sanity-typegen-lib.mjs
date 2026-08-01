@@ -6,7 +6,11 @@ function delay(milliseconds) {
 }
 
 function childHasStopped(child) {
-    return child.exitCode !== null || child.signalCode !== null;
+    return child.exitCode != null || child.signalCode != null;
+}
+
+function isMissingProcess(error) {
+    return error?.code === 'ESRCH';
 }
 
 async function waitForChildToStop(child, timeoutMs) {
@@ -26,7 +30,7 @@ async function waitForChildToStop(child, timeoutMs) {
     return stopped;
 }
 
-function runProcess(spawnProcess, command, args) {
+function runProcess(spawnProcess, command, args, timeoutMs) {
     return new Promise((resolve) => {
         let settled = false;
         let child;
@@ -39,14 +43,78 @@ function runProcess(spawnProcess, command, args) {
             resolve(false);
             return;
         }
+
+        let timer;
         const finish = (result) => {
             if (settled) return;
             settled = true;
+            clearTimeout(timer);
+            child.removeListener('error', onError);
+            child.removeListener('close', onClose);
             resolve(result);
         };
+        const onError = () => finish(false);
+        const onClose = (code) => finish(code === 0);
 
-        child.once('error', () => finish(false));
-        child.once('close', (code) => finish(code === 0));
+        child.once('error', onError);
+        child.once('close', onClose);
+        timer = setTimeout(() => {
+            try {
+                child.kill('SIGKILL');
+            } catch (error) {
+                if (!isMissingProcess(error)) {
+                    finish(false);
+                    return;
+                }
+            }
+            finish(false);
+        }, timeoutMs);
+    });
+}
+
+function signalProcessGroup(pid, signal, killProcess) {
+    try {
+        killProcess(-pid, signal);
+        return true;
+    } catch (error) {
+        if (isMissingProcess(error)) return false;
+        if (signal === 0 && error?.code === 'EPERM') return true;
+        throw error;
+    }
+}
+
+async function waitForProcessGroupToStop(
+    pid,
+    timeoutMs,
+    killProcess
+) {
+    const deadline = Date.now() + timeoutMs;
+
+    while (signalProcessGroup(pid, 0, killProcess)) {
+        if (Date.now() >= deadline) return false;
+        await delay(Math.min(25, Math.max(1, deadline - Date.now())));
+    }
+    return true;
+}
+
+function settleWithin(promise, timeoutMs) {
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = (result) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve(result);
+        };
+        const timer = setTimeout(
+            () => finish({ status: 'timeout' }),
+            timeoutMs
+        );
+
+        Promise.resolve(promise).then(
+            (value) => finish({ status: 'fulfilled', value }),
+            (error) => finish({ error, status: 'rejected' })
+        );
     });
 }
 
@@ -96,44 +164,53 @@ export function createStableJsonGate({
 export async function terminateProcessTree(
     child,
     {
+        commandTimeoutMs = 2_000,
+        finalWaitMs = 2_000,
         gracePeriodMs = 2_000,
+        killProcess = process.kill,
         platform = process.platform,
         spawnProcess = spawn,
     } = {}
 ) {
-    if (!child?.pid || childHasStopped(child)) return;
+    if (!child?.pid) return true;
 
     if (platform === 'win32') {
-        const killed = await runProcess(spawnProcess, 'taskkill.exe', [
-            '/PID',
-            String(child.pid),
-            '/T',
-            '/F',
-        ]);
-        if (!killed && !childHasStopped(child)) {
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+            const killed = await runProcess(
+                spawnProcess,
+                'taskkill.exe',
+                ['/PID', String(child.pid), '/T', '/F'],
+                commandTimeoutMs
+            );
+            if (killed) {
+                return waitForChildToStop(child, finalWaitMs);
+            }
+        }
+
+        if (!childHasStopped(child)) {
             try {
                 child.kill('SIGKILL');
             } catch (error) {
-                if (error.code !== 'ESRCH') throw error;
+                if (!isMissingProcess(error)) throw error;
             }
         }
-        await waitForChildToStop(child, gracePeriodMs);
-        return;
+        await waitForChildToStop(child, finalWaitMs);
+        return false;
     }
 
-    try {
-        process.kill(-child.pid, 'SIGTERM');
-    } catch (error) {
-        if (error.code !== 'ESRCH') throw error;
-    }
-    if (await waitForChildToStop(child, gracePeriodMs)) return;
+    signalProcessGroup(child.pid, 'SIGTERM', killProcess);
+    await delay(gracePeriodMs);
 
-    try {
-        process.kill(-child.pid, 'SIGKILL');
-    } catch (error) {
-        if (error.code !== 'ESRCH') throw error;
+    if (signalProcessGroup(child.pid, 0, killProcess)) {
+        signalProcessGroup(child.pid, 'SIGKILL', killProcess);
     }
-    await waitForChildToStop(child, gracePeriodMs);
+    const groupStopped = await waitForProcessGroupToStop(
+        child.pid,
+        finalWaitMs,
+        killProcess
+    );
+    const leaderStopped = await waitForChildToStop(child, finalWaitMs);
+    return groupStopped && leaderStopped;
 }
 
 export function createSanityWatchSupervisor({
@@ -142,6 +219,7 @@ export function createSanityWatchSupervisor({
     sanityBin,
     schemaPath,
     schemaTimeoutMs = 30_000,
+    shutdownTimeoutMs = 7_000,
     signals = process,
     spawnProcess = spawn,
     stablePolls = 3,
@@ -184,10 +262,33 @@ export function createSanityWatchSupervisor({
 
         shutdownPromise = (async () => {
             const records = [...children.values()];
-            await Promise.allSettled(
-                records.map(({ child }) => terminateTree(child))
+            const terminationResults = await Promise.all(
+                records.map(({ child }) =>
+                    settleWithin(
+                        Promise.resolve().then(() => terminateTree(child)),
+                        shutdownTimeoutMs
+                    )
+                )
             );
-            await Promise.allSettled(records.map(({ closed }) => closed));
+            const closeResults = await Promise.all(
+                records.map(({ closed }) =>
+                    settleWithin(closed, shutdownTimeoutMs)
+                )
+            );
+
+            if (
+                terminationResults.some(
+                    (result) =>
+                        result.status !== 'fulfilled' ||
+                        result.value === false
+                ) ||
+                closeResults.some((result) => result.status !== 'fulfilled')
+            ) {
+                requestedExitCode = 1;
+                logger.error(
+                    '[Sanity TypeGen] Timed out or failed while stopping child processes.'
+                );
+            }
             resolveDone(requestedExitCode);
             return requestedExitCode;
         })();

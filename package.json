@@ -10,6 +10,7 @@
         "typecheck": "tsc --noEmit",
         "typegen": "node -e \"const fs = require('node:fs'); if (fs.existsSync('schema.json')) fs.unlinkSync('schema.json')\" && sanity schema extract && sanity typegen generate",
         "typegen:watch": "node scripts/watch-sanity-typegen.mjs",
+        "test:typegen-watch": "node --test scripts/watch-sanity-typegen.test.mjs",
         "seo:validate": "node scripts/validate-seo.js",
         "verify": "pnpm lint && pnpm typecheck && pnpm seo:validate && pnpm build"
     },
