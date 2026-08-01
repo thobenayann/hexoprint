@@ -105,6 +105,7 @@ test('SIGINT during schema polling cancels polling and never starts typegen', as
     const terminateTree = async (child) => {
         terminated.push(child.pid);
         child.emit('close', null, 'SIGTERM');
+        return true;
     };
     const supervisor = createSanityWatchSupervisor({
         logger: createLogger(),
@@ -137,7 +138,7 @@ test('spawn failure shuts the supervisor down with a nonzero exit', async () => 
         logger: createLogger(),
         schemaPath: join(tmpdir(), 'missing-sanity-schema.json'),
         spawnProcess,
-        terminateTree: async () => {},
+        terminateTree: async () => true,
     });
 
     assert.equal(await supervisor.done, 1);
@@ -149,7 +150,7 @@ test('unexpected successful child exit becomes a supervisor failure', async () =
         logger: createLogger(),
         schemaPath: join(tmpdir(), 'missing-sanity-schema.json'),
         spawnProcess: () => child,
-        terminateTree: async () => {},
+        terminateTree: async () => true,
     });
 
     child.emit('exit', 0, null);
@@ -200,16 +201,33 @@ test('POSIX termination kills a resistant descendant after the leader closes', a
 test('Windows taskkill timeout is bounded and falls back without hanging', async () => {
     const leader = new FakeChild(4_300);
     const taskkillChildren = [];
+    const fallbackKills = [];
     const spawnProcess = () => {
         const taskkill = new FakeChild(5_000 + taskkillChildren.length);
         taskkillChildren.push(taskkill);
         return taskkill;
     };
+    const killProcess = (pid, signal) => {
+        if (signal === 0) {
+            const error = new Error('process is gone');
+            error.code = 'ESRCH';
+            throw error;
+        }
+        fallbackKills.push([pid, signal]);
+        leader.signalCode = signal;
+        queueMicrotask(() => leader.emit('close', null, signal));
+    };
 
     const outcome = await Promise.race([
         terminateProcessTree(leader, {
+            captureDescendantPids: async () => {
+                const error = new Error('PowerShell unavailable');
+                error.code = 'ENOENT';
+                throw error;
+            },
             commandTimeoutMs: 5,
             finalWaitMs: 20,
+            killProcess,
             platform: 'win32',
             spawnProcess,
         }),
@@ -222,7 +240,7 @@ test('Windows taskkill timeout is bounded and falls back without hanging', async
         taskkillChildren.map((child) => child.killCalls),
         [['SIGKILL'], ['SIGKILL']]
     );
-    assert.deepEqual(leader.killCalls, ['SIGKILL']);
+    assert.deepEqual(fallbackKills, [[4_300, 'SIGKILL']]);
 });
 
 test('shutdown resolves with failure when child close never arrives', async () => {
@@ -260,6 +278,128 @@ test('shutdown resolves with failure when tree termination never settles', async
     ]);
 
     assert.equal(result, 1);
+});
+
+test('shutdown treats an undefined termination result as failure', async () => {
+    const signals = new EventEmitter();
+    const child = new FakeChild(4_600);
+    const supervisor = createSanityWatchSupervisor({
+        logger: createLogger(),
+        schemaPath: join(tmpdir(), 'missing-sanity-schema.json'),
+        shutdownTimeoutMs: 20,
+        signals,
+        spawnProcess: () => child,
+        terminateTree: async () => {
+            child.emit('close', null, 'SIGTERM');
+            return undefined;
+        },
+    });
+
+    signals.emit('SIGINT');
+
+    assert.equal(await supervisor.done, 1);
+});
+
+test('Windows fallback kills captured descendants bottom-up after taskkill fails', async () => {
+    const leader = new FakeChild(4_700);
+    const alive = new Set([4_700, 4_701, 4_702]);
+    const killed = [];
+    const spawnProcess = () => {
+        const command = new FakeChild(5_100);
+        queueMicrotask(() => {
+            command.emit('error', new Error('taskkill unavailable'));
+            command.emit('close', 1, null);
+        });
+        return command;
+    };
+    const killProcess = (pid, signal) => {
+        if (signal === 0) {
+            if (alive.has(pid)) return;
+            const error = new Error('process is gone');
+            error.code = 'ESRCH';
+            throw error;
+        }
+        assert.equal(signal, 'SIGKILL');
+        killed.push(pid);
+        alive.delete(pid);
+        if (pid === leader.pid) {
+            leader.signalCode = signal;
+            queueMicrotask(() => leader.emit('close', null, signal));
+        }
+    };
+
+    const terminated = await terminateProcessTree(leader, {
+        captureDescendantPids: async () => [4_701, 4_702],
+        commandTimeoutMs: 10,
+        finalWaitMs: 20,
+        killProcess,
+        platform: 'win32',
+        spawnProcess,
+    });
+
+    assert.equal(terminated, true);
+    assert.deepEqual(killed, [4_702, 4_701, 4_700]);
+    assert.deepEqual([...alive], []);
+});
+
+test('Windows fallback returns false and supervisor fails when a descendant survives', async () => {
+    const leader = new FakeChild(4_800);
+    const alive = new Set([4_800, 4_801]);
+    const spawnProcess = () => {
+        const command = new FakeChild(5_200);
+        queueMicrotask(() => {
+            command.emit('error', new Error('taskkill permission denied'));
+            command.emit('close', 1, null);
+        });
+        return command;
+    };
+    const killProcess = (pid, signal) => {
+        if (signal === 0) {
+            if (alive.has(pid)) return;
+            const error = new Error('process is gone');
+            error.code = 'ESRCH';
+            throw error;
+        }
+        if (pid === 4_801) {
+            const error = new Error('access denied');
+            error.code = 'EPERM';
+            throw error;
+        }
+        alive.delete(pid);
+        if (pid === leader.pid) {
+            leader.signalCode = signal;
+            queueMicrotask(() => leader.emit('close', null, signal));
+        }
+    };
+    const terminateTree = (child) =>
+        terminateProcessTree(child, {
+            captureDescendantPids: async () => [4_801],
+            commandTimeoutMs: 10,
+            finalWaitMs: 20,
+            killProcess,
+            platform: 'win32',
+            spawnProcess,
+        });
+    const terminated = await terminateTree(leader);
+
+    assert.equal(terminated, false);
+    assert.deepEqual([...alive], [4_801]);
+
+    const signals = new EventEmitter();
+    const supervisorChild = new FakeChild(4_900);
+    const supervisor = createSanityWatchSupervisor({
+        logger: createLogger(),
+        schemaPath: join(tmpdir(), 'missing-sanity-schema.json'),
+        signals,
+        spawnProcess: () => supervisorChild,
+        terminateTree: async (child) => {
+            child.emit('close', null, 'SIGTERM');
+            return terminated;
+        },
+    });
+    signals.emit('SIGINT');
+
+    assert.equal(await supervisor.done, 1);
 });
 
 test('process-tree termination leaves no child process behind', async () => {

@@ -72,9 +72,130 @@ function runProcess(spawnProcess, command, args, timeoutMs) {
     });
 }
 
+function runProcessWithOutput(spawnProcess, command, args, timeoutMs) {
+    return new Promise((resolve) => {
+        let child;
+        try {
+            child = spawnProcess(command, args, {
+                stdio: ['ignore', 'pipe', 'ignore'],
+                windowsHide: true,
+            });
+        } catch (error) {
+            resolve({ error, ok: false, stdout: '' });
+            return;
+        }
+
+        let settled = false;
+        let stdout = '';
+        const finish = (result) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            child.removeListener('error', onError);
+            child.removeListener('close', onClose);
+            child.stdout?.removeListener('data', onData);
+            resolve({ stdout, ...result });
+        };
+        const onData = (chunk) => {
+            stdout += chunk.toString();
+            if (stdout.length > 1_000_000) {
+                try {
+                    child.kill('SIGKILL');
+                } catch (error) {
+                    if (!isMissingProcess(error)) {
+                        finish({ error, ok: false });
+                        return;
+                    }
+                }
+                finish({
+                    error: new Error('Process output exceeded one megabyte.'),
+                    ok: false,
+                });
+            }
+        };
+        const onError = (error) => finish({ error, ok: false });
+        const onClose = (code) => finish({ ok: code === 0 });
+        const timer = setTimeout(() => {
+            try {
+                child.kill('SIGKILL');
+            } catch (error) {
+                if (!isMissingProcess(error)) {
+                    finish({ error, ok: false });
+                    return;
+                }
+            }
+            finish({
+                error: new Error('Process timed out.'),
+                ok: false,
+            });
+        }, timeoutMs);
+
+        if (!child.stdout) {
+            finish({
+                error: new Error('Process stdout is unavailable.'),
+                ok: false,
+            });
+            return;
+        }
+        child.stdout.on('data', onData);
+        child.once('error', onError);
+        child.once('close', onClose);
+    });
+}
+
+async function captureWindowsDescendantPids(
+    rootPid,
+    spawnProcess,
+    timeoutMs
+) {
+    const script = [
+        "$ErrorActionPreference = 'Stop'",
+        `$rootProcessId = ${rootPid}`,
+        '$processes = @(Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId)',
+        '$known = @{}',
+        '$known[$rootProcessId] = $true',
+        '$ordered = @()',
+        'do { $added = $false; foreach ($process in $processes) { $candidateId = [int]$process.ProcessId; $parentId = [int]$process.ParentProcessId; if ($known.ContainsKey($parentId) -and -not $known.ContainsKey($candidateId)) { $known[$candidateId] = $true; $ordered += $candidateId; $added = $true } } } while ($added)',
+        '$ordered -join [Environment]::NewLine',
+    ].join('; ');
+    const result = await runProcessWithOutput(
+        spawnProcess,
+        'powershell.exe',
+        ['-NoProfile', '-NonInteractive', '-Command', script],
+        timeoutMs
+    );
+
+    if (!result.ok) {
+        throw result.error ?? new Error('Unable to capture Windows descendants.');
+    }
+    if (!result.stdout.trim()) return [];
+
+    return result.stdout
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .map((line) => {
+            const pid = Number(line.trim());
+            if (!Number.isSafeInteger(pid) || pid <= 0) {
+                throw new Error(`Invalid descendant PID: ${line}`);
+            }
+            return pid;
+        });
+}
+
 function signalProcessGroup(pid, signal, killProcess) {
     try {
         killProcess(-pid, signal);
+        return true;
+    } catch (error) {
+        if (isMissingProcess(error)) return false;
+        if (signal === 0 && error?.code === 'EPERM') return true;
+        throw error;
+    }
+}
+
+function signalProcess(pid, signal, killProcess) {
+    try {
+        killProcess(pid, signal);
         return true;
     } catch (error) {
         if (isMissingProcess(error)) return false;
@@ -95,6 +216,40 @@ async function waitForProcessGroupToStop(
         await delay(Math.min(25, Math.max(1, deadline - Date.now())));
     }
     return true;
+}
+
+async function waitForProcessesToStop(pids, timeoutMs, killProcess) {
+    const remaining = new Set(pids);
+    const deadline = Date.now() + timeoutMs;
+
+    while (remaining.size > 0) {
+        for (const pid of remaining) {
+            if (!signalProcess(pid, 0, killProcess)) remaining.delete(pid);
+        }
+        if (remaining.size === 0) return true;
+        if (Date.now() >= deadline) return false;
+        await delay(Math.min(25, Math.max(1, deadline - Date.now())));
+    }
+    return true;
+}
+
+function normalizeDescendantPids(pids, rootPid) {
+    if (!Array.isArray(pids)) {
+        throw new TypeError('Windows descendant capture must return an array.');
+    }
+
+    const seen = new Set();
+    const normalized = [];
+    for (const pid of pids) {
+        if (!Number.isSafeInteger(pid) || pid <= 0 || pid === rootPid) {
+            throw new TypeError(`Invalid Windows descendant PID: ${pid}`);
+        }
+        if (!seen.has(pid)) {
+            seen.add(pid);
+            normalized.push(pid);
+        }
+    }
+    return normalized;
 }
 
 function settleWithin(promise, timeoutMs) {
@@ -164,6 +319,7 @@ export function createStableJsonGate({
 export async function terminateProcessTree(
     child,
     {
+        captureDescendantPids,
         commandTimeoutMs = 2_000,
         finalWaitMs = 2_000,
         gracePeriodMs = 2_000,
@@ -187,15 +343,53 @@ export async function terminateProcessTree(
             }
         }
 
-        if (!childHasStopped(child)) {
+        const capture = captureDescendantPids ??
+            ((rootPid) =>
+                captureWindowsDescendantPids(
+                    rootPid,
+                    spawnProcess,
+                    commandTimeoutMs
+                ));
+        const captureResult = await settleWithin(
+            Promise.resolve().then(() => capture(child.pid)),
+            commandTimeoutMs
+        );
+        let descendants = [];
+        let captureSucceeded = captureResult.status === 'fulfilled';
+        if (captureSucceeded) {
             try {
-                child.kill('SIGKILL');
-            } catch (error) {
-                if (!isMissingProcess(error)) throw error;
+                descendants = normalizeDescendantPids(
+                    captureResult.value,
+                    child.pid
+                );
+            } catch {
+                captureSucceeded = false;
             }
         }
-        await waitForChildToStop(child, finalWaitMs);
-        return false;
+
+        const capturedTree = [...descendants].reverse();
+        capturedTree.push(child.pid);
+        let killsSucceeded = captureSucceeded;
+        for (const pid of capturedTree) {
+            try {
+                signalProcess(pid, 'SIGKILL', killProcess);
+            } catch {
+                killsSucceeded = false;
+            }
+        }
+
+        const processesStopped = await waitForProcessesToStop(
+            capturedTree,
+            finalWaitMs,
+            killProcess
+        );
+        const leaderStopped = await waitForChildToStop(child, finalWaitMs);
+        return (
+            captureSucceeded &&
+            killsSucceeded &&
+            processesStopped &&
+            leaderStopped
+        );
     }
 
     signalProcessGroup(child.pid, 'SIGTERM', killProcess);
@@ -280,7 +474,7 @@ export function createSanityWatchSupervisor({
                 terminationResults.some(
                     (result) =>
                         result.status !== 'fulfilled' ||
-                        result.value === false
+                        result.value !== true
                 ) ||
                 closeResults.some((result) => result.status !== 'fulfilled')
             ) {
