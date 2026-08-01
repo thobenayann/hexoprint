@@ -45,9 +45,7 @@ const PostProcessing = ({
     fullScreenEffect?: boolean;
 }) => {
     const { gl, scene, camera } = useThree();
-    const progressRef = useRef({ value: 0 });
-
-    const render = useMemo(() => {
+    const { postProcessing, uScanProgress } = useMemo(() => {
         const postProcessing = new THREE.PostProcessing(gl as any);
         const scenePass = pass(scene, camera);
         const scenePassColor = scenePass.getTextureNode('output');
@@ -55,9 +53,6 @@ const PostProcessing = ({
 
         // Create the scanning effect uniform
         const uScanProgress = uniform(0);
-        // The TSL graph and the frame callback share this imperative uniform.
-        // eslint-disable-next-line react-hooks/refs
-        progressRef.current = uScanProgress;
 
         // Create a blue overlay that follows the scan line (using Hexoprint blue light #96CFE7)
         const scanPos = float(uScanProgress.value);
@@ -81,14 +76,15 @@ const PostProcessing = ({
 
         postProcessing.outputNode = final;
 
-        return postProcessing;
+        return { postProcessing, uScanProgress };
     }, [camera, gl, scene, strength, threshold, fullScreenEffect]);
 
     useFrame(({ clock }) => {
         // Animate the scan line from top to bottom
-        progressRef.current.value =
+        // eslint-disable-next-line react-hooks/immutability -- Three TSL uniforms are imperative render-loop state.
+        uScanProgress.value =
             Math.sin(clock.getElapsedTime() * 0.5) * 0.5 + 0.5;
-        render.renderAsync();
+        postProcessing.renderAsync();
     }, 1);
 
     return null;
