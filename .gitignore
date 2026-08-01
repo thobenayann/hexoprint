@@ -44,5 +44,8 @@ next-env.d.ts
 .cursor/
 prompts/
 
+# local git worktrees
+.worktrees/
+
 # Generated Sanity types
 sanity.types.ts
