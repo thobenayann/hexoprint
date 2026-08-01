@@ -1,7 +1,7 @@
 'use client';
 
 import { GlareCard } from '@/components/ui/glare-card';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Clock, Target, Truck, Users } from 'lucide-react';
 
 const values = [
@@ -41,7 +41,7 @@ const containerVariants = {
     },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
     hidden: { opacity: 0, y: 60, scale: 0.8 },
     visible: {
         opacity: 1,

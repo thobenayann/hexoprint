@@ -55,6 +55,8 @@ const PostProcessing = ({
 
         // Create the scanning effect uniform
         const uScanProgress = uniform(0);
+        // The TSL graph and the frame callback share this imperative uniform.
+        // eslint-disable-next-line react-hooks/refs
         progressRef.current = uScanProgress;
 
         // Create a blue overlay that follows the scan line (using Hexoprint blue light #96CFE7)
@@ -95,18 +97,14 @@ const PostProcessing = ({
 const WIDTH = 300;
 const HEIGHT = 300;
 
+const staggerDelay = (index: number, maximum: number) =>
+    ((index * 0.61803398875) % 1) * maximum;
+
 const Scene = () => {
     const [rawMap, depthMap] = useTexture([TEXTUREMAP.src, DEPTHMAP.src]);
 
     const meshRef = useRef<Mesh>(null);
-    const [visible, setVisible] = useState(false);
-
-    useEffect(() => {
-        // Показываем изображение после загрузки текстур
-        if (rawMap && depthMap) {
-            setVisible(true);
-        }
-    }, [rawMap, depthMap]);
+    const visible = Boolean(rawMap && depthMap);
 
     const { material, uniforms } = useMemo(() => {
         const uPointer = uniform(new THREE.Vector2(0));
@@ -157,6 +155,7 @@ const Scene = () => {
 
     const [w, h] = useAspect(WIDTH, HEIGHT);
 
+    /* eslint-disable react-hooks/immutability -- Three uniforms are imperative render-loop state. */
     useFrame(({ clock }) => {
         uniforms.uProgress.value =
             Math.sin(clock.getElapsedTime() * 0.5) * 0.5 + 0.5;
@@ -180,6 +179,7 @@ const Scene = () => {
     useFrame(({ pointer }) => {
         uniforms.uPointer.value = pointer;
     });
+    /* eslint-enable react-hooks/immutability */
 
     const scaleFactor = 0.4;
     return (
@@ -209,13 +209,14 @@ export function Html(props: HeroFuturisticProps) {
     const titleWords = title.split(' ');
     const [visibleWords, setVisibleWords] = useState(0);
     const [subtitleVisible, setSubtitleVisible] = useState(false);
-    const [delays, setDelays] = useState<number[]>([]);
-    const [subtitleDelay, setSubtitleDelay] = useState(0);
-
-    useEffect(() => {
-        setDelays(titleWords.map(() => Math.random() * 0.07));
-        setSubtitleDelay(Math.random() * 0.1);
-    }, [titleWords.length]);
+    const delays = useMemo(
+        () => titleWords.map((_, index) => staggerDelay(index + 1, 0.07)),
+        [titleWords.length]
+    );
+    const subtitleDelay = useMemo(
+        () => staggerDelay(titleWords.length + 1, 0.1),
+        [titleWords.length]
+    );
 
     useEffect(() => {
         if (visibleWords < titleWords.length) {

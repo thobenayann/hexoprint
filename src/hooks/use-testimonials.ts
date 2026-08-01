@@ -1,7 +1,7 @@
 'use client';
 
 import { type HexoprintTestimonial } from '@/lib/google-reviews';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UseTestimonialsResult {
     testimonials: HexoprintTestimonial[];
@@ -29,7 +29,7 @@ export function useTestimonials(): UseTestimonialsResult {
     const [error, setError] = useState<string | null>(null);
     const [isGoogleSource, setIsGoogleSource] = useState(false);
 
-    const fetchTestimonials = async () => {
+    const fetchTestimonials = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
@@ -77,15 +77,15 @@ export function useTestimonials(): UseTestimonialsResult {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     const retry = () => {
         fetchTestimonials();
     };
 
     useEffect(() => {
-        fetchTestimonials();
-    }, []);
+        void Promise.resolve().then(fetchTestimonials);
+    }, [fetchTestimonials]);
 
     return {
         testimonials,

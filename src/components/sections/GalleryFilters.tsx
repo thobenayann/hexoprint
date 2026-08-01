@@ -6,7 +6,7 @@ import {
     useStickyFilters,
 } from '@/hooks/use-gallery-filters';
 import { categoryLabels, getCategoryLabel } from '@/types/gallery';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import { ChevronDown, Filter, Grid3X3, List, Settings, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -22,7 +22,7 @@ const containerVariants = {
     },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { opacity: 0, scale: 0.95 },
     visible: {
         opacity: 1,
@@ -34,7 +34,7 @@ const itemVariants = {
     },
 };
 
-const mobileFilterVariants = {
+const mobileFilterVariants: Variants = {
     hidden: { opacity: 0, y: 20, scale: 0.9 },
     visible: {
         opacity: 1,

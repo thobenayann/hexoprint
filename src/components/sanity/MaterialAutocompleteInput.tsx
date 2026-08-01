@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { set, StringInputProps, unset, useClient } from 'sanity';
 
 interface MaterialOption {
@@ -11,9 +11,6 @@ interface MaterialOption {
 export function MaterialAutocompleteInput(props: StringInputProps) {
     const { onChange, value = '', schemaType } = props;
     const [options, setOptions] = useState<MaterialOption[]>([]);
-    const [filteredOptions, setFilteredOptions] = useState<MaterialOption[]>(
-        []
-    );
     const [showDropdown, setShowDropdown] = useState(false);
     const [loading, setLoading] = useState(false);
     const client = useClient();
@@ -72,21 +69,20 @@ export function MaterialAutocompleteInput(props: StringInputProps) {
     }, [client]);
 
     useEffect(() => {
-        fetchExistingMaterials();
+        void Promise.resolve().then(fetchExistingMaterials);
     }, [fetchExistingMaterials]);
 
     // Filtrer les options lors de la saisie
-    useEffect(() => {
+    const filteredOptions = useMemo(() => {
         if (!value) {
-            setFilteredOptions(options.slice(0, 10)); // Afficher les 10 premiers par défaut
-        } else {
-            const filtered = options
-                .filter((option) =>
-                    option.value.toLowerCase().includes(value.toLowerCase())
-                )
-                .slice(0, 10);
-            setFilteredOptions(filtered);
+            return options.slice(0, 10);
         }
+
+        return options
+            .filter((option) =>
+                option.value.toLowerCase().includes(value.toLowerCase())
+            )
+            .slice(0, 10);
     }, [value, options]);
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {

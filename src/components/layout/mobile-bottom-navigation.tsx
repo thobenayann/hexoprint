@@ -9,7 +9,7 @@ import {
 import { useActivePath } from '@/hooks/use-active-path';
 import { NavigationService } from '@/lib/navigation-config';
 import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, type Transition } from 'framer-motion';
 import { Clock } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
@@ -39,7 +39,12 @@ const spanVariants = {
     exit: { width: 0, opacity: 0 },
 };
 
-const transition = { delay: 0.1, type: 'spring', bounce: 0, duration: 0.6 };
+const transition: Transition = {
+    delay: 0.1,
+    type: 'spring',
+    bounce: 0,
+    duration: 0.6,
+};
 
 /**
  * Mobile bottom navigation component for Hexoprint

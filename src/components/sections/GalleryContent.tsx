@@ -10,7 +10,7 @@ import {
     isForProfessionals,
     type GalleryItemType,
 } from '@/types/gallery';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Clock, Eye, Package, Zap } from 'lucide-react';
 import Image from 'next/image';
 import { useMemo } from 'react';
@@ -26,7 +26,7 @@ const containerVariants = {
     },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
         opacity: 1,

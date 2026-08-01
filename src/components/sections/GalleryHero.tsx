@@ -1,7 +1,7 @@
 'use client';
 
 import { ScrollIndicator } from '@/components/ui/scroll-indicator';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Camera, Grid3X3, Layers, Zap } from 'lucide-react';
 
 const heroStats = [
@@ -42,7 +42,7 @@ const containerVariants = {
     },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { opacity: 0, y: 30 },
     visible: {
         opacity: 1,
@@ -54,7 +54,7 @@ const itemVariants = {
     },
 };
 
-const statsVariants = {
+const statsVariants: Variants = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: {
         opacity: 1,

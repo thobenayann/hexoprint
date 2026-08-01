@@ -4,7 +4,7 @@ import { useBlogFilters } from '@/hooks/use-blog-filters';
 import { filterArticlesByCategory } from '@/lib/blog-client-utils';
 import type { ArticleSummary } from '@/types/blog';
 import { getArticleCategoryLabel } from '@/types/blog';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import { Filter } from 'lucide-react';
 import { useMemo } from 'react';
 import { BlogCard } from './BlogCard';
@@ -26,7 +26,7 @@ const containerVariants = {
     },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
         opacity: 1,

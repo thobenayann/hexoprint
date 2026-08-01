@@ -3,7 +3,7 @@
 import { GlareCard } from '@/components/ui/glare-card';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Building2, Cpu, Heart, Home, Palette, Wrench } from 'lucide-react';
 
 const prestations = [
@@ -51,7 +51,7 @@ const containerVariants = {
     },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
     hidden: { opacity: 0, y: 60, scale: 0.9 },
     visible: {
         opacity: 1,
@@ -64,7 +64,7 @@ const cardVariants = {
     },
 };
 
-const featureVariants = {
+const featureVariants: Variants = {
     hidden: { opacity: 0, x: -20 },
     visible: {
         opacity: 1,
@@ -76,7 +76,7 @@ const featureVariants = {
     },
 };
 
-const buttonVariants = {
+const buttonVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
         opacity: 1,

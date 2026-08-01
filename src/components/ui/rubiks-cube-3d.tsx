@@ -41,29 +41,6 @@ const RubiksCubeModel = forwardRef<any, any>((props, ref) => {
     const isResizingRef = useRef(false);
     const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const [size] = useState(0.8);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [cubes, setCubes] = useState<any[]>([]);
-    const [isVisible, setIsVisible] = useState(true);
-    const [deviceSettings, setDeviceSettings] = useState(() => {
-        const isMobile = window.innerWidth < 768;
-        return {
-            smoothness: isMobile ? 2 : 4,
-            castShadow: !isMobile,
-            receiveShadow: !isMobile,
-        };
-    });
-
-    const reusableVec3 = useMemo(() => new Vector3(), []);
-    const reusableMatrix4 = useMemo(() => new Matrix4(), []);
-    const reusableQuaternion = useMemo(() => new Quaternion(), []);
-
-    React.useImperativeHandle(ref, () => ({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(mainGroupRef.current as any),
-        reset: resetCube,
-    }));
-
     const initializeCubes = useCallback(() => {
         const initial = [];
         const positions = [-1, 0, 1];
@@ -83,9 +60,24 @@ const RubiksCubeModel = forwardRef<any, any>((props, ref) => {
         return initial;
     }, []);
 
-    useEffect(() => {
-        setCubes(initializeCubes());
+    const [size] = useState(0.8);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [cubes, setCubes] = useState<any[]>(initializeCubes);
+    const [isVisible, setIsVisible] = useState(true);
+    const [deviceSettings, setDeviceSettings] = useState(() => {
+        const isMobile = window.innerWidth < 768;
+        return {
+            smoothness: isMobile ? 2 : 4,
+            castShadow: !isMobile,
+            receiveShadow: !isMobile,
+        };
+    });
 
+    const reusableVec3 = useMemo(() => new Vector3(), []);
+    const reusableMatrix4 = useMemo(() => new Matrix4(), []);
+    const reusableQuaternion = useMemo(() => new Quaternion(), []);
+
+    useEffect(() => {
         isMountedRef.current = true;
 
         return () => {
@@ -120,6 +112,12 @@ const RubiksCubeModel = forwardRef<any, any>((props, ref) => {
             animationFrameRef.current = null;
         }
     }, [initializeCubes]);
+
+    React.useImperativeHandle(ref, () => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(mainGroupRef.current as any),
+        reset: resetCube,
+    }));
 
     const handleViewportChange = useCallback(() => {
         if (!isMountedRef.current) return;
@@ -347,6 +345,7 @@ const RubiksCubeModel = forwardRef<any, any>((props, ref) => {
         };
     }, [isVisible, selectNextMove]);
 
+    /* eslint-disable react-hooks/immutability -- These reusable Three.js buffers are intentionally mutated per frame. */
     const createRotationMatrix = useCallback(
         (axis: string, angle: number) => {
             reusableMatrix4.identity();
@@ -376,6 +375,7 @@ const RubiksCubeModel = forwardRef<any, any>((props, ref) => {
         },
         [reusableQuaternion]
     );
+    /* eslint-enable react-hooks/immutability */
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const normalizePositions = useCallback((cubes: any[]) => {
@@ -448,6 +448,7 @@ const RubiksCubeModel = forwardRef<any, any>((props, ref) => {
         [isInLayer]
     );
 
+    /* eslint-disable react-hooks/immutability -- The render loop updates Three.js objects in place. */
     useFrame((state, delta) => {
         if (!isVisible || !isMountedRef.current) return;
 
@@ -518,6 +519,7 @@ const RubiksCubeModel = forwardRef<any, any>((props, ref) => {
             }
         }
     });
+    /* eslint-enable react-hooks/immutability */
 
     const chromeMaterial = useMemo(
         () => ({
@@ -540,7 +542,7 @@ const RubiksCubeModel = forwardRef<any, any>((props, ref) => {
         [chromeMaterial]
     );
 
-    if (!isMountedRef.current || cubes.length === 0) {
+    if (cubes.length === 0) {
         return null;
     }
 

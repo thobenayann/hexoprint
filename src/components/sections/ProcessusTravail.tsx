@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import {
     CheckCircle,
     FileText,
@@ -72,7 +72,7 @@ const containerVariants = {
     },
 };
 
-const stepVariants = {
+const stepVariants: Variants = {
     hidden: { opacity: 0, x: -30 },
     visible: {
         opacity: 1,
