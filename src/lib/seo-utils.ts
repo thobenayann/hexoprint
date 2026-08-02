@@ -41,8 +41,7 @@ export function generateSEOMetadata(config: SEOConfig): Metadata {
         noIndex = false,
     } = config;
 
-    const url = `${COMPANY_INFO.siteUrl}${path}`;
-    const fullTitle = path === '' ? title : `${title} | ${COMPANY_INFO.name}`;
+    const canonical = new URL(path || '/', COMPANY_INFO.siteUrl).toString();
 
     // Mots-clés de base toujours inclus
     const baseKeywords = [
@@ -63,69 +62,41 @@ export function generateSEOMetadata(config: SEOConfig): Metadata {
         COMPANY_INFO.name,
     ];
 
-    const allKeywords = [...new Set([...baseKeywords, ...keywords])];
-
-    const metadata: Metadata = {
-        title: fullTitle,
+    return {
+        title,
         description,
-        keywords: allKeywords,
-        robots: noIndex
-            ? 'noindex, nofollow'
-            : {
-                  index: true,
-                  follow: true,
-                  googleBot: {
-                      index: true,
-                      follow: true,
-                      'max-video-preview': -1,
-                      'max-image-preview': 'large',
-                      'max-snippet': -1,
-                  },
-              },
+        keywords: [...new Set([...baseKeywords, ...keywords])],
+        alternates: { canonical },
+        robots: noIndex ? { index: false, follow: false } : { index: true, follow: true },
         openGraph: {
-            title: fullTitle,
-            description,
             type,
             locale: 'fr_FR',
             siteName: COMPANY_INFO.name,
-            url,
-            images: [
-                {
-                    url: image,
-                    width: 1200,
-                    height: type === 'article' ? 630 : 628,
-                    alt: `${COMPANY_INFO.name} - ${title}`,
-                    type: 'image/png',
-                },
-            ],
-            ...(type === 'article' && {
-                publishedTime,
-                authors: authors,
-            }),
+            url: canonical,
+            title,
+            description,
+            images: [{ url: image, width: 1200, height: 628, alt: title }],
+            ...(type === 'article' && publishedTime ? { publishedTime, authors } : {}),
         },
         twitter: {
             card: 'summary_large_image',
-            title: fullTitle,
+            title,
             description,
             images: [image],
-            ...(type === 'article' && {
-                creator: `@${COMPANY_INFO.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-            }),
         },
-        alternates: {
-            canonical: url,
-        },
-        authors: authors.map((author) => ({
-            name: author,
-            url: COMPANY_INFO.siteUrl,
-        })),
-        creator: COMPANY_INFO.name,
-        publisher: COMPANY_INFO.name,
-        category: 'Business',
-        classification: 'Impression 3D et fabrication additive',
     };
+}
 
-    return metadata;
+export function truncateMetadataText(value: string, maxLength: number) {
+    const normalized = value.replace(/\s+/g, ' ').trim();
+    if (normalized.length <= maxLength) return normalized;
+    const slice = normalized.slice(0, maxLength - 1);
+    const wordBoundary = slice.lastIndexOf(' ');
+    const truncated =
+        wordBoundary >= Math.floor(maxLength * 0.6)
+            ? slice.slice(0, wordBoundary)
+            : slice;
+    return `${truncated.trimEnd()}…`;
 }
 
 /**

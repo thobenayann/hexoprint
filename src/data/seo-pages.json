@@ -1,0 +1,66 @@
+[
+  {
+    "key": "home",
+    "path": "/",
+    "title": "Impression 3D sur mesure à Seysses (31)",
+    "description": "Hexoprint réalise vos prototypes, pièces de remplacement et créations en impression 3D à Seysses, près de Toulouse. Devis personnalisé.",
+    "changeFrequency": "weekly",
+    "priority": 1
+  },
+  {
+    "key": "services",
+    "path": "/prestations",
+    "title": "Prestations d’impression 3D sur mesure",
+    "description": "Prototypage, pièces techniques, réparation et créations sur mesure en impression 3D pour particuliers et professionnels près de Toulouse.",
+    "changeFrequency": "monthly",
+    "priority": 0.9
+  },
+  {
+    "key": "contact",
+    "path": "/contact",
+    "title": "Contact et devis d’impression 3D",
+    "description": "Décrivez votre projet d’impression 3D à Hexoprint et recevez un devis personnalisé. Atelier à Seysses, près de Toulouse.",
+    "changeFrequency": "monthly",
+    "priority": 0.8
+  },
+  {
+    "key": "about",
+    "path": "/a-propos",
+    "title": "À propos de l’atelier Hexoprint",
+    "description": "Découvrez l’atelier Hexoprint à Seysses, ses méthodes, ses matériaux et son accompagnement pour vos projets d’impression 3D sur mesure.",
+    "changeFrequency": "monthly",
+    "priority": 0.7
+  },
+  {
+    "key": "gallery",
+    "path": "/galerie",
+    "title": "Galerie de réalisations en impression 3D",
+    "description": "Parcourez les pièces, prototypes et créations réalisés par Hexoprint en impression 3D à Seysses, près de Toulouse.",
+    "changeFrequency": "weekly",
+    "priority": 0.7
+  },
+  {
+    "key": "blog",
+    "path": "/blog",
+    "title": "Conseils et guides sur l’impression 3D",
+    "description": "Conseils, guides techniques et retours d’expérience d’Hexoprint pour mieux préparer et réussir vos projets d’impression 3D.",
+    "changeFrequency": "weekly",
+    "priority": 0.7
+  },
+  {
+    "key": "legal",
+    "path": "/mentions-legales",
+    "title": "Mentions légales",
+    "description": "Consultez les mentions légales du site Hexoprint, atelier d’impression 3D situé à Seysses en Haute-Garonne.",
+    "changeFrequency": "yearly",
+    "priority": 0.2
+  },
+  {
+    "key": "privacy",
+    "path": "/politique-confidentialite",
+    "title": "Politique de confidentialité",
+    "description": "Consultez la politique de confidentialité d’Hexoprint et les informations relatives au traitement des données et aux outils de mesure.",
+    "changeFrequency": "yearly",
+    "priority": 0.2
+  }
+]
