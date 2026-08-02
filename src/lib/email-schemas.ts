@@ -12,7 +12,10 @@ export const EmailFileSchema = z.object({
 export const ContactFormSchema = z
     .object({
         type: z.enum(['particulier', 'professionnel'], {
-            required_error: 'Le type de client est requis',
+            error: (issue) =>
+                issue.input === undefined
+                    ? 'Le type de client est requis'
+                    : undefined,
         }),
         firstName: z
             .string()

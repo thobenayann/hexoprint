@@ -50,8 +50,8 @@ export function ContactForm() {
             const validationResult = ContactFormSchema.safeParse(formData);
 
             if (!validationResult.success) {
-                const errors = validationResult.error.errors.map(
-                    (err) => err.message
+                const errors = validationResult.error.issues.map(
+                    (issue) => issue.message
                 );
                 throw new Error(`Données invalides: ${errors.join(', ')}`);
             }

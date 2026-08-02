@@ -1,6 +1,6 @@
 import { ContactFormAdminEmail } from '@/components/emails/contact-form-admin-email';
 import { ContactFormConfirmationEmail } from '@/components/emails/contact-form-confirmation-email';
-import { render } from '@react-email/render';
+import { render } from 'react-email';
 import { Resend } from 'resend';
 import {
     EMAIL_SETTINGS,
