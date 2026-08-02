@@ -1,5 +1,6 @@
 import '@/app/globals.css';
 import { COMPANY_INFO } from '@/lib/company-info';
+import { getStaticSeoPage } from '@/lib/seo-config';
 import { SanityLive } from '@/sanity/lib/live';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
@@ -60,16 +61,15 @@ export const viewport: Viewport = {
     colorScheme: 'dark light',
 };
 
+const homeSeo = getStaticSeoPage('/');
+
 export const metadata: Metadata = {
-    metadataBase: new URL(
-        process.env.NEXT_PUBLIC_SITE_URL || COMPANY_INFO.siteUrl
-    ),
+    metadataBase: new URL(COMPANY_INFO.siteUrl),
     title: {
-        default: `${COMPANY_INFO.name} - Impression 3D artisanale à Seysses (31)`,
+        default: `${homeSeo.title} | ${COMPANY_INFO.name}`,
         template: `%s | ${COMPANY_INFO.name}`,
     },
-    description:
-        "Spécialiste de l'impression 3D pour professionnels et particuliers en Haute-Garonne. Prototypage rapide, modélisme, pièces sur-mesure.",
+    description: homeSeo.description,
     keywords: [
         'impression 3D',
         'Haute-Garonne',
@@ -110,15 +110,14 @@ export const metadata: Metadata = {
         locale: 'fr_FR',
         siteName: COMPANY_INFO.name,
         url: COMPANY_INFO.siteUrl,
-        title: `${COMPANY_INFO.name} - Impression 3D artisanale à Seysses (31)`,
-        description:
-            "Spécialiste de l'impression 3D pour professionnels et particuliers en Haute-Garonne.",
+        title: homeSeo.title,
+        description: homeSeo.description,
         images: [
             {
                 url: `${COMPANY_INFO.siteUrl}/logos/hexoprint-logo-impression-3d-with-text-1200x628.png`,
                 width: 1200,
                 height: 628,
-                alt: `${COMPANY_INFO.name} - Spécialiste impression 3D`,
+                alt: homeSeo.title,
                 type: 'image/png',
             },
         ],
@@ -126,9 +125,8 @@ export const metadata: Metadata = {
     twitter: {
         card: 'summary_large_image',
         creator: `@${COMPANY_INFO.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-        title: `${COMPANY_INFO.name} - Impression 3D artisanale à Seysses (31)`,
-        description:
-            "Spécialiste de l'impression 3D pour professionnels et particuliers en Haute-Garonne.",
+        title: homeSeo.title,
+        description: homeSeo.description,
         images: [
             `${COMPANY_INFO.siteUrl}/logos/hexoprint-logo-impression-3d-with-text-1200x628.png`,
         ],

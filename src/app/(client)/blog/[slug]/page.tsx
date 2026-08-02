@@ -6,6 +6,7 @@ import { ShareButton } from '@/components/ui/share-button';
 import { calculateReadingTime, formatDate } from '@/lib/blog-client-utils';
 import { getArticleBySlug, getRelatedArticles } from '@/lib/blog-utils';
 import { COMPANY_INFO } from '@/lib/company-info';
+import { generateSEOMetadata, truncateMetadataText } from '@/lib/seo-utils';
 import { urlFor } from '@/sanity/lib/image';
 import type { ArticleCategory } from '@/types/blog';
 import { ARTICLE_CATEGORIES, CATEGORY_COLORS } from '@/types/blog';
@@ -150,7 +151,6 @@ export async function generateMetadata({
         const { slug } = await params;
         const article = await getArticleBySlug(slug);
 
-        const title = article.seo?.metaTitle || article.title;
         const description =
             article.seo?.metaDescription ||
             `Découvrez notre article sur ${article.title}`;
@@ -158,40 +158,15 @@ export async function generateMetadata({
             ? urlFor(article.mainImage.asset).width(1200).height(630).url()
             : `${COMPANY_INFO.website.url}/logos/hexoprint-logo-impression-3d-with-text-1200x628.png`;
 
-        return {
-            title: `${title} - Blog ${COMPANY_INFO.name}`,
-            description,
-            keywords: [
-                ...article.categories.map(
-                    (cat) => ARTICLE_CATEGORIES[cat as ArticleCategory]
-                ),
-                'impression 3D',
-                'blog',
-                COMPANY_INFO.name,
-                'Haute-Garonne',
-            ],
-            openGraph: {
-                title,
-                description,
-                type: 'article',
-                url: `${COMPANY_INFO.website.url}/blog/${article.slug.current}`,
-                images: [
-                    { url: imageUrl, width: 1200, height: 630, alt: title },
-                ],
-                publishedTime: article.publishedAt,
-                authors: [COMPANY_INFO.name],
-                siteName: COMPANY_INFO.name,
-            },
-            twitter: {
-                card: 'summary_large_image',
-                title,
-                description,
-                images: [imageUrl],
-            },
-            alternates: {
-                canonical: `${COMPANY_INFO.website.url}/blog/${article.slug.current}`,
-            },
-        };
+        return generateSEOMetadata({
+            title: truncateMetadataText(article.title, 45),
+            description: truncateMetadataText(description, 155),
+            path: `/blog/${slug}`,
+            image: imageUrl,
+            type: 'article',
+            publishedTime: article.publishedAt,
+            authors: [COMPANY_INFO.founder],
+        });
     } catch {
         return {
             title: `Article - Blog ${COMPANY_INFO.name}`,

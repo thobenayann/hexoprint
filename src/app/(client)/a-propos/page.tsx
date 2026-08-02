@@ -4,49 +4,17 @@ import { AboutInfos } from '@/components/sections/AboutInfos';
 import { CallToAction } from '@/components/sections/CallToAction';
 import { COMPANY_INFO } from '@/lib/company-info';
 import { getMaterials } from '@/lib/materials-utils';
-import type { Metadata } from 'next';
-import { ABOUT_PAGE_DATA, ABOUT_PAGE_SEO } from './constants';
+import { getStaticSeoPage } from '@/lib/seo-config';
+import { generateSEOMetadata } from '@/lib/seo-utils';
+import { ABOUT_PAGE_DATA } from './constants';
 
-export const metadata: Metadata = {
-    title: ABOUT_PAGE_SEO.title,
-    description: ABOUT_PAGE_SEO.description,
-    keywords: ABOUT_PAGE_SEO.keywords,
-    openGraph: {
-        title: ABOUT_PAGE_SEO.title,
-        description: ABOUT_PAGE_SEO.description,
-        type: 'website',
-        locale: 'fr_FR',
-        siteName: "Hexo'print",
-        images: [
-            {
-                url: '/logos/hexoprint-logo-impression-3d-with-text-1200x628.png',
-                width: 1200,
-                height: 628,
-                alt: "Hexo'print - Spécialiste impression 3D",
-            },
-        ],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: ABOUT_PAGE_SEO.title,
-        description: ABOUT_PAGE_SEO.description,
-        images: ['/logos/hexoprint-logo-impression-3d-with-text-1200x628.png'],
-    },
-    robots: {
-        index: true,
-        follow: true,
-        googleBot: {
-            index: true,
-            follow: true,
-            'max-video-preview': -1,
-            'max-image-preview': 'large',
-            'max-snippet': -1,
-        },
-    },
-    alternates: {
-        canonical: `${COMPANY_INFO.siteUrl}/a-propos`,
-    },
-};
+const seo = getStaticSeoPage('/a-propos');
+
+export const metadata = generateSEOMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: seo.path,
+});
 
 export default async function AboutPage() {
     // Récupération des matériaux depuis Sanity avec fallback

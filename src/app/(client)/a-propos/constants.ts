@@ -47,19 +47,3 @@ export const ABOUT_PAGE_DATA = {
         },
     },
 } as const;
-
-export const ABOUT_PAGE_SEO = {
-    title: "À propos d'Hexo'print - Spécialiste impression 3D Haute-Garonne",
-    description:
-        "Découvrez Hexo'print, votre spécialiste en impression 3D artisanale à Seysses (31). Passion, expertise technique et qualité au service de vos projets sur-mesure.",
-    keywords: [
-        'impression 3D Haute-Garonne',
-        'impression 3D Seysses',
-        'artisan impression 3D',
-        'Hexoprint à propos',
-        'spécialiste impression 3D 31',
-        'fabrication additive artisanale',
-        'impression 3D sur-mesure Toulouse',
-        'expertise matériaux 3D',
-    ] as string[],
-};

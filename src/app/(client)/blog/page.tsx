@@ -3,7 +3,8 @@ import { BlogFilters } from '@/components/sections/BlogFilters';
 import { BlogHero } from '@/components/sections/BlogHero';
 import { CallToAction } from '@/components/sections/CallToAction';
 import { COMPANY_INFO } from '@/lib/company-info';
-import type { Metadata } from 'next';
+import { getStaticSeoPage } from '@/lib/seo-config';
+import { generateSEOMetadata } from '@/lib/seo-utils';
 import { Suspense } from 'react';
 
 // Composant de fallback pour le chargement
@@ -54,69 +55,13 @@ function BlogFiltersFallback() {
     );
 }
 
-// Métadonnées de la page
-export const metadata: Metadata = {
-    title: `Blog d'expertise en impression 3D - ${COMPANY_INFO.name}`,
-    description:
-        "Découvrez nos conseils pratiques, guides techniques et inspirations créatives pour vos projets d'impression 3D. Expertise Hexoprint en Haute-Garonne.",
-    keywords: [
-        'blog impression 3D',
-        'guides impression 3D',
-        'conseils impression 3D',
-        'tutoriels 3D',
-        'techniques impression 3D',
-        'matériaux 3D',
-        'prototypage',
-        'modélisme',
-        'réparation 3D',
-        'décoration 3D',
-        'expertise impression 3D',
-        'Hexoprint',
-        'Haute-Garonne',
-        'Toulouse',
-        'Seysses',
-    ],
-    openGraph: {
-        title: `Blog d'expertise en impression 3D - ${COMPANY_INFO.name}`,
-        description:
-            "Découvrez nos conseils pratiques, guides techniques et inspirations créatives pour vos projets d'impression 3D.",
-        type: 'website',
-        locale: 'fr_FR',
-        siteName: COMPANY_INFO.name,
-        url: `${COMPANY_INFO.website.url}/blog`,
-        images: [
-            {
-                url: `${COMPANY_INFO.website.url}/logos/hexoprint-logo-impression-3d-with-text-1200x628.png`,
-                width: 1200,
-                height: 628,
-                alt: `${COMPANY_INFO.name} - Blog impression 3D`,
-            },
-        ],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: `Blog d'expertise en impression 3D - ${COMPANY_INFO.name}`,
-        description:
-            "Découvrez nos conseils pratiques, guides techniques et inspirations créatives pour vos projets d'impression 3D.",
-        images: [
-            `${COMPANY_INFO.website.url}/logos/hexoprint-logo-impression-3d-with-text-1200x628.png`,
-        ],
-    },
-    robots: {
-        index: true,
-        follow: true,
-        googleBot: {
-            index: true,
-            follow: true,
-            'max-video-preview': -1,
-            'max-image-preview': 'large',
-            'max-snippet': -1,
-        },
-    },
-    alternates: {
-        canonical: `${COMPANY_INFO.website.url}/blog`,
-    },
-};
+const seo = getStaticSeoPage('/blog');
+
+export const metadata = generateSEOMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: seo.path,
+});
 
 export default function BlogPage() {
     return (

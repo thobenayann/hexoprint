@@ -1,4 +1,6 @@
 import { COMPANY_INFO } from '@/lib/company-info';
+import { getStaticSeoPage } from '@/lib/seo-config';
+import { generateSEOMetadata } from '@/lib/seo-utils';
 import {
     AlertTriangle,
     Cookie,
@@ -12,36 +14,13 @@ import {
     Shield,
     Users,
 } from 'lucide-react';
-import { Metadata } from 'next';
+const seo = getStaticSeoPage('/politique-confidentialite');
 
-export const metadata: Metadata = {
-    title: 'Politique de Confidentialité - Hexoprint | Protection Données RGPD',
-    description:
-        "Politique de confidentialité d'Hexoprint conforme au RGPD. Protection des données personnelles pour vos projets d'impression 3D à Seysses. Transparence et sécurité garanties.",
-    keywords: [
-        'politique confidentialité impression 3D',
-        'RGPD Hexoprint',
-        'protection données personnelles',
-        'sécurité données impression 3D',
-        'cookies fabrication additive',
-        'confidentialité prototypage rapide',
-        'CNIL impression 3D',
-        'données clients Seysses',
-    ],
-    robots: 'index, follow',
-    openGraph: {
-        title: 'Politique de Confidentialité - Hexoprint RGPD',
-        description:
-            "Découvrez comment Hexoprint protège vos données personnelles selon le RGPD. Transparence totale sur la collecte et l'utilisation des données pour vos projets d'impression 3D.",
-        url: `${COMPANY_INFO.siteUrl}/politique-confidentialite`,
-        siteName: 'Hexoprint',
-        locale: 'fr_FR',
-        type: 'website',
-    },
-    alternates: {
-        canonical: `${COMPANY_INFO.siteUrl}/politique-confidentialite`,
-    },
-};
+export const metadata = generateSEOMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: seo.path,
+});
 
 export default function PolitiqueConfidentialitePage() {
     const currentDate = new Date().toLocaleDateString('fr-FR', {
@@ -51,7 +30,7 @@ export default function PolitiqueConfidentialitePage() {
     });
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
+        <main className="min-h-screen bg-gradient-to-br from-background to-muted/30">
             {/* Header Section */}
             <div className="relative overflow-hidden bg-hexo-blue-dark/50 text-white pt-16">
                 <div className='absolute inset-0 bg-[url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxwYXR0ZXJuIGlkPSJkb3RzIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgICA8Y2lyY2xlIGN4PSIxMCIgY3k9IjEwIiByPSIxIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgogICAgPC9wYXR0ZXJuPgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2RvdHMpIi8+Cjwvc3ZnPgo=")] opacity-30'></div>
@@ -972,6 +951,6 @@ export default function PolitiqueConfidentialitePage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }
