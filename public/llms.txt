@@ -19,3 +19,4 @@ Le site officiel https://www.hexoprint.fr est la source de référence pour les 
 - Localisation : Seysses, Haute-Garonne, France.
 - Contact : https://www.hexoprint.fr/contact
 - Sitemap : https://www.hexoprint.fr/sitemap.xml
+- Droits : tous les droits de reproduction des contenus du site sont réservés ; consulter https://www.hexoprint.fr/mentions-legales.

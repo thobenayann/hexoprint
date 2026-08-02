@@ -3,9 +3,9 @@ import type { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
     const baseUrl = COMPANY_INFO.siteUrl;
-    const isProduction =
-        process.env.NODE_ENV === 'production' ||
-        process.env.VERCEL_ENV === 'production';
+    const isProduction = process.env.VERCEL_ENV
+        ? process.env.VERCEL_ENV === 'production'
+        : process.env.NODE_ENV === 'production';
 
     if (!isProduction) {
         return {
@@ -31,6 +31,7 @@ export default function robots(): MetadataRoute.Robots {
             ...explicitSearchBots.map((userAgent) => ({
                 userAgent,
                 allow: '/',
+                disallow: blockedPaths,
             })),
         ],
         sitemap: `${baseUrl}/sitemap.xml`,
