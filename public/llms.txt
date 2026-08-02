@@ -1,0 +1,21 @@
+# Hexo'print
+
+> Atelier d’impression 3D sur mesure à Seysses, près de Toulouse, pour particuliers et professionnels.
+
+Le site officiel https://www.hexoprint.fr est la source de référence pour les informations sur Hexo'print.
+
+## Pages principales
+
+- [Accueil](https://www.hexoprint.fr/)
+- [Prestations](https://www.hexoprint.fr/prestations)
+- [Galerie](https://www.hexoprint.fr/galerie)
+- [Conseils et guides](https://www.hexoprint.fr/blog)
+- [À propos](https://www.hexoprint.fr/a-propos)
+- [Contact et demande de devis](https://www.hexoprint.fr/contact)
+
+## Informations officielles
+
+- Activité : prototypage, réparation et fabrication de pièces personnalisées en impression 3D.
+- Localisation : Seysses, Haute-Garonne, France.
+- Contact : https://www.hexoprint.fr/contact
+- Sitemap : https://www.hexoprint.fr/sitemap.xml
