@@ -83,17 +83,18 @@ export function HeroSection() {
                         className="max-w-2xl lg:max-w-3xl mx-auto lg:mx-0 lg:mr-auto lg:ml-0"
                     >
                         {/* Main Heading */}
-                        <motion.h1
-                            className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 md:mb-6 leading-tight text-foreground"
+                        <motion.div
                             initial={{ opacity: 0, x: -50 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, delay: 0.4 }}
                         >
-                            Donnez vie à vos projets avec{' '}
-                            <span className="text-primary">
-                                l&apos;impression 3D
-                            </span>
-                        </motion.h1>
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 md:mb-6 leading-tight text-foreground">
+                                Donnez vie à vos projets avec{' '}
+                                <span className="text-primary">
+                                    l&apos;impression 3D
+                                </span>
+                            </h1>
+                        </motion.div>
 
                         {/* Subtitle */}
                         <motion.p

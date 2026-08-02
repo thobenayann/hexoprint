@@ -103,16 +103,17 @@ export function BlogHeroClient({ stats }: BlogHeroClientProps) {
                     </motion.div>
 
                     {/* Titre principal */}
-                    <motion.h1
+                    <motion.div
                         variants={itemVariants}
-                        className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 text-foreground"
                     >
-                        Notre{' '}
-                        <span className="bg-gradient-to-r from-primary to-hexo-blue-light bg-clip-text text-transparent">
-                            Blog
-                        </span>
-                        <Sparkles className="inline-block ml-2 w-6 h-6 md:w-8 md:h-8 text-primary animate-pulse" />
-                    </motion.h1>
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 text-foreground">
+                            Notre{' '}
+                            <span className="bg-gradient-to-r from-primary to-hexo-blue-light bg-clip-text text-transparent">
+                                Blog
+                            </span>
+                            <Sparkles className="inline-block ml-2 w-6 h-6 md:w-8 md:h-8 text-primary animate-pulse" />
+                        </h1>
+                    </motion.div>
 
                     {/* Sous-titre */}
                     <motion.p

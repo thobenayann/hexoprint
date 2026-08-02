@@ -123,15 +123,16 @@ export function GalleryHero() {
                     </motion.div>
 
                     {/* Titre principal */}
-                    <motion.h1
+                    <motion.div
                         variants={itemVariants}
-                        className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-6"
                     >
-                        Notre{' '}
-                        <span className="bg-gradient-to-r from-primary to-hexo-blue-light bg-clip-text text-transparent">
-                            galerie
-                        </span>
-                    </motion.h1>
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-6">
+                            Notre{' '}
+                            <span className="bg-gradient-to-r from-primary to-hexo-blue-light bg-clip-text text-transparent">
+                                galerie
+                            </span>
+                        </h1>
+                    </motion.div>
 
                     {/* Sous-titre */}
                     <motion.p
