@@ -4,6 +4,29 @@
 
 `DONE_WITH_CONCERNS`
 
+## Fix round 1 — contrat exact des erreurs enum Zod 3
+
+- Le callback Zod 4 distingue maintenant explicitement les deux branches du
+  contrat historique : une entrée absente conserve
+  `Le type de client est requis`, tandis qu'une valeur présente invalide
+  reproduit `Invalid enum value. Expected 'particulier' | 'professionnel', received '<valeur>'`.
+- Le tuple `CLIENT_TYPES` est la source typée commune du schéma et de la liste
+  attendue. La valeur reçue est convertie avec `String` sous `try/catch`, ce qui
+  conserve l'interpolation Zod 3 pour les valeurs usuelles sans laisser une
+  conversion hostile interrompre la validation.
+- Le RED ciblé a reproduit le nouveau défaut Zod 4 pour `association` :
+  `Invalid option: expected one of "particulier"|"professionnel"`.
+- Le GREEN ciblé vérifie littéralement les deux messages, la contrainte
+  entreprise, `EmailResponseSchema`, la validation d'un fichier STL et le
+  contenu des deux rendus e-mail. Résultat : e-mail administrateur de 5 471
+  caractères, confirmation de 8 138 caractères, quatre contrôles de schéma et
+  catégorie upload `3d`.
+- `pnpm typecheck` et `pnpm verify` passent sous Node.js 22.14.0 / pnpm 10.33.0.
+  Le build contient toujours `/api/contact` et `/api/upload`.
+- `pnpm audit --prod` reste volontairement visible en échec avec les mêmes 21
+  avis transitifs (13 high, 8 moderate). Aucun override, resolution, force ou
+  masquage n'a été ajouté.
+
 La pile e-mail et validation est migrée vers les dernières versions stables
 demandées. Les imports React Email sont unifiés, les contrats métier et les
 messages de validation sont conservés, les deux routes API compilent et les
@@ -33,8 +56,8 @@ trois dépendances ci-dessus pour cette cohorte.
 - Le formulaire client, autre consommateur trouvé par la recherche globale,
   utilise également `issues` tout en conservant les mêmes messages affichés.
 - Le `required_error` de Zod 3 est remplacé par le paramètre Zod 4 `error`. Le
-  callback ne remplace le message que lorsque l'entrée est absente, ce qui
-  préserve la distinction entre valeur manquante et valeur invalide.
+  callback traite séparément l'entrée absente et la valeur présente invalide
+  afin de préserver textuellement leurs deux messages historiques.
 - `ContactFormSchema`, `ContactFormData`, `EmailResponseSchema`,
   `EmailResponse` et `UploadResult` conservent leurs formes métier.
 - `src/lib/file-upload.ts` et `src/app/api/upload/route.ts` n'ont nécessité
@@ -113,4 +136,5 @@ trois dépendances ci-dessus pour cette cohorte.
 - `src/components/sections/ContactForm.tsx`
 - `src/lib/email-schemas.ts`
 - `src/lib/email-service.ts`
+- `scripts/task-5-fix-round-1-check.ts`
 - `.superpowers/sdd/2026-08-01-dependencies-modernization/task-5-report.md`

@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+const CLIENT_TYPES = ['particulier', 'professionnel'] as const;
+const LEGACY_CLIENT_TYPES = CLIENT_TYPES.map((type) => `'${type}'`).join(
+    ' | '
+);
+
+function formatLegacyEnumValue(value: unknown): string {
+    try {
+        return String(value);
+    } catch {
+        return 'unknown';
+    }
+}
+
 // Schéma pour les métadonnées de fichier dans les emails
 export const EmailFileSchema = z.object({
     name: z.string(), // Nom original du fichier
@@ -11,11 +24,14 @@ export const EmailFileSchema = z.object({
 // Schéma de base pour les données de contact
 export const ContactFormSchema = z
     .object({
-        type: z.enum(['particulier', 'professionnel'], {
-            error: (issue) =>
-                issue.input === undefined
-                    ? 'Le type de client est requis'
-                    : undefined,
+        type: z.enum(CLIENT_TYPES, {
+            error: (issue) => {
+                if (issue.input === undefined) {
+                    return 'Le type de client est requis';
+                }
+
+                return `Invalid enum value. Expected ${LEGACY_CLIENT_TYPES}, received '${formatLegacyEnumValue(issue.input)}'`;
+            },
         }),
         firstName: z
             .string()
