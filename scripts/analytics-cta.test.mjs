@@ -20,6 +20,14 @@ test('DevisButton and PrimaryButton only track the approved quote CTA sources', 
   assert.match(callToAction, /trackClientEvent\('quote_cta_clicked',\s*\{\s*source: 'page_cta',/);
 });
 
+test('the mobile navigation contact CTA tracks the approved mobile source before navigating', async () => {
+  const mobileNavigation = await source('src/components/layout/mobile-top-navigation.tsx');
+
+  assert.match(mobileNavigation, /import \{ trackClientEvent \} from '@\/lib\/analytics-client';/);
+  assert.match(mobileNavigation, /href='\/contact'/);
+  assert.match(mobileNavigation, /onClick=\{\(\) => trackClientEvent\('quote_cta_clicked', \{ source: 'mobile_navigation' \}\)\}/);
+});
+
 test('footer contact links track only their channel and footer source while preserving hrefs', async () => {
   const [footer, trackedContactLink] = await Promise.all([
     source('src/components/layout/Footer.tsx'),

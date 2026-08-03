@@ -1,5 +1,6 @@
 'use client';
 
+import { trackClientEvent } from '@/lib/analytics-client';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -26,6 +27,7 @@ export function MobileTopNavigation() {
                 {/* Contact Button */}
                 <Link
                     href='/contact'
+                    onClick={() => trackClientEvent('quote_cta_clicked', { source: 'mobile_navigation' })}
                     className='px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors'
                 >
                     Contactez-nous
