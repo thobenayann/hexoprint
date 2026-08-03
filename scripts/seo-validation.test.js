@@ -98,6 +98,13 @@ test('does not accept a URL with a matching prefix as an official llms link', ()
   assert.match(errors.join('\n'), /llms\.txt: missing https:\/\/www\.hexoprint\.fr\/contact/);
 });
 
+test('does not accept llms links with query strings or fragments as canonical links', () => {
+  for (const suffix of ['?utm=x', '#section']) {
+    const errors = validateLlms(`https://www.hexoprint.fr/contact${suffix}`, ['/contact']);
+    assert.match(errors.join('\n'), /llms\.txt: missing https:\/\/www\.hexoprint\.fr\/contact/);
+  }
+});
+
 test('rejects a page when any JSON-LD block is malformed', () => {
   const html = `<html><head>
     <title>Page</title><meta name="description" content="Description">
@@ -107,4 +114,16 @@ test('rejects a page when any JSON-LD block is malformed', () => {
   </head><body><h1>Page</h1><main>${'Texte '.repeat(50)}<a href="/">A</a><a href="/blog">B</a><a href="/contact">C</a></main></body></html>`;
   const errors = auditHtml(html, { path: '/page', canonical: 'https://www.hexoprint.fr/page' });
   assert.match(errors.join('\n'), /invalid JSON-LD/i);
+});
+
+test('rejects JSON-LD script closing sequences with whitespace or a slash', () => {
+  const page = (name) => `<html><head>
+    <title>Page</title><meta name="description" content="Description">
+    <link rel="canonical" href="https://www.hexoprint.fr/page">
+    <script type="application/ld+json">{"name":"${name}"}</script>
+  </head><body><h1>Page</h1><main>${'Texte '.repeat(50)}<a href="/">A</a><a href="/blog">B</a><a href="/contact">C</a></main></body></html>`;
+  for (const closingSequence of ['<\\/script >', '<\\/script/>']) {
+    const errors = auditHtml(page(closingSequence), { path: '/page', canonical: 'https://www.hexoprint.fr/page' });
+    assert.match(errors.join('\n'), /invalid JSON-LD/i);
+  }
 });

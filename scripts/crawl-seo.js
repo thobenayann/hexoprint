@@ -101,7 +101,7 @@ function validateRobots(robots, requiredBlockedPaths) {
 
 function validateLlms(llms, requiredPaths) {
   const urls = new Set(
-    [...llms.matchAll(/https:\/\/www\.hexoprint\.fr(?:\/[\w./-]*)?/g)]
+    [...llms.matchAll(/https:\/\/www\.hexoprint\.fr[^\s<>'"\]\)]*/g)]
       .map((match) => new URL(match[0]).toString())
   );
   return requiredPaths.flatMap((path) => {

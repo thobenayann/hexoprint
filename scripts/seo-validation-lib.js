@@ -75,8 +75,9 @@ function auditHtml(html, expected) {
     .filter((match) => parseAttributes(match[0]).type?.toLowerCase() === 'application/ld+json');
   const validJsonLd = jsonLdScripts.length > 0 && jsonLdScripts.every((match) => {
     try {
+      if (/<\/script(?:\s|\/|>)/i.test(match[1])) return false;
       const data = JSON.parse(match[1]);
-      return !JSON.stringify(data).toLowerCase().includes('</script>');
+      return !/<\/script(?:\s|\/|>)/i.test(JSON.stringify(data));
     } catch {
       return false;
     }
