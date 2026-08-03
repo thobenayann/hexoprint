@@ -17,9 +17,17 @@ export type AnalyticsEventMap = {
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;
 
-export function createAnalyticsEvent<Name extends AnalyticsEventName>(
+export type ExactAnalyticsProperties<
+  Shape,
+  Actual extends Shape,
+> = Actual & Record<Exclude<keyof Actual, keyof Shape>, never>;
+
+export function createAnalyticsEvent<
+  Name extends AnalyticsEventName,
+  Data extends AnalyticsEventMap[NoInfer<Name>],
+>(
   name: Name,
-  data: AnalyticsEventMap[Name]
+  data: ExactAnalyticsProperties<AnalyticsEventMap[NoInfer<Name>], Data>
 ) {
   return { name, data } as const;
 }
