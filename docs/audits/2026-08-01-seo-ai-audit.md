@@ -36,7 +36,7 @@ Les quatre tests dédiés aux données structurées passent. Le crawler isole la
 
 | Contrôle | Résultat |
 | --- | --- |
-| `pnpm seo:test` | 11/11 réussis |
+| `pnpm seo:test` | 12/12 réussis |
 | `pnpm verify` hors build réseau | lint, typecheck et validations SEO réussis |
 | `pnpm build` | réussi |
 | Readiness `pnpm start` | HTTP 200 |
