@@ -1,3 +1,4 @@
+import { trackServerEvent } from '@/lib/analytics-server';
 import { ContactFormSchema } from '@/lib/email-schemas';
 import { emailService } from '@/lib/email-service';
 import { NextRequest, NextResponse } from 'next/server';
@@ -47,6 +48,15 @@ export async function POST(request: NextRequest) {
                 },
                 { status: 500 }
             );
+        }
+
+        try {
+            await trackServerEvent('contact_form_submitted', {
+                customerType: formData.type,
+                hasFiles: formData.files.length > 0,
+            });
+        } catch (analyticsError) {
+            console.error('Analytics tracking failed:', analyticsError);
         }
 
         // Réponse de succès

@@ -1,3 +1,4 @@
+import { trackServerEvent } from '@/lib/analytics-server';
 import { validateFile } from '@/lib/file-upload';
 import { put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
@@ -66,6 +67,18 @@ export async function POST(request: NextRequest) {
                     filename: file.name,
                 });
             }
+        }
+
+        if (uploadResults.some((result) => !result.success)) {
+            return NextResponse.json({ results: uploadResults });
+        }
+
+        try {
+            await trackServerEvent('quote_file_upload_succeeded', {
+                fileCount: files.length,
+            });
+        } catch (analyticsError) {
+            console.error('Analytics tracking failed:', analyticsError);
         }
 
         return NextResponse.json({ results: uploadResults });
