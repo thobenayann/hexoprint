@@ -456,17 +456,25 @@ export default function PolitiqueConfidentialitePage() {
                                             Analytics sans cookies
                                         </h3>
                                         <p className="text-sm text-muted-foreground mb-3">
-                                            Collecte anonyme et agrégée sans
-                                            cookies. Aucun consentement requis.
+                                            Vercel Web Analytics mesure de façon
+                                            agrégée les pages consultées et les
+                                            interactions principales sans cookie
+                                            publicitaire. Les événements
+                                            personnalisés ne contiennent ni nom,
+                                            ni adresse e-mail, ni téléphone, ni
+                                            message, ni nom de fichier.
                                         </p>
                                         <ul className="text-sm text-muted-foreground space-y-1">
                                             <li>
-                                                • Vercel Analytics (données
-                                                anonymisées)
+                                                • Vercel Web Analytics (pages
+                                                consultées et interactions
+                                                agrégées)
                                             </li>
                                             <li>
-                                                • Métriques Web Vitals
-                                                (performance)
+                                                • Vercel Speed Insights collecte
+                                                des mesures techniques de
+                                                performance lorsque ce service
+                                                est activé pour le projet
                                             </li>
                                             <li>
                                                 • Pages populaires
