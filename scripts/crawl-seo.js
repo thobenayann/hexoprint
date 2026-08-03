@@ -100,9 +100,13 @@ function validateRobots(robots, requiredBlockedPaths) {
 }
 
 function validateLlms(llms, requiredPaths) {
+  const urls = new Set(
+    [...llms.matchAll(/https:\/\/www\.hexoprint\.fr(?:\/[\w./-]*)?/g)]
+      .map((match) => new URL(match[0]).toString())
+  );
   return requiredPaths.flatMap((path) => {
     const officialUrl = new URL(path, productionBaseUrl).toString();
-    return llms.includes(officialUrl) ? [] : [`llms.txt: missing ${officialUrl}`];
+    return urls.has(officialUrl) ? [] : [`llms.txt: missing ${officialUrl}`];
   });
 }
 

@@ -92,3 +92,19 @@ test('requires bot-specific robots directives and the six exact official llms li
   ]);
   assert.match(llmsErrors.join('\n'), /llms\.txt: missing https:\/\/www\.hexoprint\.fr\/prestations/);
 });
+
+test('does not accept a URL with a matching prefix as an official llms link', () => {
+  const errors = validateLlms('https://www.hexoprint.fr/contact-old', ['/contact']);
+  assert.match(errors.join('\n'), /llms\.txt: missing https:\/\/www\.hexoprint\.fr\/contact/);
+});
+
+test('rejects a page when any JSON-LD block is malformed', () => {
+  const html = `<html><head>
+    <title>Page</title><meta name="description" content="Description">
+    <link rel="canonical" href="https://www.hexoprint.fr/page">
+    <script type="application/ld+json">{"@context":"https://schema.org"}</script>
+    <script type="application/ld+json">{"broken":</script>
+  </head><body><h1>Page</h1><main>${'Texte '.repeat(50)}<a href="/">A</a><a href="/blog">B</a><a href="/contact">C</a></main></body></html>`;
+  const errors = auditHtml(html, { path: '/page', canonical: 'https://www.hexoprint.fr/page' });
+  assert.match(errors.join('\n'), /invalid JSON-LD/i);
+});

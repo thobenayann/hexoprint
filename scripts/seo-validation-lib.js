@@ -73,7 +73,7 @@ function auditHtml(html, expected) {
   if (expected.description && description !== expected.description) errors.push(`${expected.path}: description does not match registry`);
   const jsonLdScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
     .filter((match) => parseAttributes(match[0]).type?.toLowerCase() === 'application/ld+json');
-  const validJsonLd = jsonLdScripts.some((match) => {
+  const validJsonLd = jsonLdScripts.length > 0 && jsonLdScripts.every((match) => {
     try {
       const data = JSON.parse(match[1]);
       return !JSON.stringify(data).toLowerCase().includes('</script>');
