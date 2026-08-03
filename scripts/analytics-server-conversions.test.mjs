@@ -47,6 +47,7 @@ test('upload rejects more than five files before tracking a conversion', async (
   assert.ok(limitGuard >= 0);
   assert.ok(tracking >= 0);
   assert.ok(limitGuard < tracking);
+  assert.match(uploadRoute, /error: 'Maximum de 5 fichiers autorises\.'/);
 });
 
 test('analytics tracking failures cannot turn successful business operations into 500 responses', async () => {

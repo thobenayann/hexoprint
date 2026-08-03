@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
         if (exceedsUploadFileLimit(files)) {
             return NextResponse.json(
-                { error: 'Maximum de 5 fichiers autorisÃ©s' },
+                { error: 'Maximum de 5 fichiers autorises.' },
                 { status: 400 }
             );
         }
