@@ -12,6 +12,18 @@ const compiledSeoUtils = ts.transpileModule(seoUtilsSource, {
     },
 }).outputText;
 
+const structuredDataSource = fs.readFileSync(
+    'src/components/seo/structured-data.tsx',
+    'utf8'
+);
+const compiledStructuredData = ts.transpileModule(structuredDataSource, {
+    compilerOptions: {
+        jsx: ts.JsxEmit.ReactJSX,
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2017,
+    },
+}).outputText;
+
 function getSeoUtils() {
     const testModule = { exports: {} };
     vm.runInNewContext(compiledSeoUtils, {
@@ -57,6 +69,23 @@ function getSeoUtils() {
     return testModule.exports;
 }
 
+function getStructuredData() {
+    const testModule = { exports: {} };
+    vm.runInNewContext(compiledStructuredData, {
+        module: testModule,
+        exports: testModule.exports,
+        require: (specifier) => {
+            if (specifier === 'react/jsx-runtime') {
+                return {
+                    jsx: (type, props) => ({ type, props }),
+                };
+            }
+            throw new Error(`Unexpected module: ${specifier}`);
+        },
+    });
+    return testModule.exports.StructuredData;
+}
+
 test('connects the root business and website entities through stable identifiers', () => {
     const seoUtils = getSeoUtils();
     const business = seoUtils.generateLocalBusinessStructuredData();
@@ -97,5 +126,35 @@ test('uses entity references and ordered absolute breadcrumb URLs', () => {
     assert.equal(
         breadcrumbs.itemListElement[1].item,
         'https://www.hexoprint.fr/prestations'
+    );
+});
+
+test('keeps a single canonical LocalBusiness definition in the root graph', () => {
+    const homeSource = fs.readFileSync('src/app/(client)/page.tsx', 'utf8');
+    const layoutSource = fs.readFileSync('src/app/layout.tsx', 'utf8');
+    const seoUtilsSource = fs.readFileSync('src/lib/seo-utils.ts', 'utf8');
+
+    assert.doesNotMatch(homeSource, /application\/ld\+json/);
+    assert.doesNotMatch(homeSource, /dangerouslySetInnerHTML/);
+    assert.match(layoutSource, /<StructuredData/);
+    assert.match(layoutSource, /generateLocalBusinessStructuredData\(\)/);
+    assert.equal(
+        (seoUtilsSource.match(/'@type': 'LocalBusiness'/g) || []).length,
+        1
+    );
+});
+
+test('escapes less-than characters in JSON-LD, including closing script tags', () => {
+    const StructuredData = getStructuredData();
+    const element = StructuredData({
+        id: 'unsafe-json-ld',
+        data: { description: '</script><img src=x onerror=alert(1)>' },
+    });
+
+    assert.equal(element.props.id, 'unsafe-json-ld');
+    assert.equal(element.props.type, 'application/ld+json');
+    assert.equal(
+        element.props.dangerouslySetInnerHTML.__html,
+        '{"description":"\\u003c/script>\\u003cimg src=x onerror=alert(1)>"}'
     );
 });
