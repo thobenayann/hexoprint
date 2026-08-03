@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
                 customerType: formData.type,
                 hasFiles: formData.files.length > 0,
             });
-        } catch (analyticsError) {
-            console.error('Analytics tracking failed:', analyticsError);
+        } catch {
+            console.error('Analytics tracking failed');
         }
 
         // Réponse de succès

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { MAX_UPLOAD_FILES, exceedsUploadFileLimit } from '../src/lib/upload-limits.mjs';
 
 const source = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -34,6 +35,20 @@ test('upload tracks an aggregate conversion only after every upload succeeds', a
   assert.doesNotMatch(uploadPayload, /(?:filename|pathname|url|contentType|size|name|type)/);
 });
 
+test('upload rejects more than five files before tracking a conversion', async () => {
+  assert.equal(MAX_UPLOAD_FILES, 5);
+  assert.equal(exceedsUploadFileLimit(Array.from({ length: 6 })), true);
+  assert.equal(exceedsUploadFileLimit(Array.from({ length: 5 })), false);
+
+  const uploadRoute = await source('src/app/api/upload/route.ts');
+  const limitGuard = uploadRoute.indexOf('exceedsUploadFileLimit(files)');
+  const tracking = uploadRoute.indexOf("trackServerEvent('quote_file_upload_succeeded'");
+
+  assert.ok(limitGuard >= 0);
+  assert.ok(tracking >= 0);
+  assert.ok(limitGuard < tracking);
+});
+
 test('analytics tracking failures cannot turn successful business operations into 500 responses', async () => {
   const [contactRoute, uploadRoute] = await Promise.all([
     source('src/app/api/contact/route.ts'),
@@ -43,7 +58,7 @@ test('analytics tracking failures cannot turn successful business operations int
   for (const route of [contactRoute, uploadRoute]) {
     assert.match(
       route,
-      /try \{\s*await trackServerEvent\([\s\S]*?\);\s*\} catch \(analyticsError\) \{\s*console\.error\('Analytics tracking failed:', analyticsError\);\s*\}/
+      /try \{\s*await trackServerEvent\([\s\S]*?\);\s*\} catch \{\s*console\.error\('Analytics tracking failed'\);\s*\}/
     );
   }
 });

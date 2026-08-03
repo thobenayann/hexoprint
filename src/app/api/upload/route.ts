@@ -1,5 +1,6 @@
 import { trackServerEvent } from '@/lib/analytics-server';
 import { validateFile } from '@/lib/file-upload';
+import { exceedsUploadFileLimit } from '@/lib/upload-limits.mjs';
 import { put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -19,6 +20,13 @@ export async function POST(request: NextRequest) {
         if (!files || files.length === 0) {
             return NextResponse.json(
                 { error: 'Aucun fichier fourni' },
+                { status: 400 }
+            );
+        }
+
+        if (exceedsUploadFileLimit(files)) {
+            return NextResponse.json(
+                { error: 'Maximum de 5 fichiers autorisÃ©s' },
                 { status: 400 }
             );
         }
@@ -77,8 +85,8 @@ export async function POST(request: NextRequest) {
             await trackServerEvent('quote_file_upload_succeeded', {
                 fileCount: files.length,
             });
-        } catch (analyticsError) {
-            console.error('Analytics tracking failed:', analyticsError);
+        } catch {
+            console.error('Analytics tracking failed');
         }
 
         return NextResponse.json({ results: uploadResults });
