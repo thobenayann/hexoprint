@@ -4,35 +4,33 @@
 
 La build de production Next.js 16.2.12 a passé lint, typecheck, validations SEO, tests robots, données structurées et les 12 tests `seo:test`. Le crawl local de production a validé les 11 pages du sitemap, dont trois articles publiés.
 
-La branche `codex/hexoprint-seo-deps-analytics` a créé une Preview Git le `2026-08-03 16:26` (Europe/Paris), sans déploiement ni promotion de production :
+La Preview Git `dpl_8KouthqQc8s4JWJ8AiQoipSPbqdk` a été vérifiée `Ready` le `2026-08-03 16:26` (Europe/Paris) : https://hexoprint-c5r8x4p5b-yann-pro.vercel.app. La Preview est volontairement non indexable (`X-Robots-Tag: noindex`, `User-Agent: *` puis `Disallow: /`).
 
-- Déploiement : `dpl_8KouthqQc8s4JWJ8AiQoipSPbqdk` — `Ready`, cible `Preview`
-- URL : https://hexoprint-c5r8x4p5b-yann-pro.vercel.app
-- Alias : https://hexoprint-git-codex-hexoprint-seo-deps-analytics-yann-pro.vercel.app
+## Mise en production
 
-## Routes, sitemap et robots
+Le HEAD `7833d93` a été poussé atomiquement vers la branche de travail et `master`. Le push direct de `master` a contourné la règle de pull request avec l’autorisation explicite de l’utilisateur.
 
-Avec `vercel curl` après lien authentifié au projet, `/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/prestations` et `/contact` répondent HTTP 200 sur la Preview.
+Le déploiement Vercel `dpl_FrDLsdXj9T36dH6mCLwHKkjiCDde` est `Ready`, cible `production`, créé le `2026-08-03 18:18:10` (Europe/Paris) : https://hexoprint-oo2zqwsg5-yann-pro.vercel.app. Les alias sont https://hexoprint-yann-pro.vercel.app et https://hexoprint-git-master-yann-pro.vercel.app.
 
-La Preview est volontairement non indexable : `X-Robots-Tag: noindex` et `robots.txt` contient exactement `User-Agent: *` puis `Disallow: /`. Cette protection d’environnement de test ne décrit pas le comportement attendu en production.
+## Validation de production
 
-Le sitemap porte 11 URL canoniques `https://www.hexoprint.fr`, dont trois articles publiés. `/prestations` et `/contact` portent les titres et canoniques attendus.
+Le domaine https://www.hexoprint.fr répond HTTP 200 pour `/`, `/robots.txt`, `/sitemap.xml`, `/llms.txt` et `/contact`. Aucun `X-Robots-Tag: noindex` n’est présent en production.
+
+`robots.txt` autorise `/` tout en protégeant `api`, `studio`, `_vercel` et `admin` pour `*`, `Googlebot`, `Bingbot`, `OAI-SearchBot`, `ChatGPT-User` et `PerplexityBot`.
+
+Le sitemap contient 11 URL, toutes canoniques sous `https://www.hexoprint.fr`. `llms.txt` contient huit URL officielles uniques : les six liens principaux ainsi que les informations officielles associées. `/contact` porte la canonique correcte.
+
+`vercel logs --level error --since 15m` a répondu `No logs found`. Cela établit qu’aucun log serveur d’erreur n’a été observé sur cette fenêtre, sans garantir l’absence absolue d’erreur.
 
 ## Données structurées et agents IA
 
 Les quatre tests de données structurées passent. Le crawler isole la balise ouvrante réelle de chaque script JSON-LD pour ne pas confondre les données React Server Components avec du JSON-LD.
 
-`llms.txt` répond HTTP 200 et fournit six liens principaux avec les informations officielles du site. Il complète les mécanismes d’indexation habituels, sans garantir exploration ni citation par un agent IA.
-
-## Preuves navigateur d’instrumentation
-
-Sur `/prestations` dans la Preview, Vercel Analytics charge `/0d3a3ce314aae831/script.js` (`data-sdkn="@vercel/analytics/next"`, `data-sdkv="2.0.1"`). Les endpoints `event`, `session` et `view` sont présents et une requête `/0d3a3ce314aae831/view` est observée.
-
-Speed Insights charge `/eed7881f45bf61ee/script.js` (`data-sdkn="@vercel/speed-insights/next"`, `data-sdkv="2.0.0"`, endpoint `/eed7881f45bf61ee/vitals`, route `/prestations`). Les logs filtrés des deux SDK ne signalent aucun avertissement ni erreur. Aucune requête `/vitals` n’a été observée et la métrique LCP sur 7 jours retourne `No data` : ce contrôle ne démontre donc pas une collecte Speed Insights active.
+`llms.txt` complète sitemap et métadonnées pour les agents IA ; il ne garantit ni exploration ni citation. La vérification Analytics/Speed Insights de la Preview a confirmé le chargement des SDK, mais aucune donnée Speed Insights ni conversion n’est affirmée ici.
 
 ## Finding technique séparé
 
-La console globale de la Preview contient des erreurs sans lien avec les SDK Vercel : `THREE.WebGPURenderer` / `WebGPU GPUValidationError`, avec « depth-stencil attachment size mismatch ». Elles doivent être investiguées séparément et ne sont pas masquées par la vérification Analytics.
+La console globale de la Preview a rapporté des erreurs indépendantes des SDK Vercel : `THREE.WebGPURenderer` / `WebGPU GPUValidationError` (« depth-stencil attachment size mismatch »). Elles doivent être investiguées séparément.
 
 ## Résultats locaux et limites
 
@@ -43,4 +41,4 @@ La console globale de la Preview contient des erreurs sans lien avec les SDK Ver
 | `pnpm build` | réussi |
 | `pnpm seo:crawl` | réussi : 11 pages |
 
-L’indexation réelle reste à contrôler après un déploiement Production explicitement autorisé avec les outils des moteurs. Aucune activation de Speed Insights, aucun déploiement Production et aucune promotion de Preview n’ont été effectués.
+La production est désormais vérifiée pour l’accessibilité et les signaux SEO techniques. L’indexation effective reste à suivre dans les outils des moteurs de recherche. Aucune conclusion sur les événements de conversion ou les Web Vitals n’est tirée.
