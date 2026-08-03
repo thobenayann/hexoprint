@@ -8,6 +8,7 @@ import {
 } from '@/lib/seo-utils';
 import { SanityLive } from '@/sanity/lib/live';
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import {
     Open_Sans,
@@ -200,6 +201,7 @@ export default function RootLayout({
                     ]}
                 />
                 <Analytics />
+                <SpeedInsights />
                 <SanityLive />
             </body>
         </html>
