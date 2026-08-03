@@ -1,52 +1,40 @@
-# Audit SEO et découvrabilité IA — 1er août 2026
+# Audit SEO et découvrabilité IA — 3 août 2026
 
-## Synthèse exécutive
+## Synthèse
 
-Audit exécuté localement le 3 août 2026 sur la build de production Next.js 16.2.12, avec pnpm 10.33.0. Les contrôles statiques sont concluants : lint, typecheck, validation SEO, tests robots et données structurées, ainsi que les 11 tests `seo:test`, passent. La build de production aboutit également.
+La build de production Next.js 16.2.12 a passé lint, typecheck, validations SEO, tests robots, données structurées et les 12 tests `seo:test`. Le crawl local de production a validé les 11 pages du sitemap, dont trois articles publiés.
 
-Le crawl du rendu de production local passe pour les 11 pages du sitemap, y compris les trois articles publiés.
+Une Preview Vercel de la branche `codex/hexoprint-seo-deps-analytics` a ensuite été créée le `2026-08-03 16:26` (Europe/Paris), sans déploiement ni promotion de production :
 
-## Routes et indexabilité
+- Déploiement : `dpl_8KouthqQc8s4JWJ8AiQoipSPbqdk` — `Ready`, cible `Preview`
+- URL : https://hexoprint-c5r8x4p5b-yann-pro.vercel.app
+- Alias de branche : https://hexoprint-git-codex-hexoprint-seo-deps-analytics-yann-pro.vercel.app
 
-La build génère 19 routes, dont les huit pages statiques publiques, `robots.txt` et `sitemap.xml`. Le serveur `pnpm start` a répondu 200 sur `http://localhost:3000/` et a été arrêté proprement après l’audit.
+## Routes, sitemap et robots
 
-Le crawl a contrôlé les huit routes statiques, puis les trois routes d’article trouvées dans le sitemap, toutes en HTTP 200 :
+Via `vercel curl` après un lien authentifié au projet, `/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/prestations` et `/contact` répondent tous HTTP 200 sur la Preview.
 
-- `/blog/quand-l-impression-3d-sublime-votre-decoration-interieure`
-- `/blog/reparer-au-lieu-de-jeter-l-impression-3d-au-service-des-bricoleurs-et-des-pros`
-- `/blog/le-prototypage-rapide-en-impression-3d-un-atout-pour-vos-projets-industriels`
+La Preview est volontairement non indexable : son en-tête est `X-Robots-Tag: noindex` et son `robots.txt` est exactement composé de `User-Agent: *` puis `Disallow: /`. Cette règle protège l’environnement de test ; elle ne décrit pas le comportement attendu du domaine de production.
 
-## Métadonnées et structure sémantique
+Le sitemap de la Preview contient 11 URL canoniques `https://www.hexoprint.fr`, dont trois articles publiés. Les pages `/prestations` et `/contact` portent les titres et canoniques attendus.
 
-Le HTML rendu contient une balise `title`, une meta description, une canonique, et exactement un H1 par route statique. Le crawler décode les entités HTML, normalise la canonique d’accueil et compare le titre éditorial sans confondre le suffixe de marque généré.
+## Données structurées et agents IA
 
-## Sitemap et robots
+Les quatre tests de données structurées passent. Le crawler isole la balise ouvrante de chaque script JSON-LD afin d’éviter toute confusion avec les données React Server Components.
 
-Le contrôle du sitemap généré donne une occurrence de `/blog`, une occurrence de `/galerie` et une occurrence de `/contact`. Il ne contient aucune date du jour inventée (`2026-08-03`) pour les pages statiques. `robots.txt` répond 200 et les tests dédiés valident ses groupes de robots et ses chemins protégés.
+`llms.txt` répond HTTP 200 dans la Preview et expose six liens principaux, ainsi que les informations officielles du site. Il complète sitemap et métadonnées, sans garantir l’exploration ni la citation par un agent IA.
 
-## Données structurées
+Le rendu RSC de la Preview contient aussi les composants Vercel Analytics et Speed Insights. Leur présence ne prouve pas l’activation du service ni la réception de données.
 
-Les quatre tests dédiés aux données structurées passent. Le crawler isole la balise ouvrante réelle de chaque script JSON-LD, ce qui évite de confondre les données React Server Components avec du JSON-LD.
-
-## Découvrabilité par les agents IA
-
-`llms.txt` répond 200 et ses liens canoniques sont validés par les tests. Ce fichier est complémentaire des mécanismes habituels d’indexation ; les règles explicites n’impliquent aucune garantie de citation par un agent IA.
-
-## Résultats du crawl local
+## Résultats locaux
 
 | Contrôle | Résultat |
 | --- | --- |
 | `pnpm seo:test` | 12/12 réussis |
 | `pnpm verify` hors build réseau | lint, typecheck et validations SEO réussis |
 | `pnpm build` | réussi |
-| Readiness `pnpm start` | HTTP 200 |
-| `robots.txt` / `llms.txt` | HTTP 200 / HTTP 200 |
-| Sitemap : blog, galerie, contact | 1, 1, 1 occurrence |
-| Sitemap : dates statiques du 3 août | 0 |
 | `pnpm seo:crawl` | réussi : 11 pages |
 
-## Limites et actions après déploiement
+## Limites et suite
 
-Avant tout déploiement, relancer ce crawl contre l’artefact de Preview afin de vérifier l’environnement réellement exposé.
-
-Après déploiement, la validation de l’indexation réelle devra être refaite : inspection des réponses publiques, contrôle du sitemap et de `robots.txt`, puis suivi dans les outils des moteurs de recherche. L’existence de règles explicites pour les agents IA ne garantit ni leur exploration, ni leur citation.
+L’indexation réelle doit être contrôlée après un déploiement de production explicitement autorisé, avec les outils des moteurs de recherche. Aucune activation de Speed Insights, aucun déploiement Production et aucune promotion de cette Preview n’ont été effectués.

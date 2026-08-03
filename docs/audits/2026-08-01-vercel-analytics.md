@@ -1,4 +1,4 @@
-# Audit Vercel Analytics Hexoprint — 1er août 2026
+# Audit Vercel Analytics Hexoprint — 3 août 2026
 
 ## Périmètre Vercel
 
@@ -6,52 +6,50 @@
 - Projet : `hexoprint`
 - Domaine canonique : https://www.hexoprint.fr
 
-## Référence observée avant cette instrumentation
+## Référence initiale dans Vercel Analytics
 
-La référence ci-dessous est issue de Vercel Analytics sur une fenêtre de 180 jours. Les valeurs marquées « environ » sont des valeurs affichées arrondies ; elles ne doivent pas être interprétées comme une mesure exhaustive au visiteur près.
+La référence affichée dans l’interface Vercel Analytics sur 180 jours était d’environ 496 pages vues et 331 visiteurs uniques. L’accueil comptait 348 vues, Google 88 vues attribuées et ChatGPT 4 vues attribuées. Ces chiffres restent la référence UI, avec des valeurs arrondies.
 
-- Pages vues : environ 496
-- Visiteurs uniques : environ 331
-- Accueil : 348 vues, soit environ 70 % des pages vues
-- Google : 88 vues attribuées, soit environ 18 % des pages vues
-- ChatGPT : 4 vues attribuées
+La CLI a ensuite retourné `481` pour `vercel.analytics_pageview.count` sur la fenêtre exacte du `2026-02-04 14:32 UTC` au `2026-08-03 14:32 UTC`. Cette valeur ne remplace pas silencieusement la référence UI : elle provient d’une fenêtre et d’une source de restitution différentes, et ne fournit pas le nombre de visiteurs uniques.
 
-Avant cette intervention, aucun événement personnalisé n’était visible dans le projet et aucune série Speed Insights n’était disponible.
+Avant cette instrumentation, aucun événement personnalisé n’était visible et aucune série Speed Insights n’était disponible.
 
-## Pages et sources principales
+## Instrumentation ajoutée
 
-L’accueil concentre l’essentiel des consultations. Google est la première source identifiée dans la référence disponible. La part de trafic direct est importante : elle peut recouvrir des accès directs, des favoris, des campagnes non étiquetées ou des référents non transmis ; elle ne doit donc pas être assimilée automatiquement à une source unique. Les 4 vues attribuées à ChatGPT confirment seulement un signal de découverte faible à cette date, pas une tendance établie.
+Le code définit un contrat fermé, sans donnée personnelle, pour :
 
-## Répartition géographique et appareils
+- `quote_cta_clicked` ;
+- `contact_link_clicked` ;
+- `contact_form_submitted` ;
+- `quote_file_upload_succeeded`.
 
-La répartition observée fait apparaître une part américaine à valider. Avec ce volume et sans analyse par période suffisamment stable, elle peut provenir de visiteurs réels, de robots, de VPN ou d’infrastructures intermédiaires. Le volume récent étant faible, aucune conclusion opérationnelle fiable ne doit être tirée de la géographie ou des appareils sans nouvelle observation.
+Les événements n’envoient ni nom, adresse e-mail, téléphone, message libre, nom de fichier, URL Blob ni identifiant d’e-mail. Leur présence dans le code ne prouve pas encore leur réception dans Vercel.
 
-## Événements de conversion ajoutés localement
+Le composant Speed Insights est monté dans l’application. La métrique `vercel.speed_insights.lcp_ms` sur les 7 derniers jours retourne `No data` : le service n’est donc pas déclaré actif et aucune conclusion Web Vitals ne peut être tirée.
 
-Le code local ajoute un contrat fermé, sans données personnelles, pour les événements suivants :
+## Vérification Preview du 3 août
 
-- `quote_cta_clicked` : source parmi navigation bureau, navigation mobile ou CTA de page ;
-- `contact_link_clicked` : canal téléphone ou e-mail et source parmi pied de page ou page contact ;
-- `contact_form_submitted` : type de client et présence ou non de fichiers, uniquement après succès de l’envoi d’e-mail ;
-- `quote_file_upload_succeeded` : nombre de fichiers, uniquement après succès de l’upload.
+La branche `codex/hexoprint-seo-deps-analytics` a été poussée. Son intégration Git a déclenché la Preview suivante, sans promotion ni déploiement de production :
 
-Les événements n’envoient ni nom, adresse e-mail, téléphone, message libre, nom de fichier, URL de Blob ni identifiant d’e-mail. Leur présence dans le code ne constitue pas une preuve qu’ils sont déjà reçus ou visibles dans Vercel : cette vérification reste à faire après déploiement autorisé.
+- Déploiement : `dpl_8KouthqQc8s4JWJ8AiQoipSPbqdk`
+- Cible : `Preview`
+- État : `Ready`
+- Créée : `2026-08-03 16:26` (Europe/Paris)
+- URL de déploiement : https://hexoprint-c5r8x4p5b-yann-pro.vercel.app
+- Alias de branche : https://hexoprint-git-codex-hexoprint-seo-deps-analytics-yann-pro.vercel.app
 
-## État de Speed Insights
+Après `vercel link` authentifié, `vercel curl` a confirmé des réponses HTTP 200 pour `/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/prestations` et `/contact`.
 
-Le composant Speed Insights est monté localement afin que la collecte puisse fonctionner une fois le service activé dans le projet. Speed Insights n’est pas déclaré actif côté Vercel dans cet audit. L’absence de série Web Vitals avant l’intervention ne permet aucune conclusion sur les Core Web Vitals.
+- La Preview est correctement protégée de l’indexation avec `X-Robots-Tag: noindex` et un corps `robots.txt` correspondant à `User-Agent: *` puis `Disallow: /`.
+- Le sitemap contient 11 URL canoniques `https://www.hexoprint.fr`, dont trois articles publiés.
+- `llms.txt` présente six liens principaux et les informations officielles du site.
+- `/prestations` et `/contact` ont les titres et canoniques attendus.
+- Le HTML RSC contient les composants Analytics et Speed Insights.
 
-## Limites d’interprétation
+Les événements de conversion n’ont pas été exercés dans cette Preview : l’environnement peut utiliser des variables sensibles et une soumission risquerait d’envoyer des e-mails réels. Cette validation reste à faire avec un environnement de test explicitement prévu à cet effet.
 
-La requête de métrique HTTP consultée pendant l’audit n’a retourné aucune série. Ce résultat ne permet pas d’affirmer qu’il n’existe aucune erreur, ni qu’aucune donnée technique n’existe ailleurs dans Vercel. Les métriques agrégées et la faible volumétrie imposent de comparer des fenêtres homogènes avant d’évaluer une évolution SEO ou de conversion.
+## Limites et suites
 
-## Vérifications après déploiement autorisé
+Cette Preview ne modifie ni la production ni l’état du service Speed Insights. Aucune activation, promotion ou conclusion sur les Core Web Vitals n’a été effectuée. Le fichier `.env.local` a été restauré à l’identique de l’original, sans exposer ses valeurs.
 
-Avant toute mutation externe, le propriétaire doit confirmer le coût éventuel de Speed Insights pour l’équipe et autoriser un déploiement Preview. Dans cette Preview uniquement, il restera à :
-
-1. vérifier les routes publiques et les scripts Web Analytics/Speed Insights ;
-2. confirmer l’état effectivement activé de Speed Insights dans le projet ;
-3. générer des interactions de test sans données personnelles et contrôler que les quatre événements respectent le contrat ;
-4. conserver l’URL, la date et les résultats dans ce rapport.
-
-Aucun déploiement Preview ou Production, aucune activation de Speed Insights et aucune conclusion sur les Web Vitals ne sont inclus dans l’état présent.
+Après activation explicite de Speed Insights et un volume suffisant, comparer des fenêtres homogènes dans Vercel Analytics et vérifier la réception des quatre événements avec des interactions de test non sensibles.
