@@ -233,6 +233,14 @@ pnpm build
 # Linter
 pnpm lint
 
+# Validation SEO statique et tests de régression
+pnpm seo:test && pnpm seo:validate
+
+# Crawl SEO (nécessite l'application lancée, par exemple avec pnpm dev)
+pnpm seo:crawl
+
+# seo:crawl reste hors de pnpm verify : il nécessite un serveur HTTP en cours d'exécution
+
 # Ajouter des composants ShadcnUI
 pnpm dlx shadcn@latest add button card input
 
