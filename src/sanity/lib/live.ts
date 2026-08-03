@@ -48,7 +48,10 @@ if (isSanityAvailable() && client) {
         try {
             const data = await sanityClient.fetch<T>(
                 options.query,
-                options.params || {}
+                options.params || {},
+                options.tags?.length
+                    ? { next: { tags: options.tags } }
+                    : undefined
             );
             return { data };
         } catch (error) {

@@ -72,6 +72,16 @@ function matchesExpectedTitle(title, expectedTitle) {
   return title === expectedTitle || title.startsWith(`${expectedTitle} | `);
 }
 
+function parseJsonLd(content) {
+  try {
+    return JSON.parse(content);
+  } catch (error) {
+    if (!/^[\[{]\\"/.test(content)) throw error;
+    const decoded = content.replace(/\\(["\\/bfnrt]|u[\da-f]{4})/gi, '$1');
+    return JSON.parse(decoded);
+  }
+}
+
 function auditHtml(html, expected) {
   const errors = [];
   const title = decodeHtmlEntities(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() || '');
@@ -108,9 +118,7 @@ function auditHtml(html, expected) {
   const validJsonLd = jsonLdScripts.length > 0 && jsonLdScripts.every((match) => {
     try {
       const content = decodeHtmlEntities(match[1]);
-      const json = content.replace(/\\"/g, '"');
-      if (/<\/script(?:\s|\/|>)/i.test(json)) return false;
-      const data = JSON.parse(json);
+      const data = parseJsonLd(content);
       return !/<\/script(?:\s|\/|>)/i.test(JSON.stringify(data));
     } catch {
       return false;

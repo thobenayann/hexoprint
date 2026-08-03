@@ -84,6 +84,16 @@ test('accepts Next-rendered entities, the root canonical URL, and serialized JSO
   assert.doesNotMatch(errors.join('\n'), /invalid canonical|title does not match registry|description does not match registry|invalid JSON-LD/i);
 });
 
+test('accepts RSC-serialized JSON-LD without corrupting escaped quotes in values', () => {
+  const html = String.raw`<html><head>
+    <title>Page</title><meta name="description" content="Description">
+    <link rel="canonical" href="https://www.hexoprint.fr/page">
+    <script type="application/ld+json">{\"name\":\"Une valeur avec \\\"guillemets\\\"\"}</script>
+  </head><body><h1>Page</h1><main>${'Texte '.repeat(50)}<a href="/">A</a><a href="/blog">B</a><a href="/contact">C</a></main></body></html>`;
+  const errors = auditHtml(html, { path: '/page', canonical: 'https://www.hexoprint.fr/page' });
+  assert.doesNotMatch(errors.join('\n'), /invalid JSON-LD/i);
+});
+
 test('rejects sitemap URLs outside the canonical registry and dynamic blog articles', () => {
   const sitemap = `<urlset>
     <url><loc>https://www.hexoprint.fr/</loc></url>
