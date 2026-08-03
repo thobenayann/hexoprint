@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PrimaryButton } from '@/components/ui/primary-button';
+import { trackClientEvent } from '@/lib/analytics-client';
 import { CheckCircle, Clock, FileText, Star } from 'lucide-react';
 import Link from 'next/link';
 
@@ -106,14 +107,26 @@ export function CallToAction() {
 
                         {/* Main CTA Button */}
                         <div className="mb-8">
-                            <PrimaryButton href="/contact" icon={Star}>
+                            <PrimaryButton
+                                href="/contact"
+                                icon={Star}
+                                analyticsSource="page_cta"
+                            >
                                 Demander mon devis gratuit
                             </PrimaryButton>
                         </div>
 
                         {/* Secondary Actions */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-                            <Link href="/contact" className="w-full sm:w-auto">
+                            <Link
+                                href="/contact"
+                                className="w-full sm:w-auto"
+                                onClick={() =>
+                                    trackClientEvent('quote_cta_clicked', {
+                                        source: 'page_cta',
+                                    })
+                                }
+                            >
                                 <Button
                                     variant="outline"
                                     size="lg"

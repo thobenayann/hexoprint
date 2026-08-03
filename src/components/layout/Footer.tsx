@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { TrackedContactLink } from '@/components/analytics/tracked-contact-link';
 import {
     Popover,
     PopoverContent,
@@ -25,12 +26,6 @@ const socialLinks = [
         hoverColor:
             'hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-600',
     },
-    {
-        href: `mailto:${COMPANY_INFO.contact.email}`,
-        icon: Mail,
-        label: 'Email',
-        hoverColor: 'hover:bg-primary',
-    },
 ];
 
 const contactInfo = [
@@ -43,11 +38,13 @@ const contactInfo = [
         icon: Phone,
         title: formatPhone(COMPANY_INFO.contact.phone),
         href: `tel:${COMPANY_INFO.contact.phone.replace(/\s/g, '')}`,
+        channel: 'phone' as const,
     },
     {
         icon: Mail,
         title: COMPANY_INFO.contact.email,
         href: `mailto:${COMPANY_INFO.contact.email}`,
+        channel: 'email' as const,
     },
 ];
 
@@ -103,23 +100,29 @@ export function Footer() {
                                         rel="noopener noreferrer"
                                         className={`group relative p-3 bg-card border border-border rounded-xl ${social.hoverColor} transition-all duration-300 transform hover:scale-110 hover:shadow-lg cursor-pointer`}
                                     >
-                                        {social.icon === 'instagram' ? (
-                                            <Image
-                                                src="/logos/instagram_dark.svg"
-                                                alt="Instagram"
-                                                width={20}
-                                                height={20}
-                                                className="w-5 h-5 text-muted-foreground group-hover:text-white transition-colors duration-300"
-                                            />
-                                        ) : (
-                                            <social.icon className="w-5 h-5 text-muted-foreground group-hover:text-white transition-colors duration-300" />
-                                        )}
+                                        <Image
+                                            src="/logos/instagram_dark.svg"
+                                            alt="Instagram"
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5 text-muted-foreground group-hover:text-white transition-colors duration-300"
+                                        />
 
                                         {/* Glow effect */}
                                         <div className="absolute inset-0 bg-primary/20 rounded-xl blur-lg scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     </Link>
                                 );
                             })}
+                            <TrackedContactLink
+                                href={`mailto:${COMPANY_INFO.contact.email}`}
+                                channel="email"
+                                source="footer"
+                                aria-label="Email"
+                                className="group relative p-3 bg-card border border-border rounded-xl hover:bg-primary transition-all duration-300 transform hover:scale-110 hover:shadow-lg cursor-pointer"
+                            >
+                                <Mail className="w-5 h-5 text-muted-foreground group-hover:text-white transition-colors duration-300" />
+                                <div className="absolute inset-0 bg-primary/20 rounded-xl blur-lg scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            </TrackedContactLink>
                         </div>
                     </div>
 
@@ -150,14 +153,16 @@ export function Footer() {
                                     </div>
                                 );
 
-                                return contact.href ? (
-                                    <Link
+                                return contact.href && contact.channel ? (
+                                    <TrackedContactLink
                                         key={index}
                                         href={contact.href}
+                                        channel={contact.channel}
+                                        source="footer"
                                         className="block"
                                     >
                                         {content}
-                                    </Link>
+                                    </TrackedContactLink>
                                 ) : (
                                     <div key={index}>{content}</div>
                                 );

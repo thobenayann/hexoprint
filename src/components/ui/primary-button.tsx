@@ -1,4 +1,7 @@
+'use client';
+
 import { StarBorder } from '@/components/ui/star-border';
+import { trackClientEvent } from '@/lib/analytics-client';
 import { ArrowRight, LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 
@@ -8,6 +11,7 @@ type PrimaryButtonProps = {
     icon?: LucideIcon;
     className?: string;
     external?: boolean;
+    analyticsSource?: 'page_cta';
 };
 
 export function PrimaryButton({
@@ -16,6 +20,7 @@ export function PrimaryButton({
     icon: Icon,
     className = '',
     external = false,
+    analyticsSource,
 }: PrimaryButtonProps) {
     const content = (
         <StarBorder
@@ -45,7 +50,16 @@ export function PrimaryButton({
     }
 
     return (
-        <Link href={href} className='inline-block'>
+        <Link
+            href={href}
+            className='inline-block'
+            onClick={() =>
+                analyticsSource &&
+                trackClientEvent('quote_cta_clicked', {
+                    source: analyticsSource,
+                })
+            }
+        >
             {content}
         </Link>
     );
