@@ -14,7 +14,9 @@
         "test:robots": "node --test scripts/robots.test.mjs",
         "test:structured-data": "node --test scripts/structured-data.test.mjs",
         "seo:validate": "node scripts/validate-seo.js",
-        "verify": "pnpm lint && pnpm typecheck && pnpm seo:validate && pnpm test:robots && pnpm test:structured-data && pnpm build"
+        "seo:test": "node --test scripts/seo-validation.test.js",
+        "seo:crawl": "node scripts/crawl-seo.js",
+        "verify": "pnpm lint && pnpm typecheck && pnpm seo:test && pnpm seo:validate && pnpm test:robots && pnpm test:structured-data && pnpm build"
     },
     "dependencies": {
         "@portabletext/react": "^7.0.1",

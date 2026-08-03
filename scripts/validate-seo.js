@@ -10,6 +10,10 @@
 const fs = require('fs');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require('path');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pages = require('../src/data/seo-pages.json');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { validatePageRegistry } = require('./seo-validation-lib');
 
 // Configuration des chemins
 // Couleurs pour les logs
@@ -30,6 +34,27 @@ const log = {
 
 // Vérifications SEO
 const checks = {
+    checkPageRegistry() {
+        log.info('Vérification du registre des pages SEO...');
+
+        const errors = validatePageRegistry(pages, [
+            '/',
+            '/prestations',
+            '/contact',
+            '/a-propos',
+            '/galerie',
+            '/blog',
+            '/mentions-legales',
+            '/politique-confidentialite',
+        ]);
+        const llmsPath = path.join(__dirname, '..', 'public', 'llms.txt');
+        if (!fs.existsSync(llmsPath)) errors.push('Missing file: public/llms.txt');
+
+        errors.forEach((error) => log.error(error));
+        if (!errors.length) log.success('Registre des pages SEO valide');
+        return errors.length === 0;
+    },
+
     // Vérifie si les fichiers essentiels SEO existent
     checkEssentialFiles() {
         log.info('Vérification des fichiers SEO essentiels...');
@@ -263,6 +288,7 @@ async function runSEOValidation() {
     console.log(`${colors.blue}🔍 Validation SEO Hexoprint${colors.reset}\n`);
 
     const results = {
+        pageRegistry: checks.checkPageRegistry(),
         essentialFiles: checks.checkEssentialFiles(),
         pageMetadata: checks.checkPageMetadata(),
         manifest: checks.checkManifest(),
