@@ -37,15 +37,44 @@ function parseAttributes(tag) {
   for (const match of tag.matchAll(/([\w:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g)) {
     const [, name, doubleQuoted, singleQuoted, unquoted] = match;
     if (name.toLowerCase() !== 'meta' && name.toLowerCase() !== 'link' && name.toLowerCase() !== 'script') {
-      attributes[name.toLowerCase()] = doubleQuoted ?? singleQuoted ?? unquoted ?? '';
+      attributes[name.toLowerCase()] = decodeHtmlEntities(doubleQuoted ?? singleQuoted ?? unquoted ?? '');
     }
   }
   return attributes;
 }
 
+function decodeHtmlEntities(value) {
+  return value.replace(/&(#x[\da-f]+|#\d+|amp|apos|quot|lt|gt);/gi, (entity, token) => {
+    const normalized = token.toLowerCase();
+    if (normalized === 'amp') return '&';
+    if (normalized === 'apos') return "'";
+    if (normalized === 'quot') return '"';
+    if (normalized === 'lt') return '<';
+    if (normalized === 'gt') return '>';
+    const codePoint = normalized.startsWith('#x')
+      ? Number.parseInt(normalized.slice(2), 16)
+      : Number.parseInt(normalized.slice(1), 10);
+    return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+      ? String.fromCodePoint(codePoint)
+      : entity;
+  });
+}
+
+function haveSameCanonicalUrl(actual, expected) {
+  try {
+    return new URL(actual).toString() === new URL(expected).toString();
+  } catch {
+    return false;
+  }
+}
+
+function matchesExpectedTitle(title, expectedTitle) {
+  return title === expectedTitle || title.startsWith(`${expectedTitle} | `);
+}
+
 function auditHtml(html, expected) {
   const errors = [];
-  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim();
+  const title = decodeHtmlEntities(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() || '');
   const description = [...html.matchAll(/<meta\b[^>]*>/gi)]
     .map((match) => parseAttributes(match[0]))
     .find((attributes) => attributes.name?.toLowerCase() === 'description')?.content;
@@ -65,18 +94,23 @@ function auditHtml(html, expected) {
   );
   if (!title) errors.push(`${expected.path}: missing title`);
   if (!description) errors.push(`${expected.path}: missing meta description`);
-  if (canonical !== expected.canonical) errors.push(`${expected.path}: invalid canonical`);
+  if (!haveSameCanonicalUrl(canonical, expected.canonical)) errors.push(`${expected.path}: invalid canonical`);
   if (h1Count !== 1) errors.push(`${expected.path}: expected exactly one h1, got ${h1Count}`);
   if (title && title.length > 60) errors.push(`${expected.path}: title is longer than 60 characters`);
   if (description && description.length > 160) errors.push(`${expected.path}: description is longer than 160 characters`);
-  if (expected.title && title !== expected.title) errors.push(`${expected.path}: title does not match registry`);
+  if (expected.title && !matchesExpectedTitle(title, expected.title)) errors.push(`${expected.path}: title does not match registry`);
   if (expected.description && description !== expected.description) errors.push(`${expected.path}: description does not match registry`);
   const jsonLdScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
-    .filter((match) => parseAttributes(match[0]).type?.toLowerCase() === 'application/ld+json');
+    .filter((match) => {
+      const openingTag = match[0].match(/^<script\b[^>]*>/i)?.[0] || '';
+      return parseAttributes(openingTag).type?.toLowerCase() === 'application/ld+json';
+    });
   const validJsonLd = jsonLdScripts.length > 0 && jsonLdScripts.every((match) => {
     try {
-      if (/<\/script(?:\s|\/|>)/i.test(match[1])) return false;
-      const data = JSON.parse(match[1]);
+      const content = decodeHtmlEntities(match[1]);
+      const json = content.replace(/\\"/g, '"');
+      if (/<\/script(?:\s|\/|>)/i.test(json)) return false;
+      const data = JSON.parse(json);
       return !/<\/script(?:\s|\/|>)/i.test(JSON.stringify(data));
     } catch {
       return false;

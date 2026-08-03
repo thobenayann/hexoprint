@@ -68,6 +68,22 @@ test('parses SEO attributes in any order and checks registry metadata plus safe 
   assert.match(unsafeJsonLd.join('\n'), /invalid JSON-LD/i);
 });
 
+test('accepts Next-rendered entities, the root canonical URL, and serialized JSON-LD', () => {
+  const html = `<!doctype html><html><head>
+    <title>L&#x27;atelier Hexoprint | Hexo&#x27;print</title>
+    <meta name="description" content="Une cr&#xE9;ation sur mesure">
+    <link rel="canonical" href="https://www.hexoprint.fr">
+    <script type="application/ld+json">[{\"@context\":\"https://schema.org\",\"name\":\"Hexoprint\"}]</script>
+  </head><body><h1>Atelier</h1><main>${'Texte '.repeat(50)}<a href="/">A</a><a href="/blog">B</a><a href="/contact">C</a></main></body></html>`;
+  const errors = auditHtml(html, {
+    path: '/',
+    canonical: 'https://www.hexoprint.fr/',
+    title: "L'atelier Hexoprint",
+    description: 'Une création sur mesure',
+  });
+  assert.doesNotMatch(errors.join('\n'), /invalid canonical|title does not match registry|description does not match registry|invalid JSON-LD/i);
+});
+
 test('rejects sitemap URLs outside the canonical registry and dynamic blog articles', () => {
   const sitemap = `<urlset>
     <url><loc>https://www.hexoprint.fr/</loc></url>

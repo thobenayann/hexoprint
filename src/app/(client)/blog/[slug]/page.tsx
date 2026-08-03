@@ -6,6 +6,7 @@ import { FloatingShareButton } from '@/components/ui/floating-share-button';
 import { ShareButton } from '@/components/ui/share-button';
 import { calculateReadingTime, formatDate } from '@/lib/blog-client-utils';
 import { getArticleBySlug, getRelatedArticles } from '@/lib/blog-utils';
+import { articleSlugsQuery } from '@/lib/sanity-queries';
 import { COMPANY_INFO } from '@/lib/company-info';
 import {
     generateArticleStructuredData,
@@ -14,6 +15,7 @@ import {
     truncateMetadataText,
 } from '@/lib/seo-utils';
 import { urlFor } from '@/sanity/lib/image';
+import { client, isSanityAvailable } from '@/sanity/lib/client';
 import type { ArticleCategory } from '@/types/blog';
 import { ARTICLE_CATEGORIES, CATEGORY_COLORS } from '@/types/blog';
 import { PortableText, type PortableTextComponents } from '@portabletext/react';
@@ -27,6 +29,20 @@ import { Suspense } from 'react';
 type PageParams = {
     params: Promise<{ slug: string }>;
 };
+
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+    if (!isSanityAvailable() || !client) return [];
+
+    try {
+        const articles = await client.fetch<Array<{ slug: string }>>(
+            articleSlugsQuery
+        );
+        return articles.filter((article) => Boolean(article.slug));
+    } catch (error) {
+        console.error('[Blog] Impossible de générer les routes d’articles:', error);
+        return [];
+    }
+}
 
 // Composant pour le contenu portable (PortableText)
 const portableTextComponents: PortableTextComponents = {

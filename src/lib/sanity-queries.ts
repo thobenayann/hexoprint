@@ -22,7 +22,7 @@ import { groq } from 'next-sanity';
 
 // Requêtes pour les articles
 export const articlesQuery = groq`
-  *[_type == "article"] | order(publishedAt desc) {
+  *[_type == "article" && defined(slug.current) && defined(publishedAt) && publishedAt <= now()] | order(publishedAt desc) {
     _id,
     _type,
     title,
@@ -46,7 +46,7 @@ export const articlesQuery = groq`
 `;
 
 export const articleBySlugQuery = groq`
-  *[_type == "article" && slug.current == $slug][0] {
+  *[_type == "article" && slug.current == $slug && defined(publishedAt) && publishedAt <= now()][0] {
     _id,
     _type,
     title,
@@ -67,6 +67,12 @@ export const articleBySlugQuery = groq`
       metaTitle,
       metaDescription
     }
+  }
+`;
+
+export const articleSlugsQuery = groq`
+  *[_type == "article" && defined(slug.current) && defined(publishedAt) && publishedAt <= now()] {
+    "slug": slug.current
   }
 `;
 

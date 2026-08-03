@@ -48,13 +48,7 @@ if (isSanityAvailable() && client) {
         try {
             const data = await sanityClient.fetch<T>(
                 options.query,
-                options.params || {},
-                {
-                    cache: 'force-cache',
-                    next: {
-                        tags: options.tags || [],
-                    },
-                }
+                options.params || {}
             );
             return { data };
         } catch (error) {
