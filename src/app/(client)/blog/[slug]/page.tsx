@@ -1,12 +1,18 @@
 import { CallToAction } from '@/components/sections/CallToAction';
 import { RelatedArticles } from '@/components/sections/RelatedArticles';
+import { StructuredData } from '@/components/seo/structured-data';
 import { Badge } from '@/components/ui/badge';
 import { FloatingShareButton } from '@/components/ui/floating-share-button';
 import { ShareButton } from '@/components/ui/share-button';
 import { calculateReadingTime, formatDate } from '@/lib/blog-client-utils';
 import { getArticleBySlug, getRelatedArticles } from '@/lib/blog-utils';
 import { COMPANY_INFO } from '@/lib/company-info';
-import { generateSEOMetadata, truncateMetadataText } from '@/lib/seo-utils';
+import {
+    generateArticleStructuredData,
+    generateBreadcrumbStructuredData,
+    generateSEOMetadata,
+    truncateMetadataText,
+} from '@/lib/seo-utils';
 import { urlFor } from '@/sanity/lib/image';
 import type { ArticleCategory } from '@/types/blog';
 import { ARTICLE_CATEGORIES, CATEGORY_COLORS } from '@/types/blog';
@@ -351,50 +357,35 @@ export default async function ArticlePage({ params }: PageParams) {
             {/* Call to Action */}
             <CallToAction />
 
-            {/* Schema.org JSON-LD */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
-                        '@context': 'https://schema.org',
-                        '@type': 'BlogPosting',
-                        headline: article.title,
+            <StructuredData
+                id={`hexoprint-article-${article.slug.current}`}
+                data={[
+                    generateArticleStructuredData({
+                        title: article.title,
+                        description: article.seo?.metaDescription || article.title,
+                        url: new URL(
+                            `/blog/${article.slug.current}`,
+                            COMPANY_INFO.siteUrl
+                        ).toString(),
+                        publishedAt: article.publishedAt,
                         image: urlFor(article.mainImage.asset)
                             .width(1200)
                             .height(630)
                             .url(),
-                        author: {
-                            '@type': 'Person',
-                            name: COMPANY_INFO.founder,
-                        },
-                        publisher: {
-                            '@type': 'Organization',
-                            name: COMPANY_INFO.name,
-                            logo: {
-                                '@type': 'ImageObject',
-                                url: `${COMPANY_INFO.website.url}/logos/hexoprint-sans-text-no-bg-750x750.png`,
-                            },
-                        },
-                        datePublished: article.publishedAt,
-                        dateModified: article.publishedAt,
-                        mainEntityOfPage: {
-                            '@type': 'WebPage',
-                            '@id': `${COMPANY_INFO.website.url}/blog/${article.slug.current}`,
-                        },
-                        articleSection: article.categories
-                            .map(
-                                (cat) =>
-                                    ARTICLE_CATEGORIES[cat as ArticleCategory]
-                            )
-                            .join(', '),
-                        keywords: article.categories
-                            .map(
-                                (cat) =>
-                                    ARTICLE_CATEGORIES[cat as ArticleCategory]
-                            )
-                            .join(', '),
+                        categories: article.categories,
                     }),
-                }}
+                    generateBreadcrumbStructuredData([
+                        { name: 'Accueil', url: new URL('/', COMPANY_INFO.siteUrl).toString() },
+                        { name: 'Blog', url: new URL('/blog', COMPANY_INFO.siteUrl).toString() },
+                        {
+                            name: article.title,
+                            url: new URL(
+                                `/blog/${article.slug.current}`,
+                                COMPANY_INFO.siteUrl
+                            ).toString(),
+                        },
+                    ]),
+                ]}
             />
 
             {/* Bouton de partage mobile flottant */}

@@ -2,9 +2,14 @@ import { CallToAction } from '@/components/sections/CallToAction';
 import { GalleryContentWrapper } from '@/components/sections/GalleryContentWrapper';
 import { GalleryFilters } from '@/components/sections/GalleryFilters';
 import { GalleryHero } from '@/components/sections/GalleryHero';
+import { StructuredData } from '@/components/seo/structured-data';
 import { COMPANY_INFO } from '@/lib/company-info';
 import { getStaticSeoPage } from '@/lib/seo-config';
-import { generateSEOMetadata } from '@/lib/seo-utils';
+import {
+    BUSINESS_ID,
+    generateBreadcrumbStructuredData,
+    generateSEOMetadata,
+} from '@/lib/seo-utils';
 import { sanityFetch } from '@/sanity/lib/live';
 import { Suspense } from 'react';
 
@@ -77,47 +82,21 @@ export default async function GalleriePage() {
             {/* Call to Action */}
             <CallToAction />
 
-            {/* Schema.org JSON-LD pour le SEO */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
+            <StructuredData
+                id="hexoprint-galerie"
+                data={[
+                    {
                         '@context': 'https://schema.org',
                         '@type': 'ImageGallery',
                         name: "Galerie de réalisations Hexo'print",
-                        description:
-                            "Portfolio de nos créations d'impression 3D : prototypage, modélisme, pièces industrielles et créations artistiques",
-                        url: `${COMPANY_INFO.website.url}/galerie`,
-                        publisher: {
-                            '@type': 'LocalBusiness',
-                            name: COMPANY_INFO.name,
-                            url: COMPANY_INFO.website.url,
-                            address: {
-                                '@type': 'PostalAddress',
-                                streetAddress:
-                                    COMPANY_INFO.contact.address.street,
-                                addressLocality:
-                                    COMPANY_INFO.contact.address.city,
-                                addressRegion:
-                                    COMPANY_INFO.contact.address.department,
-                                postalCode:
-                                    COMPANY_INFO.contact.address.postalCode,
-                                addressCountry: 'FR',
-                            },
-                        },
-                        serviceArea: {
-                            '@type': 'Country',
-                            name: 'France',
-                        },
-                        about: [
-                            'Impression 3D',
-                            'Prototypage rapide',
-                            'Modélisme',
-                            'Fabrication additive',
-                            'Pièces sur-mesure',
-                        ],
-                    }),
-                }}
+                        url: new URL('/galerie', COMPANY_INFO.siteUrl).toString(),
+                        publisher: { '@id': BUSINESS_ID },
+                    },
+                    generateBreadcrumbStructuredData([
+                        { name: 'Accueil', url: new URL('/', COMPANY_INFO.siteUrl).toString() },
+                        { name: 'Galerie', url: new URL('/galerie', COMPANY_INFO.siteUrl).toString() },
+                    ]),
+                ]}
             />
         </main>
     );

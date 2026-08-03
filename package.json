@@ -12,8 +12,9 @@
         "typegen:watch": "node scripts/watch-sanity-typegen.mjs",
         "test:typegen-watch": "node --test scripts/watch-sanity-typegen.test.mjs",
         "test:robots": "node --test scripts/robots.test.mjs",
+        "test:structured-data": "node --test scripts/structured-data.test.mjs",
         "seo:validate": "node scripts/validate-seo.js",
-        "verify": "pnpm lint && pnpm typecheck && pnpm seo:validate && pnpm test:robots && pnpm build"
+        "verify": "pnpm lint && pnpm typecheck && pnpm seo:validate && pnpm test:robots && pnpm test:structured-data && pnpm build"
     },
     "dependencies": {
         "@portabletext/react": "^7.0.1",

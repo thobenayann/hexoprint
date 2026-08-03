@@ -11,6 +11,15 @@ import type { Metadata } from 'next';
  */
 export type JSONLDData = Record<string, unknown>;
 
+export const BUSINESS_ID = `${COMPANY_INFO.siteUrl}/#business`;
+export const WEBSITE_ID = `${COMPANY_INFO.siteUrl}/#website`;
+
+function parseBusinessHours(hours: string) {
+    return hours.split(' - ').map((time) =>
+        time.replace(/^(\d)h/, '0$1:').replace('h', ':')
+    );
+}
+
 // Types pour les options SEO
 export type SEOConfig = {
     title: string;
@@ -103,16 +112,20 @@ export function truncateMetadataText(value: string, maxLength: number) {
  * Génère du JSON-LD pour LocalBusiness
  */
 export function generateLocalBusinessStructuredData() {
+    const [weekdayOpens, weekdayCloses] = parseBusinessHours(
+        COMPANY_INFO.schedule.weekdays.hours
+    );
+    const [saturdayOpens, saturdayCloses] = parseBusinessHours(
+        COMPANY_INFO.schedule.saturday.hours
+    );
+
     return {
         '@context': 'https://schema.org',
         '@type': 'LocalBusiness',
+        '@id': BUSINESS_ID,
         name: COMPANY_INFO.name,
         legalName: COMPANY_INFO.legalName,
         url: COMPANY_INFO.siteUrl,
-        logo: `${COMPANY_INFO.siteUrl}/logos/hexoprint-sans-text-no-bg-250x250.png`,
-        image: `${COMPANY_INFO.siteUrl}/logos/hexoprint-logo-impression-3d-with-text-1200x628.png`,
-        description:
-            "Spécialiste de l'impression 3D artisanale et sur-mesure pour professionnels et particuliers.",
         telephone: COMPANY_INFO.contact.phone,
         email: COMPANY_INFO.contact.email,
         address: {
@@ -123,32 +136,44 @@ export function generateLocalBusinessStructuredData() {
             postalCode: COMPANY_INFO.contact.address.postalCode,
             addressCountry: 'FR',
         },
-        geo: {
-            '@type': 'GeoCoordinates',
-            latitude: '43.4973',
-            longitude: '1.3094',
-        },
         founder: {
             '@type': 'Person',
             name: COMPANY_INFO.founder,
         },
-        foundingDate: '2021',
-        industry: 'Fabrication additive et impression 3D',
-        numberOfEmployees: '1',
-        slogan: "Donnez vie à vos projets grâce à l'impression 3D artisanale",
         sameAs: [COMPANY_INFO.social.instagram],
-        serviceArea: {
-            '@type': 'Country',
-            name: 'France',
-        },
-        areaServed: {
-            '@type': 'State',
-            name: 'Haute-Garonne',
-        },
-        openingHours: ['Mo-Fr 09:00-18:00', 'Sa 09:00-12:00'],
-        priceRange: '€€',
-        paymentAccepted: ['Cash', 'Credit Card', 'Bank Transfer'],
-        currenciesAccepted: 'EUR',
+        areaServed: [
+            ...COMPANY_INFO.serviceArea.localDelivery.areas,
+            ...COMPANY_INFO.serviceArea.extendedDelivery.areas,
+            ...(COMPANY_INFO.serviceArea.shipping.national
+                ? [COMPANY_INFO.contact.address.country]
+                : []),
+        ].map((name) => ({ '@type': 'Place', name })),
+        openingHoursSpecification: [
+            {
+                '@type': 'OpeningHoursSpecification',
+                dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                opens: weekdayOpens,
+                closes: weekdayCloses,
+            },
+            {
+                '@type': 'OpeningHoursSpecification',
+                dayOfWeek: 'Saturday',
+                opens: saturdayOpens,
+                closes: saturdayCloses,
+            },
+        ],
+    };
+}
+
+export function generateWebSiteStructuredData() {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        '@id': WEBSITE_ID,
+        url: COMPANY_INFO.siteUrl,
+        name: COMPANY_INFO.name,
+        publisher: { '@id': BUSINESS_ID },
+        inLanguage: 'fr-FR',
     };
 }
 
@@ -187,22 +212,9 @@ export function generateArticleStructuredData(config: {
         author: {
             '@type': 'Person',
             name: author,
-            url: COMPANY_INFO.siteUrl,
         },
-        publisher: {
-            '@type': 'Organization',
-            name: COMPANY_INFO.name,
-            logo: {
-                '@type': 'ImageObject',
-                url: `${COMPANY_INFO.siteUrl}/logos/hexoprint-sans-text-no-bg-250x250.png`,
-            },
-        },
-        image: {
-            '@type': 'ImageObject',
-            url: image,
-            width: 1200,
-            height: 630,
-        },
+        publisher: { '@id': BUSINESS_ID },
+        image,
         mainEntityOfPage: {
             '@type': 'WebPage',
             '@id': url,
@@ -211,15 +223,12 @@ export function generateArticleStructuredData(config: {
             '@type': 'Blog',
             name: `Blog ${COMPANY_INFO.name}`,
             url: `${COMPANY_INFO.siteUrl}/blog`,
+            publisher: { '@id': BUSINESS_ID },
         },
         inLanguage: 'fr-FR',
         ...(categories.length > 0 && {
             keywords: categories.join(', '),
         }),
-        about: {
-            '@type': 'Thing',
-            name: 'Impression 3D',
-        },
     };
 }
 
@@ -245,11 +254,11 @@ export function generateServiceStructuredData(config: {
         name,
         description,
         url,
-        provider: generateLocalBusinessStructuredData(),
+        provider: { '@id': BUSINESS_ID },
         serviceType,
         serviceArea: {
             '@type': 'Country',
-            name: 'France',
+            name: COMPANY_INFO.contact.address.country,
         },
         ...(offers.length > 0 && {
             hasOfferCatalog: {
@@ -265,11 +274,26 @@ export function generateServiceStructuredData(config: {
                     },
                     eligibleRegion: {
                         '@type': 'Country',
-                        name: 'France',
+                        name: COMPANY_INFO.contact.address.country,
                     },
                 })),
             },
         }),
+    };
+}
+
+export function generateBreadcrumbStructuredData(
+    items: Array<{ name: string; url: string }>
+) {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: items.map((item, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: item.name,
+            item: item.url,
+        })),
     };
 }
 

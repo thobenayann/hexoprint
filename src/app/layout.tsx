@@ -1,6 +1,11 @@
 import '@/app/globals.css';
+import { StructuredData } from '@/components/seo/structured-data';
 import { COMPANY_INFO } from '@/lib/company-info';
 import { getStaticSeoPage } from '@/lib/seo-config';
+import {
+    generateLocalBusinessStructuredData,
+    generateWebSiteStructuredData,
+} from '@/lib/seo-utils';
 import { SanityLive } from '@/sanity/lib/live';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
@@ -182,64 +187,18 @@ export default function RootLayout({
                     type="image/png"
                 />
 
-                {/* Schema.org Organisation globale */}
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{
-                        __html: JSON.stringify({
-                            '@context': 'https://schema.org',
-                            '@type': 'Organization',
-                            name: COMPANY_INFO.name,
-                            legalName: COMPANY_INFO.legalName,
-                            url: COMPANY_INFO.siteUrl,
-                            logo: `${COMPANY_INFO.siteUrl}/logos/hexoprint-sans-text-no-bg-250x250.png`,
-                            image: `${COMPANY_INFO.siteUrl}/logos/hexoprint-logo-impression-3d-with-text-1200x628.png`,
-                            description:
-                                "Spécialiste de l'impression 3D artisanale et sur-mesure pour professionnels et particuliers.",
-                            telephone: COMPANY_INFO.contact.phone,
-                            email: COMPANY_INFO.contact.email,
-                            address: {
-                                '@type': 'PostalAddress',
-                                streetAddress:
-                                    COMPANY_INFO.contact.address.street,
-                                addressLocality:
-                                    COMPANY_INFO.contact.address.city,
-                                addressRegion:
-                                    COMPANY_INFO.contact.address.department,
-                                postalCode:
-                                    COMPANY_INFO.contact.address.postalCode,
-                                addressCountry: 'FR',
-                            },
-                            geo: {
-                                '@type': 'GeoCoordinates',
-                                latitude: '43.4973',
-                                longitude: '1.3094',
-                            },
-                            founder: {
-                                '@type': 'Person',
-                                name: COMPANY_INFO.founder,
-                            },
-                            foundingDate: '2021',
-                            industry: 'Fabrication additive et impression 3D',
-                            numberOfEmployees: '1',
-                            slogan: "Donnez vie à vos projets grâce à l'impression 3D artisanale",
-                            sameAs: [COMPANY_INFO.social.instagram],
-                            serviceArea: {
-                                '@type': 'Country',
-                                name: 'France',
-                            },
-                            areaServed: {
-                                '@type': 'State',
-                                name: 'Haute-Garonne',
-                            },
-                        }),
-                    }}
-                />
             </head>
             <body
                 className={`${playfair.variable} ${openSans.variable} ${orbitron.variable} ${oxanium.variable} antialiased dark`}
             >
                 <NuqsAdapter>{children}</NuqsAdapter>
+                <StructuredData
+                    id="hexoprint-entities"
+                    data={[
+                        generateLocalBusinessStructuredData(),
+                        generateWebSiteStructuredData(),
+                    ]}
+                />
                 <Analytics />
                 <SanityLive />
             </body>

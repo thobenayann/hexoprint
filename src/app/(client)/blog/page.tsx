@@ -2,9 +2,14 @@ import { BlogContent } from '@/components/sections/BlogContent';
 import { BlogFilters } from '@/components/sections/BlogFilters';
 import { BlogHero } from '@/components/sections/BlogHero';
 import { CallToAction } from '@/components/sections/CallToAction';
+import { StructuredData } from '@/components/seo/structured-data';
 import { COMPANY_INFO } from '@/lib/company-info';
 import { getStaticSeoPage } from '@/lib/seo-config';
-import { generateSEOMetadata } from '@/lib/seo-utils';
+import {
+    BUSINESS_ID,
+    generateBreadcrumbStructuredData,
+    generateSEOMetadata,
+} from '@/lib/seo-utils';
 import { Suspense } from 'react';
 
 // Composant de fallback pour le chargement
@@ -82,33 +87,26 @@ export default function BlogPage() {
             {/* Call to Action */}
             <CallToAction />
 
-            {/* Schema.org JSON-LD pour la page blog */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
+            <StructuredData
+                id="hexoprint-blog"
+                data={[
+                    {
                         '@context': 'https://schema.org',
                         '@type': 'Blog',
                         name: `Blog ${COMPANY_INFO.name}`,
-                        description:
-                            "Blog d'expertise en impression 3D : conseils, guides techniques et inspirations créatives.",
-                        url: `${COMPANY_INFO.website.url}/blog`,
-                        publisher: {
-                            '@type': 'LocalBusiness',
-                            name: COMPANY_INFO.name,
-                            url: COMPANY_INFO.website.url,
-                            logo: {
-                                '@type': 'ImageObject',
-                                url: `${COMPANY_INFO.website.url}/logos/hexoprint-sans-text-no-bg-750x750.png`,
-                            },
-                        },
+                        url: new URL('/blog', COMPANY_INFO.siteUrl).toString(),
+                        publisher: { '@id': BUSINESS_ID },
                         mainEntityOfPage: {
                             '@type': 'WebPage',
-                            '@id': `${COMPANY_INFO.website.url}/blog`,
+                            '@id': new URL('/blog', COMPANY_INFO.siteUrl).toString(),
                         },
                         inLanguage: 'fr-FR',
-                    }),
-                }}
+                    },
+                    generateBreadcrumbStructuredData([
+                        { name: 'Accueil', url: new URL('/', COMPANY_INFO.siteUrl).toString() },
+                        { name: 'Blog', url: new URL('/blog', COMPANY_INFO.siteUrl).toString() },
+                    ]),
+                ]}
             />
         </main>
     );
