@@ -1,4 +1,5 @@
 import type { ContactFormData } from '@/lib/email-schemas';
+import { PROJECT_TYPES, getOptionLabel } from '@/lib/contact-options.mjs';
 import {
     Body,
     Button,
@@ -22,7 +23,8 @@ export function ContactFormConfirmationEmail({
     formData,
     submittedAt,
 }: ContactFormConfirmationEmailProps) {
-    const { firstName, lastName, projectType, description } = formData;
+    const { projectType } = formData;
+    const projectTypeLabel = getOptionLabel(PROJECT_TYPES, projectType);
 
     return (
         <Html>
@@ -45,9 +47,7 @@ export function ContactFormConfirmationEmail({
 
                     <Heading style={h1}>Merci pour votre demande !</Heading>
 
-                    <Text style={text}>
-                        Bonjour {firstName} {lastName},
-                    </Text>
+                    <Text style={text}>Bonjour,</Text>
 
                     <Text style={text}>
                         Nous avons bien reçu votre demande de devis pour votre
@@ -62,16 +62,12 @@ export function ContactFormConfirmationEmail({
                         <Heading as="h2" style={h2}>
                             Récapitulatif de votre demande
                         </Heading>
-                        <Text style={text}>
-                            <strong>Type de projet :</strong>{' '}
-                            {getProjectTypeLabel(projectType)}
-                        </Text>
-                        <Text style={text}>
-                            <strong>Description :</strong>
-                        </Text>
-                        <Section style={descriptionBox}>
-                            <Text style={descriptionText}>{description}</Text>
-                        </Section>
+                        {projectTypeLabel !== null && (
+                            <Text style={text}>
+                                <strong>Type de projet :</strong>{' '}
+                                {projectTypeLabel}
+                            </Text>
+                        )}
                         <Text style={text}>
                             <strong>Demande reçue le :</strong> {submittedAt}
                         </Text>
@@ -149,20 +145,6 @@ export function ContactFormConfirmationEmail({
     );
 }
 
-// Fonction utilitaire pour les labels de projets
-function getProjectTypeLabel(projectType: string): string {
-    const labels: Record<string, string> = {
-        prototypage: 'Prototypage rapide',
-        reparation: 'Réparation de pièce',
-        modelisme: 'Modélisme',
-        decoration: 'Objet décoratif',
-        'piece-technique': 'Pièce technique sur-mesure',
-        'petite-serie': 'Petite série',
-        autre: 'Autre projet',
-    };
-    return labels[projectType] || projectType;
-}
-
 // Styles
 const main = {
     backgroundColor: '#ffffff',
@@ -199,21 +181,6 @@ const text = {
     fontSize: '14px',
     margin: '10px 0',
     lineHeight: '1.5',
-};
-
-const descriptionBox = {
-    margin: '10px 0',
-    padding: '15px',
-    backgroundColor: '#f9f9f9',
-    borderLeft: '4px solid #96CFE7',
-    borderRadius: '4px',
-};
-
-const descriptionText = {
-    color: '#333',
-    fontSize: '14px',
-    fontStyle: 'italic' as const,
-    margin: '0',
 };
 
 const section = {
