@@ -13,10 +13,16 @@
  * @typedef {object} FoundLink
  * @property {number} start Position du premier caractère du lien dans le texte.
  * @property {number} end Position qui suit le dernier caractère (exclue).
- * @property {string} raw Le lien tel qu'écrit, ponctuation finale retirée.
- * @property {string} href URL absolue normalisée, ou `''` si l'analyseur d'URL
- *   rejette le lien (son hôte n'est alors jamais autorisé).
- * @property {string} host Hôte en minuscules et en punycode.
+ * @property {string} raw Le lien tel qu'écrit, sans la ponctuation finale ni les
+ *   `.`, `-`, `_` de tête.
+ * @property {string} href URL absolue normalisée. Vide (`''`) pour un lien qui
+ *   ne doit jamais être autorisé ni rendu cliquable : URL que l'analyseur
+ *   rejette, URL avec identifiant (`https://we.tl@partagepro.online`), hôte
+ *   remplacé par `invalid-host`. Voir `isAllowedLink`.
+ * @property {string} host Hôte en minuscules et en punycode : un domaine ou une
+ *   adresse IP (lettres, chiffres, points, tirets, IPv6 entre crochets) de 253
+ *   caractères au plus. Pour une URL que l'analyseur rejette, la partie hôte
+ *   écrite, sans port, si elle respecte cette forme. Sinon `invalid-host`.
  *
  * @typedef {object} ScreeningInput
  * @property {string} firstName
@@ -70,6 +76,9 @@ export const ALLOWED_LINK_HOSTS = Object.freeze([
  * 2. `www.`, puis l'autorité, puis un chemin éventuel ;
  * 3. un domaine nu immédiatement suivi de `/`, dont le dernier libellé est un
  *    vrai suffixe (lettres, ou punycode `xn--`), port facultatif.
+ * Les formes 2 et 3 acceptent des `.`, `-`, `_` de tête (`.www.`, `-www.`,
+ * `:.partagepro.online/`), retirés ensuite du lien : sans cela, un seul point
+ * devant le domaine suffirait à le cacher.
  *
  * Pourquoi c'est linéaire :
  * - aucune répétition n'en contient une autre : les seules répétitions de
@@ -77,10 +86,12 @@ export const ALLOWED_LINK_HOSTS = Object.freeze([
  *   bornée, et les `?` ne rendent un groupe que facultatif ;
  * - deux quantificateurs voisins ne peuvent jamais lire le même caractère :
  *   l'autorité exclut `/?#\`, le chemin commence forcément par l'un d'eux,
- *   les libellés du domaine nu excluent `.` qui les sépare ;
+ *   les libellés du domaine nu excluent `.` qui les sépare, la tête `[._-]*`
+ *   de la forme 2 ne contient pas de `w` ;
  * - les formes 2 et 3 ne peuvent démarrer qu'au début d'une suite de
- *   caractères de domaine (regard arrière `GLUED_BEFORE`), donc chaque essai
- *   raté ne parcourt que sa propre suite, et ces suites sont disjointes ;
+ *   caractères de domaine (regard arrière `GLUED_BEFORE`, qui contient `.`,
+ *   `-` et `_`), donc chaque essai raté ne parcourt que sa propre suite, et
+ *   ces suites sont disjointes ;
  * - les regards avant et arrière ont une longueur bornée (8 caractères pour
  *   le schéma, un libellé plus 6 caractères de port pour le suffixe) ;
  * - un candidat trouvé est consommé en entier, la recherche reprend après lui.
@@ -92,8 +103,10 @@ const GLUED_BEFORE = String.raw`(?<![\p{L}\p{M}\p{N}_.@-])`;
 // Le début d'une autre URL : il termine le candidat en cours, pour que
 // `https://we.tl/?u=https://partagepro.online/x` donne deux liens.
 const NEXT_URL = String.raw`https?:[\/\\]`;
-// Identifiant, hôte et port : tout sauf les séparateurs, les blancs, les
-// caractères de contrôle et les délimiteurs HTML (`<`, `>`, `"`, accent grave).
+// Identifiant, hôte et port, lus comme le ferait un logiciel de messagerie
+// strict : tout sauf les séparateurs, les blancs, les caractères de contrôle
+// et les délimiteurs HTML ou Markdown (`<`, `>`, `"`, accent grave). La
+// lecture large, qui traverse ces délimiteurs, est traitée dans `findLinks`.
 const AUTHORITY_CHAR = String.raw`(?:(?!${NEXT_URL})[^\s\p{Cc}<>"\x60\/?#\\])`;
 const PATH_CHAR = String.raw`(?:(?!${NEXT_URL})[^\s\p{Cc}<>"\x60])`;
 const OPTIONAL_PATH = String.raw`(?:[\/?#\\]${PATH_CHAR}*)?`;
@@ -106,16 +119,30 @@ const ENDS_WITH_TLD = String.raw`(?<=\.(?:[\p{L}\p{M}]{2,}|xn--[\p{L}\p{N}-]+)(?
 const LINK_CANDIDATE = new RegExp(
   [
     String.raw`https?:[\/\\]+${AUTHORITY_CHAR}+${OPTIONAL_PATH}`,
-    String.raw`${GLUED_BEFORE}www\.${AUTHORITY_CHAR}+${OPTIONAL_PATH}`,
-    String.raw`${GLUED_BEFORE}${LABEL_CHAR}+\.${HOST_CHAR}*(?::\d{1,5})?\/${ENDS_WITH_TLD}${PATH_CHAR}*`,
+    String.raw`${GLUED_BEFORE}[._-]*www\.${AUTHORITY_CHAR}+${OPTIONAL_PATH}`,
+    String.raw`${GLUED_BEFORE}\.*${LABEL_CHAR}+\.${HOST_CHAR}*(?::\d{1,5})?\/${ENDS_WITH_TLD}${PATH_CHAR}*`,
   ].join('|'),
   'giu'
 );
 
+// Lecture large de l'autorité, à partir d'un délimiteur : jusqu'au premier
+// blanc, caractère de contrôle ou `/?#\`, comme l'analyseur d'URL WHATWG.
+const WIDE_AUTHORITY = /[^\s\p{Cc}\/?#\\]*/uy;
+const PATH_AFTER_AUTHORITY = new RegExp(OPTIONAL_PATH, 'iuy');
+const STRICT_AUTHORITY_DELIMITERS = new Set(['"', '<', '>', '`']);
+
 const SCHEME_PREFIX = /^https?:[\/\\]+/i;
 const AUTHORITY_END = /[\/?#\\]/;
+const LEADING_JUNK = /^[._-]*/;
 const TRAILING_PUNCTUATION = new Set(['.', ',', ';', ':', '!', '?', ')', ']', '}', "'", '"']);
 const WWW_PREFIX_LENGTH = 'www.'.length;
+
+/** Valeur de `host` quand l'hôte écrit ne peut pas figurer dans la trace. */
+export const INVALID_HOST = 'invalid-host';
+const MAX_HOST_LENGTH = 253;
+// Hôte « simple » : domaine ASCII ou IPv4, ou IPv6 entre crochets, puis port
+// facultatif. Rien d'autre n'entre dans `linkHosts` ni dans la trace serveur.
+const PLAIN_HOST = /^(\[[0-9a-f:.]+\]|[a-z0-9.-]+)(?::\d*)?$/;
 
 /** @param {string} candidate */
 function trimTrailingPunctuation(candidate) {
@@ -127,19 +154,27 @@ function trimTrailingPunctuation(candidate) {
 }
 
 /**
- * Hôte écrit dans une URL que l'analyseur rejette (port invalide, caractère
- * interdit…) : ce qui suit le dernier `@` de l'autorité, ou toute l'autorité
- * si rien ne suit (`https://partagepro.online@`), en minuscules. Il ne
- * correspond jamais à la liste blanche, puisqu'il ne s'analyse pas.
+ * Autorité d'une URL absolue : entre le schéma et le premier `/?#\`.
  *
  * @param {string} absoluteUrl
  */
-function writtenHost(absoluteUrl) {
+function authorityOf(absoluteUrl) {
   const rest = absoluteUrl.replace(SCHEME_PREFIX, '');
   const authorityEnd = rest.search(AUTHORITY_END);
-  const authority = authorityEnd === -1 ? rest : rest.slice(0, authorityEnd);
-  const host = authority.slice(authority.lastIndexOf('@') + 1);
-  return (host || authority).toLowerCase();
+  return authorityEnd === -1 ? rest : rest.slice(0, authorityEnd);
+}
+
+/**
+ * Hôte tel qu'il peut figurer dans `linkHosts` et dans la trace serveur : en
+ * minuscules, sans port, borné à 253 caractères (la limite d'un nom DNS) et
+ * réduit à un domaine ou une adresse IP. Tout le reste devient `invalid-host`,
+ * pour qu'aucun texte saisi par le visiteur n'atteigne la trace.
+ *
+ * @param {string} hostAndPort
+ */
+function toReportedHost(hostAndPort) {
+  const match = PLAIN_HOST.exec(hostAndPort.toLowerCase());
+  return match && match[1].length <= MAX_HOST_LENGTH ? match[1] : INVALID_HOST;
 }
 
 /**
@@ -163,15 +198,49 @@ function toLink(raw, start) {
   const absoluteUrl = hasScheme ? raw : `https://${raw}`;
   const end = start + raw.length;
 
-  try {
-    const url = new URL(absoluteUrl);
-    return { start, end, raw, href: url.href, host: url.hostname };
-  } catch {
+  // `URL.canParse` évite une exception par URL invalide : un texte piégé peut
+  // en contenir des milliers, et une exception coûte cher.
+  if (!URL.canParse(absoluteUrl)) {
     // Un lien que l'analyseur refuse reste un lien : un logiciel de messagerie
-    // peut en rendre cliquable une partie. Il compte donc comme non autorisé.
-    const host = writtenHost(absoluteUrl);
-    return host === '' ? null : { start, end, raw, href: '', host };
+    // peut en rendre cliquable une partie. Il n'est jamais autorisé.
+    const authority = authorityOf(absoluteUrl);
+    if (authority === '') {
+      return null;
+    }
+    const hostAndPort = authority.slice(authority.lastIndexOf('@') + 1) || authority;
+    return { start, end, raw, href: '', host: toReportedHost(hostAndPort) };
   }
+
+  const url = new URL(absoluteUrl);
+  const host = toReportedHost(url.hostname);
+  // Un identifiant dans l'URL n'a aucun usage légitime ici, et deux logiciels
+  // peuvent y lire deux hôtes différents (`https://partagepro.online"@we.tl`).
+  const neverAllowed = url.username !== '' || url.password !== '' || host === INVALID_HOST;
+  return { start, end, raw, href: neverAllowed ? '' : url.href, host };
+}
+
+/**
+ * Lecture large de l'autorité qui commence à `from` : sa fin, et le dernier
+ * `@` qu'elle contient (ou -1). Le dernier résultat est gardé : des candidats
+ * successifs dans la même autorité (`www.a"www.a"…`) ne la relisent pas, ce
+ * qui garde `findLinks` linéaire.
+ *
+ * @param {string} text
+ */
+function createWideAuthorityReader(text) {
+  let cachedEnd = -1;
+  let cachedLastAt = -1;
+  /** @param {number} from */
+  return (from) => {
+    if (from >= cachedEnd) {
+      WIDE_AUTHORITY.lastIndex = from;
+      WIDE_AUTHORITY.exec(text);
+      cachedEnd = WIDE_AUTHORITY.lastIndex;
+      cachedLastAt = text.slice(from, cachedEnd).lastIndexOf('@');
+      cachedLastAt = cachedLastAt === -1 ? -1 : from + cachedLastAt;
+    }
+    return { end: cachedEnd, lastAt: cachedLastAt >= from ? cachedLastAt : -1 };
+  };
 }
 
 /**
@@ -181,6 +250,13 @@ function toLink(raw, start) {
  * (`plan.zip`), une adresse e-mail, un nombre décimal. La ponctuation finale
  * `.,;:!?)]}'"` est retirée du lien.
  *
+ * Une autorité qui s'arrête sur `"`, `<`, `>` ou un accent grave est lue de
+ * deux façons. Un logiciel strict coupe le lien au délimiteur. Un logiciel
+ * large, comme l'analyseur WHATWG, le prolonge jusqu'au `/` : si un `@` suit,
+ * l'hôte réel est après lui (`https://we.tl"@partagepro.online/x`). Dans ce
+ * cas le lien couvre toute la lecture large, et son identifiant le rend
+ * non autorisé.
+ *
  * @param {string} text
  * @returns {FoundLink[]}
  */
@@ -189,10 +265,29 @@ export function findLinks(text) {
     return [];
   }
 
+  const candidates = new RegExp(LINK_CANDIDATE.source, LINK_CANDIDATE.flags);
+  const readWideAuthority = createWideAuthorityReader(text);
   /** @type {FoundLink[]} */
   const links = [];
-  for (const match of text.matchAll(LINK_CANDIDATE)) {
-    const link = toLink(trimTrailingPunctuation(match[0]), match.index);
+
+  /** @type {RegExpExecArray | null} */
+  let match;
+  while ((match = candidates.exec(text)) !== null) {
+    let end = candidates.lastIndex;
+    const isAuthorityOnly = !AUTHORITY_END.test(match[0].replace(SCHEME_PREFIX, ''));
+    if (isAuthorityOnly && STRICT_AUTHORITY_DELIMITERS.has(text[end])) {
+      const wide = readWideAuthority(end);
+      if (wide.lastAt !== -1) {
+        PATH_AFTER_AUTHORITY.lastIndex = wide.end;
+        PATH_AFTER_AUTHORITY.exec(text);
+        end = PATH_AFTER_AUTHORITY.lastIndex;
+        candidates.lastIndex = end;
+      }
+    }
+
+    const candidate = text.slice(match.index, end);
+    const leading = /** @type {RegExpExecArray} */ (LEADING_JUNK.exec(candidate))[0].length;
+    const link = toLink(trimTrailingPunctuation(candidate.slice(leading)), match.index + leading);
     if (link) {
       links.push(link);
     }
@@ -243,6 +338,19 @@ export function isAllowedHost(host, extraAllowedHosts = []) {
   );
 }
 
+/**
+ * Un lien trouvé par `findLinks` est autorisé si son hôte l'est et s'il a une
+ * URL utilisable (`href` non vide). À utiliser plutôt que `isAllowedHost`
+ * seul, avant de rendre un lien cliquable.
+ *
+ * @param {Pick<FoundLink, 'href' | 'host'>} link
+ * @param {readonly string[]} [extraAllowedHosts]
+ * @returns {boolean}
+ */
+export function isAllowedLink(link, extraAllowedHosts = []) {
+  return link.href !== '' && isAllowedHost(link.host, extraAllowedHosts);
+}
+
 const IDENTITY_FIELDS = /** @type {const} */ (['firstName', 'lastName', 'company', 'phone']);
 
 /**
@@ -270,7 +378,7 @@ export function screenContactSubmission(data, options = {}) {
     for (const link of findLinks(typeof value === 'string' ? value : '')) {
       hosts.add(link.host);
       linkInIdentityField ||= isIdentityField;
-      linkNotAllowed ||= !isAllowedHost(link.host, extraAllowedHosts);
+      linkNotAllowed ||= !isAllowedLink(link, extraAllowedHosts);
     }
   };
 

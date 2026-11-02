@@ -85,6 +85,65 @@ test('a link hidden behind an allowed one or an invalid host is still caught', (
   ]) assert.equal(screen({ description }).verdict, 'suspect', description);
 });
 
+test('fix I1: a leading dot, hyphen or underscore does not hide a link', () => {
+  for (const description of [
+    'ici :.partagepro.online/fr',
+    'ici :...partagepro.online/fr',
+    '-www.partagepro.online',
+    '.www.partagepro.online',
+    '..www.partagepro.online/x',
+    '_www.partagepro.online',
+    'https://we.tl\n.partagepro.online/x',
+  ]) assert.equal(screen({ description }).verdict, 'suspect', JSON.stringify(description));
+  const [link] = findLinks('ici :..www.partagepro.online/x');
+  assert.deepEqual({ start: link.start, raw: link.raw, host: link.host }, { start: 7, raw: 'www.partagepro.online/x', host: 'www.partagepro.online' });
+});
+
+test('fix I2: a quote, backtick or angle bracket before "@" does not hide the real host', () => {
+  for (const description of [
+    'https://we.tl"@partagepro.online/x',
+    'https://we.tl`@partagepro.online/x',
+    'https://we.tl<@partagepro.online/x',
+    'https://we.tl>@partagepro.online/x',
+    'www.we.tl"@partagepro.online/x',
+  ]) assert.deepEqual(screen({ description }), { verdict: 'suspect', reasons: ['link_not_allowed'], linkHosts: ['partagepro.online'] }, description);
+  // L'inverse : un logiciel qui coupe au délimiteur ouvrirait partagepro.online.
+  for (const description of [
+    'https://partagepro.online"@we.tl/x',
+    'https://partagepro.online)@we.tl/x',
+    'https://partagepro.online@we.tl/x',
+    'https://we.tl"www.partagepro.online/x',
+  ]) assert.equal(screen({ description }).verdict, 'suspect', description);
+  const [quoted] = findLinks('"https://we.tl", ok');
+  assert.deepEqual([quoted.raw, quoted.href], ['https://we.tl', 'https://we.tl/']);
+  for (const description of ['"https://we.tl", ok', '<a href="https://we.tl/x">lien</a>', '<p>https://we.tl</p>', '`https://we.tl`'])
+    assert.equal(screen({ description }).verdict, 'clean', description);
+});
+
+test('fix R12: an unparseable link reports a bounded plain host or a sentinel, never its raw text', () => {
+  for (const [text, host] of [
+    ['https://we.tl:99999/x', 'we.tl'],
+    ['https://partagepro.online:99999/x', 'partagepro.online'],
+    ['https://we.tl:9x9,www.evil.online/x', 'invalid-host'],
+    ['https://Jean.Dupont^Rue-des-Lilas/x', 'invalid-host'],
+    [`https://${'a'.repeat(300)}.online:99999/x`, 'invalid-host'],
+    [`www.${'w'.repeat(300)}.online`, 'invalid-host'],
+  ]) {
+    const [link] = findLinks(text);
+    assert.deepEqual([link.host, link.href], [host, ''], text);
+    assert.equal(screen({ description: text }).verdict, 'suspect', text);
+  }
+});
+
+test('scaling: 50 000-character pathological inputs stay under 100 ms', () => {
+  for (const unit of ['a.', 'www.', 'a/', '-.', '.', '_', 'a.b/', ':www.a', 'www.a"', 'https://a"', 'https://a^']) {
+    const description = unit.repeat(Math.ceil(50000 / unit.length)).slice(0, 50000);
+    const t = performance.now();
+    screen({ description });
+    assert.ok(performance.now() - t < 100, unit);
+  }
+});
+
 test('isAllowedHost matches exact hosts and subdomains only', () => {
   assert.equal(isAllowedHost('we.tl'), true);
   assert.equal(isAllowedHost('WWW.Printables.com'), true);
