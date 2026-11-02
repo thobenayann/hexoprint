@@ -93,13 +93,17 @@ export const ALLOWED_LINK_HOSTS = Object.freeze([
  *   `-` et `_`), donc chaque essai raté ne parcourt que sa propre suite, et
  *   ces suites sont disjointes ;
  * - les regards avant et arrière ont une longueur bornée (8 caractères pour
- *   le schéma, un libellé plus 6 caractères de port pour le suffixe) ;
+ *   le schéma, 2 pour `GLUED_BEFORE`, 1 pour une autorité vide, un libellé
+ *   plus 6 caractères de port pour le suffixe) ;
  * - un candidat trouvé est consommé en entier, la recherche reprend après lui.
  */
 
-// Un candidat collé à un mot, à un domaine ou à une adresse e-mail n'est pas
-// un lien : `jean@www.exemple.fr`, `awww.`, `exemple.fr`.
-const GLUED_BEFORE = String.raw`(?<![\p{L}\p{M}\p{N}_.@-])`;
+// Un candidat collé à un mot ou à un domaine (`awww.`, `exemple.fr`) n'est pas
+// un lien, ni la partie domaine d'une adresse e-mail (`jean@www.exemple.fr`).
+// Un `@` ne marque une adresse que s'il suit un caractère de partie locale
+// (RFC 5322, hors `.` final) : `voir @partagepro.online/fr` reste un lien.
+const EMAIL_LOCAL_PART_END = String.raw`[\p{L}\p{M}\p{N}!#$%&'*+\/=?^_\x60{|}~-]`;
+const GLUED_BEFORE = String.raw`(?<![\p{L}\p{M}\p{N}_.-])(?<!${EMAIL_LOCAL_PART_END}@)`;
 // Le début d'une autre URL : il termine le candidat en cours, pour que
 // `https://we.tl/?u=https://partagepro.online/x` donne deux liens.
 const NEXT_URL = String.raw`https?:[\/\\]`;
@@ -116,10 +120,15 @@ const HOST_CHAR = String.raw`[\p{L}\p{M}\p{N}_.-]`;
 // Écarte les nombres (`2.5/3`), les mesures (`0.4mm/0.6mm`), les initiales.
 const ENDS_WITH_TLD = String.raw`(?<=\.(?:[\p{L}\p{M}]{2,}|xn--[\p{L}\p{N}-]+)(?::\d{1,5})?\/)`;
 
+// Une autorité stricte non vide, ou vide si un délimiteur suit aussitôt
+// (`https://"@partagepro.online/x`) : la lecture large de `findLinks` prend
+// alors le relais. Le regard avant ne lit qu'un caractère.
+const STRICT_AUTHORITY = String.raw`(?:${AUTHORITY_CHAR}+|(?=["<>\x60]))`;
+
 const LINK_CANDIDATE = new RegExp(
   [
-    String.raw`https?:[\/\\]+${AUTHORITY_CHAR}+${OPTIONAL_PATH}`,
-    String.raw`${GLUED_BEFORE}[._-]*www\.${AUTHORITY_CHAR}+${OPTIONAL_PATH}`,
+    String.raw`https?:[\/\\]+${STRICT_AUTHORITY}${OPTIONAL_PATH}`,
+    String.raw`${GLUED_BEFORE}[._-]*www\.${STRICT_AUTHORITY}${OPTIONAL_PATH}`,
     String.raw`${GLUED_BEFORE}\.*${LABEL_CHAR}+\.${HOST_CHAR}*(?::\d{1,5})?\/${ENDS_WITH_TLD}${PATH_CHAR}*`,
   ].join('|'),
   'giu'

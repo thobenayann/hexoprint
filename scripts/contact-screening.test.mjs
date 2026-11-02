@@ -106,7 +106,15 @@ test('fix I2: a quote, backtick or angle bracket before "@" does not hide the re
     'https://we.tl<@partagepro.online/x',
     'https://we.tl>@partagepro.online/x',
     'www.we.tl"@partagepro.online/x',
+    // Autorité stricte vide : le délimiteur suit directement `https://` ou `www.`.
+    'https://"@partagepro.online/x',
+    'https://`@partagepro.online/x',
+    'https://<@partagepro.online/x',
+    'https://>@partagepro.online/x',
+    'https://"x"@partagepro.online/x',
+    'www."@partagepro.online/x',
   ]) assert.deepEqual(screen({ description }), { verdict: 'suspect', reasons: ['link_not_allowed'], linkHosts: ['partagepro.online'] }, description);
+  assert.deepEqual(findLinks('https://"x et www."x'), []);
   // L'inverse : un logiciel qui coupe au délimiteur ouvrirait partagepro.online.
   for (const description of [
     'https://partagepro.online"@we.tl/x',
@@ -135,8 +143,15 @@ test('fix R12: an unparseable link reports a bounded plain host or a sentinel, n
   }
 });
 
+test('fix R13: a lone "@" does not turn a domain into an e-mail address', () => {
+  for (const description of ['voir @partagepro.online/fr', '@www.partagepro.online', '(@partagepro.online/fr)'])
+    assert.equal(screen({ description }).verdict, 'suspect', description);
+  for (const description of ['écrivez-moi à jean@exemple.fr', 'contact: jean.dupont@exemple.fr', 'jean@exemple.fr', 'contact@www.exemple.fr'])
+    assert.equal(screen({ description }).verdict, 'clean', description);
+});
+
 test('scaling: 50 000-character pathological inputs stay under 100 ms', () => {
-  for (const unit of ['a.', 'www.', 'a/', '-.', '.', '_', 'a.b/', ':www.a', 'www.a"', 'https://a"', 'https://a^']) {
+  for (const unit of ['a.', 'www.', 'a/', '-.', '.', '_', 'a.b/', ':www.a', 'www.a"', 'https://a"', 'https://a^', 'https://"', 'www."', ' @www.a', '@a.aa/', 'a@a.aa/']) {
     const description = unit.repeat(Math.ceil(50000 / unit.length)).slice(0, 50000);
     const t = performance.now();
     screen({ description });
