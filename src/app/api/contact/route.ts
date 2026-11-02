@@ -1,7 +1,14 @@
 import { trackServerEvent } from '@/lib/analytics-server';
-import { ContactFormSchema } from '@/lib/email-schemas';
+import { emailConfig } from '@/lib/email-config';
+import { createContactSubmissionSchema } from '@/lib/email-schemas';
 import { emailService } from '@/lib/email-service';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Schéma serveur, créé une fois au chargement du module : il n'accepte que les
+// fichiers hébergés sur le store Vercel Blob du projet
+const ContactSubmissionSchema = createContactSubmissionSchema(
+    emailConfig.BLOB_PUBLIC_BASE_URL
+);
 
 // Types pour la gestion des erreurs
 type ApiError = {
@@ -19,7 +26,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // Validation des données avec Zod
-        const validationResult = ContactFormSchema.safeParse(body);
+        const validationResult = ContactSubmissionSchema.safeParse(body);
 
         if (!validationResult.success) {
             const errors = validationResult.error.issues.map(

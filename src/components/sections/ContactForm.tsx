@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileUploadSimple } from '@/components/ui/file-upload-simple';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ContactFormSchema, type ContactFormData } from '@/lib/email-schemas';
+import { BUDGETS, DEADLINES, PROJECT_TYPES } from '@/lib/contact-options.mjs';
+import { ContactFormSchema, type ContactFormDraft } from '@/lib/email-schemas';
 import type { UploadResult } from '@/lib/file-upload';
 import {
     AlertCircleIcon,
@@ -17,10 +18,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-// Le type ContactFormData est maintenant importé depuis email-schemas
-
 export function ContactForm() {
-    const [formData, setFormData] = useState<ContactFormData>({
+    const [formData, setFormData] = useState<ContactFormDraft>({
         type: 'particulier',
         firstName: '',
         lastName: '',
@@ -422,23 +421,14 @@ export function ContactForm() {
                                     <option value="">
                                         Sélectionnez le type de projet
                                     </option>
-                                    <option value="prototypage">
-                                        Prototypage rapide
-                                    </option>
-                                    <option value="reparation">
-                                        Réparation de pièce
-                                    </option>
-                                    <option value="modelisme">Modélisme</option>
-                                    <option value="decoration">
-                                        Objet décoratif
-                                    </option>
-                                    <option value="piece-technique">
-                                        Pièce technique sur-mesure
-                                    </option>
-                                    <option value="petite-serie">
-                                        Petite série
-                                    </option>
-                                    <option value="autre">Autre projet</option>
+                                    {PROJECT_TYPES.map((option) => (
+                                        <option
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -530,21 +520,14 @@ export function ContactForm() {
                                         className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground"
                                     >
                                         <option value="">Non défini</option>
-                                        <option value="0-50">
-                                            Moins de 50€
-                                        </option>
-                                        <option value="50-100">
-                                            50€ - 100€
-                                        </option>
-                                        <option value="100-200">
-                                            100€ - 200€
-                                        </option>
-                                        <option value="200-500">
-                                            200€ - 500€
-                                        </option>
-                                        <option value="500+">
-                                            Plus de 500€
-                                        </option>
+                                        {BUDGETS.map((option) => (
+                                            <option
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>
@@ -566,21 +549,14 @@ export function ContactForm() {
                                         className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-background text-foreground"
                                     >
                                         <option value="">Non défini</option>
-                                        <option value="urgent">
-                                            Urgent (48h)
-                                        </option>
-                                        <option value="1-semaine">
-                                            Sous 1 semaine
-                                        </option>
-                                        <option value="2-semaines">
-                                            Sous 2 semaines
-                                        </option>
-                                        <option value="1-mois">
-                                            Sous 1 mois
-                                        </option>
-                                        <option value="flexible">
-                                            Flexible
-                                        </option>
+                                        {DEADLINES.map((option) => (
+                                            <option
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>

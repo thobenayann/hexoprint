@@ -13,6 +13,12 @@ const EmailConfigSchema = z.object({
     NEXT_PUBLIC_APP_URL: z
         .string()
         .url('NEXT_PUBLIC_APP_URL doit être une URL valide'),
+    // URL publique du store Vercel Blob : seuls les fichiers qui en viennent sont acceptés par /api/contact
+    BLOB_PUBLIC_BASE_URL: z
+        .string()
+        .url(
+            'BLOB_PUBLIC_BASE_URL doit être une URL valide (ex: https://xxxx.public.blob.vercel-storage.com)'
+        ),
 });
 
 // Validation et export de la configuration
@@ -24,6 +30,7 @@ function getEmailConfig() {
         EMAIL_TO_ADMIN: process.env.EMAIL_TO_ADMIN, // Deuxième destinataire optionnel
         NODE_ENV: process.env.NODE_ENV as 'development' | 'production' | 'test',
         NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+        BLOB_PUBLIC_BASE_URL: process.env.BLOB_PUBLIC_BASE_URL,
     };
 
     // Mode test uniquement : on peut simuler sans vraies valeurs
@@ -35,6 +42,9 @@ function getEmailConfig() {
             EMAIL_TO_ADMIN: config.EMAIL_TO_ADMIN,
             NODE_ENV: config.NODE_ENV,
             NEXT_PUBLIC_APP_URL: config.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+            BLOB_PUBLIC_BASE_URL:
+                config.BLOB_PUBLIC_BASE_URL ||
+                'https://test.public.blob.vercel-storage.com',
             isDevMode: true,
         };
     }
