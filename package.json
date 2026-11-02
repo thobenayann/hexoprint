@@ -14,10 +14,11 @@
         "test:robots": "node --test scripts/robots.test.mjs",
         "test:speed-insights": "node --test scripts/speed-insights-layout.test.mjs",
         "test:structured-data": "node --test scripts/structured-data.test.mjs",
+        "test:security": "node --test scripts/analytics-server-conversions.test.mjs scripts/security-config.test.mjs",
         "seo:validate": "node scripts/validate-seo.js",
         "seo:test": "node --test scripts/seo-validation.test.js",
         "seo:crawl": "node scripts/crawl-seo.js",
-        "verify": "pnpm lint && pnpm typecheck && pnpm seo:test && pnpm seo:validate && pnpm test:robots && pnpm test:speed-insights && pnpm test:structured-data && pnpm build"
+        "verify": "pnpm lint && pnpm typecheck && pnpm seo:test && pnpm seo:validate && pnpm test:robots && pnpm test:speed-insights && pnpm test:structured-data && pnpm test:security && pnpm build"
     },
     "dependencies": {
         "@portabletext/react": "^7.0.1",
