@@ -93,17 +93,17 @@ export const ALLOWED_LINK_HOSTS = Object.freeze([
  *   `-` et `_`), donc chaque essai raté ne parcourt que sa propre suite, et
  *   ces suites sont disjointes ;
  * - les regards avant et arrière ont une longueur bornée (8 caractères pour
- *   le schéma, 2 pour `GLUED_BEFORE`, 1 pour une autorité vide, un libellé
+ *   le schéma, 3 pour `GLUED_BEFORE`, 1 pour une autorité vide, un libellé
  *   plus 6 caractères de port pour le suffixe) ;
  * - un candidat trouvé est consommé en entier, la recherche reprend après lui.
  */
 
 // Un candidat collé à un mot ou à un domaine (`awww.`, `exemple.fr`) n'est pas
 // un lien, ni la partie domaine d'une adresse e-mail (`jean@www.exemple.fr`).
-// Un `@` ne marque une adresse que s'il suit un caractère de partie locale
-// (RFC 5322, hors `.` final) : `voir @partagepro.online/fr` reste un lien.
-const EMAIL_LOCAL_PART_END = String.raw`[\p{L}\p{M}\p{N}!#$%&'*+\/=?^_\x60{|}~-]`;
-const GLUED_BEFORE = String.raw`(?<![\p{L}\p{M}\p{N}_.-])(?<!${EMAIL_LOCAL_PART_END}@)`;
+// Un `@` ne marque une adresse que s'il suit une lettre ou un chiffre, avec
+// au plus une marque combinante (`josé@`) : `voir @…`, `voir ~@…` ou
+// `voir l'@…` restent des liens, car aucun n'a de vraie partie locale.
+const GLUED_BEFORE = String.raw`(?<![\p{L}\p{M}\p{N}_.-])(?<![\p{L}\p{N}]\p{M}?@)`;
 // Le début d'une autre URL : il termine le candidat en cours, pour que
 // `https://we.tl/?u=https://partagepro.online/x` donne deux liens.
 const NEXT_URL = String.raw`https?:[\/\\]`;

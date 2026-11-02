@@ -144,14 +144,34 @@ test('fix R12: an unparseable link reports a bounded plain host or a sentinel, n
 });
 
 test('fix R13: a lone "@" does not turn a domain into an e-mail address', () => {
-  for (const description of ['voir @partagepro.online/fr', '@www.partagepro.online', '(@partagepro.online/fr)'])
-    assert.equal(screen({ description }).verdict, 'suspect', description);
-  for (const description of ['écrivez-moi à jean@exemple.fr', 'contact: jean.dupont@exemple.fr', 'jean@exemple.fr', 'contact@www.exemple.fr'])
-    assert.equal(screen({ description }).verdict, 'clean', description);
+  for (const description of [
+    'voir @partagepro.online/fr',
+    '@www.partagepro.online',
+    '(@partagepro.online/fr)',
+    // Un symbole seul devant `@` n'est pas une partie locale.
+    "voir l'@partagepro.online/fr",
+    'voir ~@www.partagepro.online',
+    'voir _@www.partagepro.online',
+    'voir ́@partagepro.online/fr',
+    'x@www.`@partagepro.online/x',
+  ]) assert.equal(screen({ description }).verdict, 'suspect', JSON.stringify(description));
+  for (const description of [
+    'écrivez-moi à jean@exemple.fr',
+    'contact: jean.dupont@exemple.fr',
+    'jean@exemple.fr',
+    'contact@www.exemple.fr',
+    'a.b-c_d+e@sous.domaine.fr',
+    "o'brien@exemple.fr/x",
+    'élodie@exemple.fr/x',
+    'josé@exemple.fr/x',
+    '1234@exemple.fr/x',
+  ]) assert.equal(screen({ description }).verdict, 'clean', JSON.stringify(description));
+  const [link] = findLinks("voir l'@partagepro.online/fr");
+  assert.deepEqual([link.start, link.raw], [8, 'partagepro.online/fr']);
 });
 
 test('scaling: 50 000-character pathological inputs stay under 100 ms', () => {
-  for (const unit of ['a.', 'www.', 'a/', '-.', '.', '_', 'a.b/', ':www.a', 'www.a"', 'https://a"', 'https://a^', 'https://"', 'www."', ' @www.a', '@a.aa/', 'a@a.aa/']) {
+  for (const unit of ['a.', 'www.', 'a/', '-.', '.', '_', 'a.b/', ':www.a', 'www.a"', 'https://a"', 'https://a^', 'https://"', 'www."', ' @www.a', '@a.aa/', 'a@a.aa/', ' ́@a.aa/', 'á@a.aa/', '~@www.a']) {
     const description = unit.repeat(Math.ceil(50000 / unit.length)).slice(0, 50000);
     const t = performance.now();
     screen({ description });
