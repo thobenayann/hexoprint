@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { defang, toSafeSegments } from '../src/lib/safe-text.mjs';
+import { defang, toSafeFileNameSegments, toSafeSegments } from '../src/lib/safe-text.mjs';
 
 const joined = (segments) => segments.map((segment) => segment.value).join('');
 
@@ -330,6 +330,60 @@ test('long hostile inputs stay fast', () => {
     const text = unit.repeat(Math.ceil(50000 / unit.length)).slice(0, 50000);
     const t = performance.now();
     toSafeSegments(text, { allowLinks: true, extraAllowedHosts: ['example.org'] });
+    assert.ok(performance.now() - t < 1500, unit);
+  }
+});
+
+test('file names keep the dot of a known upload extension and are never links', () => {
+  const run = (name) => toSafeFileNameSegments(name);
+  const expected = {
+    'piece.stl': 'piece.stl',
+    'Résumé.PDF': 'Résumé.PDF',
+    'modele.3mf': 'modele.3mf',
+    'Mon modèle (v2).STEP': 'Mon modèle (v2).STEP',
+    'ab.cd.ef.stl': 'ab[.]cd[.]ef.stl',
+    '.stl': '.stl',
+    'plan.zip': 'plan[.]zip',
+    'plan.ZIP': 'plan[.]ZIP',
+    'Acme.io': 'Acme[.]io',
+    'evil.online.stl': 'evil[.]online.stl',
+    'Acme.io.pdf': 'Acme[.]io.pdf',
+    'www.evil.online': 'www[.]evil[.]online',
+    'x.pdf.online': 'x[.]pdf[.]online',
+    '203.0.113.7.stl': '203[.]0[.]113[.]7.stl',
+    'https://evil.online/x.pdf': 'hxxps://evil[.]online/x.pdf',
+    'https://we.tl/x.stl': 'hxxps://we[.]tl/x.stl',
+    'evil.online/dl.stl': 'evil[.]online/dl.stl',
+    'ftp://evil.online/x.pdf': 'ftx://evil[.]online/x.pdf',
+    'piece.stl ': 'piece[.]stl ',
+    'piece.': 'piece.',
+    sans: 'sans',
+    '': '',
+  };
+  for (const [input, output] of Object.entries(expected)) {
+    const segments = run(input);
+    assert.equal(joined(segments), output, input);
+    assert.ok(segments.every((segment) => segment.kind === 'text'), `${input} must never be a link`);
+  }
+});
+
+test('every accepted upload extension stays readable except zip, which is a real top-level domain', () => {
+  const plain = ['stl', 'obj', '3mf', 'step', 'stp', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf', 'doc', 'docx', 'txt', 'rar', '7z'];
+  for (const extension of plain) {
+    for (const written of [extension, extension.toUpperCase()]) {
+      assert.equal(joined(toSafeFileNameSegments(`piece.${written}`)), `piece.${written}`, written);
+    }
+  }
+  assert.equal(joined(toSafeFileNameSegments('plan.zip')), 'plan[.]zip');
+});
+
+test('file name rendering ignores non-string input and runs in linear time', () => {
+  assert.deepEqual(toSafeFileNameSegments(undefined), []);
+  assert.deepEqual(toSafeFileNameSegments(42), []);
+  for (const unit of ['.a', 'a.', '.stl', 'a.stl.', '.'.repeat(5), 'x.pdf']) {
+    const text = unit.repeat(Math.ceil(50000 / unit.length)).slice(0, 50000);
+    const t = performance.now();
+    toSafeFileNameSegments(text);
     assert.ok(performance.now() - t < 1500, unit);
   }
 });

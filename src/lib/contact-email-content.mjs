@@ -38,7 +38,7 @@
  */
 
 import { BUDGETS, DEADLINES, PROJECT_TYPES, getOptionLabel } from './contact-options.mjs';
-import { toSafeSegments } from './safe-text.mjs';
+import { toSafeFileNameSegments, toSafeSegments } from './safe-text.mjs';
 
 export const ADMIN_SUBJECT = 'Nouvelle demande de devis reçue';
 export const SUSPECT_SUBJECT_PREFIX = '[À VÉRIFIER] ';
@@ -150,6 +150,13 @@ export function buildAdminEmailText({ formData, screening, submittedAt, extraAll
   const allowLinks = isClean(screening);
   /** @param {string | undefined} value */
   const line = (value) => safe(oneLine(value), allowLinks, extraAllowedHosts);
+  // Un nom de fichier n'est jamais un lien, et garde le point de son extension
+  // si c'est un format accepté (`piece.stl`), dans les deux modes
+  /** @param {string | undefined} value */
+  const fileName = (value) =>
+    toSafeFileNameSegments(oneLine(value))
+      .map((segment) => segment.value)
+      .join('');
   /** @param {ReadonlyArray<{ value: string; label: string }>} options @param {string} value */
   const label = (options, value) => getOptionLabel(options, value) ?? UNKNOWN_OPTION_LABEL;
 
@@ -195,7 +202,7 @@ export function buildAdminEmailText({ formData, screening, submittedAt, extraAll
     lines.push('', `Fichiers joints (${files.length})`);
     for (const file of files) {
       const megabytes = Number.isFinite(file.size) ? (file.size / BYTES_PER_MEGABYTE).toFixed(2) : '?';
-      lines.push(`- ${line(file.name)} (${megabytes} MB)`);
+      lines.push(`- ${fileName(file.name)} (${megabytes} MB)`);
       if (file.url) lines.push(`  ${line(file.url)}`);
     }
   }

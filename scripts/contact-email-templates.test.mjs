@@ -27,3 +27,10 @@ test('the email service applies the envelope', async () => {
   assert.match(svc, /text: buildAdminEmailText\(/);
   assert.match(svc, /if \(envelope\.sendConfirmation\)/);
 });
+
+test('the admin template renders file names with the file name rules', async () => {
+  const tpl = await source('src/components/emails/contact-form-admin-email.tsx');
+  assert.match(tpl, /toSafeFileNameSegments\(/);
+  assert.match(tpl, /safeFileName\(file\.name\)/);
+  assert.doesNotMatch(tpl, /safe\(file\.name/);
+});

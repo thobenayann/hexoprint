@@ -202,3 +202,30 @@ test('a value outside the closed lists is never echoed', () => {
   assert.doesNotMatch(text, /partagepro|gratuit|\bhier\b/);
   assert.equal(text.match(/Valeur non reconnue/g).length, 3);
 });
+
+test('clean and suspect text keep known file extensions readable and never link a file name', () => {
+  for (const screening of [CLEAN, SUSPECT]) {
+    const text = build({
+      files: ['piece.stl', 'Résumé.PDF', 'plan.zip', 'evil.online.stl', 'Acme.io', '203.0.113.7.stl', 'www.evil.online'].map(
+        (name) => ({ name, size: 1_572_864, type: 'x', url: FILE_URL })
+      ),
+    }, screening);
+    assert.match(text, /^- piece\.stl \(1\.50 MB\)$/m);
+    assert.match(text, /^- Résumé\.PDF \(/m);
+    assert.match(text, /^- plan\[\.\]zip \(/m);
+    assert.match(text, /^- evil\[\.\]online\.stl \(/m);
+    assert.match(text, /^- Acme\[\.\]io \(/m);
+    assert.match(text, /^- 203\[\.\]0\[\.\]113\[\.\]7\.stl \(/m);
+    assert.match(text, /^- www\[\.\]evil\[\.\]online \(/m);
+  }
+});
+
+test('only the file name changes: the file URL keeps its own rules', () => {
+  const clean = build({ files: [{ name: 'piece.stl', size: 1, type: 'x', url: FILE_URL }] }, CLEAN);
+  assert.ok(clean.includes('piece.stl'));
+  assert.ok(clean.includes(FILE_URL));
+  const suspect = build({ files: [{ name: 'piece.stl', size: 1, type: 'x', url: FILE_URL }] }, SUSPECT);
+  assert.ok(suspect.includes('piece.stl'));
+  assert.doesNotMatch(suspect, /https?:\/\//i);
+  assert.match(suspect, /hxxps:\/\/store\[\.\]public\[\.\]blob\[\.\]vercel-storage\[\.\]com\/a\[\.\]stl/);
+});

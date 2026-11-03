@@ -12,7 +12,7 @@ import {
 } from '@/lib/contact-options.mjs';
 import type { ScreeningResult } from '@/lib/contact-screening.mjs';
 import type { ContactFormData } from '@/lib/email-schemas';
-import { toSafeSegments } from '@/lib/safe-text.mjs';
+import { toSafeFileNameSegments, toSafeSegments } from '@/lib/safe-text.mjs';
 import { Fragment } from 'react';
 import {
     Body,
@@ -42,17 +42,30 @@ type SafeTextProps = {
     value: string | undefined;
     allowLinks: boolean;
     extraAllowedHosts: string[];
+    // Un nom de fichier n'est jamais cliquable et garde le point d'une extension
+    // acceptée (`piece.stl`), dans les deux modes
+    fileName?: boolean;
 };
 
 /**
  * Affiche un texte saisi par le visiteur. Tout passe par `toSafeSegments` : un
  * lien autorisé devient cliquable (seulement si `allowLinks`), tout le reste
  * (lien inconnu, domaine nu, adresse IP, autre schéma) devient du texte désamorcé.
+ * Un nom de fichier passe par `toSafeFileNameSegments`, qui s'appuie sur la même
+ * règle sans jamais produire de lien.
  */
-function SafeText({ value, allowLinks, extraAllowedHosts }: SafeTextProps) {
+function SafeText({
+    value,
+    allowLinks,
+    extraAllowedHosts,
+    fileName = false,
+}: SafeTextProps) {
+    const segments = fileName
+        ? toSafeFileNameSegments(value ?? '')
+        : toSafeSegments(value ?? '', { allowLinks, extraAllowedHosts });
     return (
         <>
-            {toSafeSegments(value ?? '', { allowLinks, extraAllowedHosts }).map(
+            {segments.map(
                 (segment, index) =>
                     segment.kind === 'link' ? (
                         <a
@@ -105,6 +118,14 @@ export function ContactFormAdminEmail({
             value={value}
             allowLinks={allowLinks}
             extraAllowedHosts={extraAllowedHosts}
+        />
+    );
+    const safeFileName = (value: string | undefined) => (
+        <SafeText
+            value={value}
+            allowLinks={false}
+            extraAllowedHosts={extraAllowedHosts}
+            fileName
         />
     );
 
@@ -235,7 +256,8 @@ export function ContactFormAdminEmail({
                                 </Heading>
                                 {files.map((file, index) => (
                                     <Text key={index} style={text}>
-                                        • <strong>{safe(file.name)}</strong> (
+                                        • <strong>{safeFileName(file.name)}</strong>{' '}
+                                        (
                                         {(file.size / 1024 / 1024).toFixed(2)}{' '}
                                         MB)
                                         {isClean && file.url && (

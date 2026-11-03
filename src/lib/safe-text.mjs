@@ -376,3 +376,47 @@ export function toSafeSegments(text, options) {
   appendText(base.slice(cursor));
   return segments;
 }
+
+// Extensions de fichier dont le point reste lisible dans un nom de fichier : les
+// formats acceptés à l'envoi (`SUPPORTED_FILE_TYPES` dans `src/lib/file-upload.ts`)
+// sauf `zip`, qui est aussi un vrai domaine de premier niveau (`plan.zip` peut être
+// un lien), donc `plan.zip` reste désamorcé en `plan[.]zip`.
+const PLAIN_FILE_EXTENSIONS = new Set([
+  'stl', 'obj', '3mf', 'step', 'stp',
+  'jpg', 'jpeg', 'png', 'webp', 'gif',
+  'pdf', 'doc', 'docx', 'txt',
+  'rar', '7z',
+]);
+const FINAL_EXTENSION = /\.([a-z0-9]+)$/i;
+
+/**
+ * Découpe un nom de fichier en segments sûrs. Un nom de fichier n'est jamais
+ * cliquable : aucun segment n'est de type `link`.
+ *
+ * Le point de la dernière extension reste lisible si cette extension (sans tenir
+ * compte de la casse) est un format de fichier accepté qui n'est pas un domaine
+ * de premier niveau (`piece.stl`, `Résumé.PDF`). Tout ce qui précède suit les
+ * règles de `toSafeSegments` avec `allowLinks: false` : `evil.online.stl` donne
+ * `evil[.]online.stl`, `203.0.113.7.stl` donne `203[.]0[.]113[.]7.stl`. Un nom
+ * sans extension connue, `plan.zip` ou `www.evil.online`, est désamorcé en entier.
+ *
+ * @param {string} name
+ * @returns {SafeSegment[]}
+ */
+export function toSafeFileNameSegments(name) {
+  const source = typeof name === 'string' ? name : '';
+  const match = FINAL_EXTENSION.exec(source);
+  if (!match || !PLAIN_FILE_EXTENSIONS.has(match[1].toLowerCase())) {
+    return toSafeSegments(source, { allowLinks: false });
+  }
+
+  const extension = match[0];
+  const segments = toSafeSegments(source.slice(0, match.index), { allowLinks: false });
+  const last = segments[segments.length - 1];
+  if (last && last.kind === 'text') {
+    last.value += extension;
+  } else {
+    segments.push({ kind: 'text', value: extension });
+  }
+  return segments;
+}
