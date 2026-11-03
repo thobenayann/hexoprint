@@ -99,6 +99,45 @@ test('an unknown VERCEL_ENV is treated as preview, so the manager is never maile
   assert.deepEqual(resolveAdminRecipients(env), [DEVELOPER]);
 });
 
+test('VERCEL_ENV=development in production mode is treated as preview, so the manager is never mailed', () => {
+  const env = {
+    NODE_ENV: 'production',
+    VERCEL_ENV: 'development',
+    EMAIL_TO: MANAGER,
+    EMAIL_TO_ADMIN: DEVELOPER,
+  };
+  assert.equal(resolveDeployEnv(env), 'preview');
+  assert.deepEqual(resolveAdminRecipients(env), [DEVELOPER]);
+  assert.throws(
+    () => resolveAdminRecipients({ ...env, EMAIL_TO_ADMIN: undefined }),
+    (error) =>
+      error instanceof Error &&
+      /EMAIL_TO_ADMIN/.test(error.message) &&
+      /VERCEL_ENV=development/.test(error.message)
+  );
+});
+
+test('the error message gives the raw VERCEL_ENV when it is unknown, and only then', () => {
+  const unknown = {
+    NODE_ENV: 'production',
+    VERCEL_ENV: 'staging',
+    EMAIL_TO: MANAGER,
+  };
+  assert.throws(
+    () => resolveAdminRecipients(unknown),
+    (error) =>
+      error instanceof Error &&
+      /EMAIL_TO_ADMIN/.test(error.message) &&
+      /preview/.test(error.message) &&
+      error.message.includes('VERCEL_ENV=staging')
+  );
+  assert.throws(
+    () => resolveAdminRecipients({ ...unknown, VERCEL_ENV: 'preview' }),
+    (error) =>
+      error instanceof Error && !error.message.includes('VERCEL_ENV=')
+  );
+});
+
 test('without VERCEL_ENV, NODE_ENV=production is treated as production', () => {
   const env = {
     NODE_ENV: 'production',
@@ -143,4 +182,7 @@ test('email-config resolves the recipients at import through the shared module',
   assert.match(config, /from '\.\/email-recipients\.mjs'/);
   assert.match(config, /resolveAdminRecipients\(/);
   assert.match(config, /EMAIL_TO: z\.string\(\)\.optional\(\)/);
+  // Without VERCEL_ENV, a preview (NODE_ENV=production) would resolve as production
+  assert.match(config, /VERCEL_ENV:\s*process\.env\.VERCEL_ENV/);
+  assert.match(config, /NODE_ENV:\s*emailConfig\.NODE_ENV/);
 });

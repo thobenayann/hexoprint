@@ -30,6 +30,10 @@ function clean(value) {
  * - Sur Vercel, `VERCEL_ENV` fait foi (`production`, `preview` ou `development`).
  *   Une valeur inconnue est traitée comme `preview`, le cas où le gérant ne
  *   reçoit jamais de mail.
+ * - `VERCEL_ENV=development` avec `NODE_ENV=production` (un `vercel build` sur la
+ *   cible development) est aussi traité comme `preview`. Le service d'envoi
+ *   choisit son mode d'après `NODE_ENV` seul, donc il enverrait de vrais mails :
+ *   ils ne doivent aller qu'à `EMAIL_TO_ADMIN`.
  * - Hors Vercel, `NODE_ENV=production` vaut production, le reste vaut développement.
  *
  * @param {EnvLike} env
@@ -39,9 +43,10 @@ export function resolveDeployEnv(env) {
   if (env.NODE_ENV === 'test') return 'test';
 
   const vercelEnv = clean(env.VERCEL_ENV);
-  if (vercelEnv === 'production' || vercelEnv === 'development') {
-    return vercelEnv;
+  if (vercelEnv === 'development') {
+    return env.NODE_ENV === 'production' ? 'preview' : 'development';
   }
+  if (vercelEnv === 'production') return 'production';
   if (vercelEnv) return 'preview';
 
   return env.NODE_ENV === 'production' ? 'production' : 'development';
@@ -75,7 +80,12 @@ export function resolveAdminRecipients(env) {
   if (deployEnv === 'preview') {
     if (!emailToAdmin) {
       throw new Error(
-        missingMessage('EMAIL_TO_ADMIN', deployEnv, 'seul destinataire des mails de test, le gérant n\'en reçoit jamais')
+        missingMessage(
+          'EMAIL_TO_ADMIN',
+          deployEnv,
+          'seul destinataire des mails de test, le gérant n\'en reçoit jamais',
+          rawOrigin(env)
+        )
       );
     }
     return [emailToAdmin];
@@ -85,12 +95,30 @@ export function resolveAdminRecipients(env) {
 }
 
 /**
+ * Valeur brute de `VERCEL_ENV` quand elle n'est pas `preview` mais que
+ * l'environnement est traité comme tel (valeur inconnue, ou development en
+ * mode production). Aide au diagnostic dans le message d'erreur.
+ *
+ * @param {EnvLike} env
+ * @returns {string}
+ */
+function rawOrigin(env) {
+  const vercelEnv = clean(env.VERCEL_ENV);
+  if (!vercelEnv || vercelEnv === 'preview') return '';
+  return vercelEnv === 'development'
+    ? 'VERCEL_ENV=development avec NODE_ENV=production'
+    : `VERCEL_ENV=${vercelEnv}`;
+}
+
+/**
  * @param {string} name
  * @param {DeployEnv} deployEnv
  * @param {string} role
+ * @param {string} [origin]
  * @returns {string}
  */
-function missingMessage(name, deployEnv, role) {
+function missingMessage(name, deployEnv, role, origin = '') {
   const label = DEPLOY_LABELS[deployEnv];
-  return `${name} est requis en ${label} (${role}). Définissez-le dans les variables d'environnement Vercel de l'environnement ${label}.`;
+  const details = origin ? `${origin} : ${role}` : role;
+  return `${name} est requis en ${label} (${details}). Définissez-le dans les variables d'environnement Vercel de l'environnement ${label}.`;
 }
