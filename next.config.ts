@@ -1,3 +1,4 @@
+import { withBotId } from 'botid/next/config';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -105,4 +106,6 @@ const nextConfig: NextConfig = {
     },
 };
 
-export default nextConfig;
+// withBotId ajoute les réécritures qui servent le script de défi BotID depuis
+// le domaine du site, sans toucher au reste de la configuration
+export default withBotId(nextConfig);

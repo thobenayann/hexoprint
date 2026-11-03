@@ -6,6 +6,7 @@ import {
 import { emailConfig } from '@/lib/email-config';
 import { createContactSubmissionSchema } from '@/lib/email-schemas';
 import { emailService } from '@/lib/email-service';
+import { checkBotId } from 'botid/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Schéma serveur, créé une fois au chargement du module : il n'accepte que les
@@ -33,6 +34,16 @@ type ApiError = {
  */
 export async function POST(request: NextRequest) {
     try {
+        // Contrôle anti-robot avant tout travail : on ne lit pas le corps de la
+        // requête, on n'envoie aucun email et on ne compte aucune statistique
+        const verification = await checkBotId();
+        if (verification.isBot) {
+            return NextResponse.json<ApiError>(
+                { error: 'Accès refusé' },
+                { status: 403 }
+            );
+        }
+
         // Parse du body de la requête
         const body = await request.json();
 
