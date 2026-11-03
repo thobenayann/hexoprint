@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import {
     BOT_REFUSED_MESSAGE,
+    FILE_TOO_LARGE_MESSAGE,
     RATE_LIMITED_MESSAGE,
     SEND_FAILED_MESSAGE,
 } from '@/lib/contact-fallback-messages';
@@ -77,14 +78,19 @@ export function FileUploadSimple({
                 }
                 const { response, body } = exchange;
 
-                // Refus anti-robot (403) et limite de débit (429) : message
-                // d'accueil avec les coordonnées directes
+                // Refus anti-robot (403), limite de débit (429) et fichier trop
+                // gros pour la plateforme (413) : message d'accueil avec les
+                // coordonnées directes
                 if (response.status === 403) {
                     alert(BOT_REFUSED_MESSAGE);
                     return;
                 }
                 if (response.status === 429) {
                     alert(RATE_LIMITED_MESSAGE);
+                    return;
+                }
+                if (response.status === 413) {
+                    alert(FILE_TOO_LARGE_MESSAGE);
                     return;
                 }
 
