@@ -29,9 +29,14 @@ const nextConfig: NextConfig = {
             "default-src 'self'; script-src 'none'; sandbox;",
     },
 
-    // Optimisations de compilation
+    // Optimisations de compilation : en production, on retire les console.log
+    // et console.debug mais on garde error, warn et info, sinon la trace du tri
+    // des demandes de devis (route contact) n'apparaîtrait jamais dans les logs
     compiler: {
-        removeConsole: process.env.NODE_ENV === 'production',
+        removeConsole:
+            process.env.NODE_ENV === 'production'
+                ? { exclude: ['error', 'warn', 'info'] }
+                : false,
     },
 
     // Headers de sécurité et performance pour la production
