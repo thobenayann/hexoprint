@@ -116,10 +116,121 @@ test('text glued to a link, a stray scheme and a hidden address do not escape', 
   assert.equal(on('evil.comhttps://a.online/x'), 'evil[.]comhxxps://a[.]online/x');
   // un schéma sans hôte derrière lui disparaît d'un texte mis de côté
   assert.equal(off('https://https://a.online/x'), 'hxxps://hxxps://a[.]online/x');
-  assert.equal(on('voir http:// ici'), 'voir http:// ici');
+  assert.equal(on('voir http:// ici'), 'voir hxxp:// ici');
   assert.equal(off('voir http:// ici'), 'voir hxxp:// ici');
   // un « @ » dans le chemin d'un lien ne cache pas un domaine
   assert.equal(on('https://a.online/p@evil.com/q'), 'hxxps://a[.]online/p@evil[.]com/q');
+});
+
+test('non-http schemes and dotted IP hosts are defanged in both modes', () => {
+  for (const allowLinks of [false, true]) {
+    const run = (text) => joined(toSafeSegments(text, { allowLinks }));
+    const expected = {
+      'ftp://203.0.113.7/plans.zip': 'ftx://203[.]0[.]113[.]7/plans[.]zip',
+      'ftp://3232235777/x': 'ftx://3232235777/x',
+      'sftp://203.0.113.7/x': 'sftx://203[.]0[.]113[.]7/x',
+      'file://203.0.113.7/share': 'filx://203[.]0[.]113[.]7/share',
+      'smb://203.0.113.7/share': 'smx://203[.]0[.]113[.]7/share',
+      'FTP://203.0.113.7/x': 'FTx://203[.]0[.]113[.]7/x',
+      'SMB://203.0.113.7/x': 'SMx://203[.]0[.]113[.]7/x',
+      'HTTP://203.0.113.7/x': 'hxxp://203[.]0[.]113[.]7/x',
+      'HTTPS://3232235777/x': 'hxxps://3232235777/x',
+      'ftp://evil.online/x': 'ftx://evil[.]online/x',
+      'file://evil.online/share': 'filx://evil[.]online/share',
+      'file:///C:/Modeles/piece.stl': 'filx:///C:/Modeles/piece[.]stl',
+      '1ftp://203.0.113.7/x': '1ftx://203[.]0[.]113[.]7/x',
+      'evil.comftp://x.online': 'evil[.]comftx://x[.]online',
+      'ftp:\\\\203.0.113.7\\x': 'ftx:\\\\203[.]0[.]113[.]7\\x',
+      // chemin réseau Windows : pas de schéma, une adresse IP ou un domaine
+      '\\\\203.0.113.7\\share': '\\\\203[.]0[.]113[.]7\\share',
+      '\\\\files.example.com\\share': '\\\\files[.]example[.]com\\share',
+      // adresse IP seule, avec ou sans chemin, avec ou sans port
+      '203.0.113.7/x': '203[.]0[.]113[.]7/x',
+      'ip 203.0.113.7:8080/x': 'ip 203[.]0[.]113[.]7:8080/x',
+      '(203.0.113.7)': '(203[.]0[.]113[.]7)',
+      '-203.0.113.7.': '-203[.]0[.]113[.]7.',
+    };
+    for (const [input, output] of Object.entries(expected)) {
+      assert.equal(run(input), output, `${input} (allowLinks: ${allowLinks})`);
+    }
+    // identifiant devant l'hôte : l'hôte garde la forme d'une adresse e-mail,
+    // mais le schéma est coupé, il ne reste aucun lien
+    assert.equal(run('sftp://user@evil.online/x'), 'sftx://user@evil.online/x');
+  }
+});
+
+test('schemes, IPs and Windows paths: what is left alone', () => {
+  const run = (text) => joined(toSafeSegments(text, { allowLinks: true }));
+  // une seule barre : un chemin Windows ou une heure, pas un lien
+  assert.equal(run('dans C:\\Modeles\\liste'), 'dans C:\\Modeles\\liste');
+  assert.equal(run('RDV 12:/30'), 'RDV 12:/30');
+  // moins de quatre nombres, ou une lettre devant : pas une adresse IP
+  for (const text of ['1.2.3', '2.5', 'v1.2.3.4', 'buse 0.4.0.6mm', 'version2.5.1.0x']) {
+    assert.equal(run(text), text);
+  }
+  // un schéma désamorcé reste stable
+  assert.equal(run('hxxp://a[.]online ftx://203[.]0[.]113[.]7/x'), 'hxxp://a[.]online ftx://203[.]0[.]113[.]7/x');
+});
+
+test('a link to an allowed host after a non-http scheme stays clickable, the scheme does not', () => {
+  const segments = toSafeSegments('ftp://we.tl/x', { allowLinks: true });
+  assert.deepEqual(segments, [
+    { kind: 'text', value: 'ftx://' },
+    { kind: 'link', value: 'we.tl/x', href: 'https://we.tl/x' },
+  ]);
+  assert.equal(joined(toSafeSegments('ftp://we.tl/x', { allowLinks: false })), 'ftx://we[.]tl/x');
+});
+
+test('an allowed link ends at the first unbalanced closing bracket and the rest is plain text', () => {
+  const on = (text) => toSafeSegments(text, { allowLinks: true });
+  assert.deepEqual(on('(https://we.tl/x)evil.online'), [
+    { kind: 'text', value: '(' },
+    { kind: 'link', value: 'https://we.tl/x', href: 'https://we.tl/x' },
+    { kind: 'text', value: ')evil[.]online' },
+  ]);
+  assert.deepEqual(on('https://we.tl/x]evil.online'), [
+    { kind: 'link', value: 'https://we.tl/x', href: 'https://we.tl/x' },
+    { kind: 'text', value: ']evil[.]online' },
+  ]);
+  assert.deepEqual(on('www.we.tl/x)www.evil.online/y'), [
+    { kind: 'link', value: 'www.we.tl/x', href: 'https://www.we.tl/x' },
+    { kind: 'text', value: ')www[.]evil[.]online/y' },
+  ]);
+  assert.deepEqual(on('https://we.tl/x)ftp://203.0.113.7/a'), [
+    { kind: 'link', value: 'https://we.tl/x', href: 'https://we.tl/x' },
+    { kind: 'text', value: ')ftx://203[.]0[.]113[.]7/a' },
+  ]);
+  assert.deepEqual(on('https://we.tl/x)(https://we.tl/y)'), [
+    { kind: 'link', value: 'https://we.tl/x', href: 'https://we.tl/x' },
+    { kind: 'text', value: ')(' },
+    { kind: 'link', value: 'https://we.tl/y', href: 'https://we.tl/y' },
+    { kind: 'text', value: ')' },
+  ]);
+  // un fermant suivi d'un texte sans domaine : la concaténation reste exacte
+  const plain = 'voir https://we.tl/x) puis https://we.tl/y]ok.';
+  assert.equal(joined(on(plain)), plain);
+  assert.deepEqual(on(plain).filter((s) => s.kind === 'link').map((s) => s.value), ['https://we.tl/x', 'https://we.tl/y']);
+});
+
+test('balanced brackets stay inside an allowed link', () => {
+  const on = (text) => toSafeSegments(text, { allowLinks: true });
+  for (const url of ['https://we.tl/Objet_(2)/x', 'https://we.tl/a_[1]c', 'https://we.tl/a(b[c]d)e']) {
+    assert.deepEqual(on(`voir ${url}.`), [
+      { kind: 'text', value: 'voir ' },
+      { kind: 'link', value: url, href: url },
+      { kind: 'text', value: '.' },
+    ]);
+  }
+  // fermant isolé en fin de phrase : retiré du lien, comme avant
+  assert.deepEqual(on('(voir https://we.tl/x)'), [
+    { kind: 'text', value: '(voir ' },
+    { kind: 'link', value: 'https://we.tl/x', href: 'https://we.tl/x' },
+    { kind: 'text', value: ')' },
+  ]);
+});
+
+test('with links off, a bracket-clipped link is still one defanged text', () => {
+  assert.equal(joined(toSafeSegments('(https://we.tl/x)evil.online', { allowLinks: false })), '(hxxps://we[.]tl/x)evil[.]online');
 });
 
 test('the segments of allowed-only text rebuild the original text', () => {
@@ -164,7 +275,11 @@ test('defanged output never leaves a host a mail client could link', () => {
 });
 
 test('long hostile inputs stay fast', () => {
-  for (const unit of ['a.bc ', 'a.', 'www.', 'https://a.b/', 'x@y.zz ', '.-_', 'a/', 'https://we.tl"@', 'a.bc' + '.'.repeat(500), 'https://we.tl/' + 'x.'.repeat(200)]) {
+  for (const unit of ['a.bc ', 'a.', 'www.', 'https://a.b/', 'x@y.zz ', '.-_', 'a/', 'https://we.tl"@', 'a.bc' + '.'.repeat(500), 'https://we.tl/' + 'x.'.repeat(200),
+    // schémas, adresses IP, chemins réseau, fermants sans ouvrant
+    'ftp://1.2.3.4/', 'ftp:/', 'a://', 'sftp:\\\\1.2.3.4\\', '\\\\1.2.3.4\\share ', '1.2.3.4 ', '1.', 'a1.1.1.1.', '1.1.1.1x ', '1.1.1.1a',
+    'abc', 'a1-b2+c3', ':///', 'https://we.tl/x)', 'https://we.tl/x]y.zz ', 'www.we.tl/x)www.we.tl/y)', 'https://we.tl/(x]', '((((((', '))))))', '[]][[]',
+    'https://we.tl/' + ')'.repeat(100), 'https://we.tl/' + '(x)'.repeat(100)]) {
     const text = unit.repeat(Math.ceil(50000 / unit.length)).slice(0, 50000);
     const t = performance.now();
     toSafeSegments(text, { allowLinks: true, extraAllowedHosts: ['example.org'] });

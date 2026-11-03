@@ -26,18 +26,46 @@ import { findLinks, isAllowedHost, isAllowedLink } from './contact-screening.mjs
 // `httpbin.org/get` n'a pas de schéma.
 const SCHEME_AND_SEPARATOR = /^(https?)(:[\/\\]*)/i;
 const AUTHORITY_END = /[\/?#\\]/;
-const STRAY_SCHEME = /http(s?)(?=:[\/\\])/gi;
+
+// Un mot de schéma suivi de `:` et de deux `/` ou `\` (`ftp://`, `sftp://`,
+// `file://`, `smb://`, `1ftp://`), ou `http(s)` suivi d'un seul (`https:/`).
+// Le mot de schéma ne démarre qu'au début d'une suite de caractères de schéma :
+// sans ce regard arrière, chaque lettre d'un long mot relancerait la lecture
+// de tout le mot (temps quadratique). Un chemin Windows (`C:\Modeles`) n'a
+// qu'un séparateur, il n'est pas touché.
+const SCHEME_WORD = /(?<![a-z0-9+-])[a-z0-9+-]+(?=:[\/\\]{2})|http(?:s?)(?=:[\/\\])/gi;
+const ENDS_WITH_HTTP = /https?$/i;
 
 /**
- * Désamorce un schéma `http(s)` resté seul dans un texte, sans hôte derrière lui
- * pour `findLinks` (`https://https://x.online`, où le premier ne mène nulle
- * part). Il ne pointe vers rien d'inconnu, mais un texte mis de côté ne doit
- * contenir aucun `http://`.
+ * Le mot de schéma sous sa forme désamorcée : `http` devient `hxxp`, tout autre
+ * schéma perd sa dernière lettre au profit d'un `x` (`ftp` devient `ftx`). Les
+ * deux sont stables : on peut désamorcer deux fois sans rien changer de plus.
+ * Le `:` et les `/` qui suivent restent, ce qui empêche aussi qu'une
+ * messagerie lise le `//` seul comme un lien sans schéma.
+ *
+ * @param {string} word
+ */
+function defangSchemeWord(word) {
+  if (/hxxps?$/i.test(word)) {
+    return word;
+  }
+  const http = ENDS_WITH_HTTP.exec(word);
+  if (http) {
+    return `${word.slice(0, http.index)}hxxp${http[0].slice('http'.length).toLowerCase()}`;
+  }
+  return `${word.slice(0, -1)}x`;
+}
+
+/**
+ * Désamorce tout schéma qui reste écrit dans un texte, sans hôte derrière lui
+ * pour `findLinks` : `https://https://x.online` (le premier ne mène nulle part),
+ * mais aussi `ftp://203.0.113.7/plan.zip` ou `file://serveur/dossier`, que
+ * `findLinks` ne compte pas comme liens et qu'une messagerie rend cliquables.
  *
  * @param {string} text
  */
 function defangStraySchemes(text) {
-  return text.replace(STRAY_SCHEME, (_, secure) => `hxxp${secure.toLowerCase()}`);
+  return text.replace(SCHEME_WORD, defangSchemeWord);
 }
 
 /**
@@ -75,16 +103,30 @@ export function defang(raw) {
  * qui écarte `2.5`, `0.4mm`, `1.2.3-beta`, `a.b` et la fin de phrase `ok. Oui`.
  * Tous ses points entre deux caractères de domaine deviennent `[.]`.
  *
+ * Une suite de nombres séparés par des points, au moins quatre
+ * (`203.0.113.7`), est traitée de la même façon : c'est une adresse IP, que
+ * Gmail rend cliquable derrière `ftp://` et que Windows ouvre dans un chemin
+ * `\\203.0.113.7\partage`. Elle n'a pas de lettres, `HAS_TLD_LIKE_LABEL` ne la
+ * voit pas. `v1.2.3.4` et `2.5` ne sont pas concernés (lettre devant, ou moins
+ * de quatre nombres).
+ *
  * Pourquoi c'est linéaire :
- * - une suite est maximale, donc deux suites ne se recouvrent jamais ;
+ * - une suite est maximale, donc deux suites ne se recouvrent jamais.
  * - chaque test d'une suite lit chaque caractère un nombre borné de fois
  *   (aucune répétition n'en contient une autre, les regards avant et arrière
- *   lisent un seul caractère) ;
+ *   lisent un seul caractère, et `DOTTED_NUMBERS` s'arrête à son premier
+ *   succès).
  * - le reste (adresse e-mail, hôte autorisé) lit au plus huit caractères autour
  *   de la suite, ou la suite voisine.
  */
 const DOMAIN_RUN = /[\p{L}\p{M}\p{N}_.-]+/gu;
 const HAS_TLD_LIKE_LABEL = /[\p{L}\p{M}\p{N}_-]\.[\p{L}\p{M}]{2,}/u;
+const DOTTED_NUMBERS = /(?<![\p{L}\p{M}\p{N}_])\d+(?:\.\d+){3,}(?![\p{L}\p{M}\p{N}_])/u;
+
+/** @param {string} run */
+function looksLikeDomain(run) {
+  return HAS_TLD_LIKE_LABEL.test(run) || DOTTED_NUMBERS.test(run);
+}
 const DOT_BETWEEN_LABELS = /(?<=[\p{L}\p{M}\p{N}_-])\.(?=[\p{L}\p{M}\p{N}_-])/gu;
 // Même définition que `findLinks` : un `@` ne marque une adresse e-mail que
 // s'il suit une lettre ou un chiffre, avec au plus une marque combinante.
@@ -116,7 +158,7 @@ function findBareDomains(text, skipAddresses) {
 
   runs.forEach((run, index) => {
     const value = run[0];
-    if (!HAS_TLD_LIKE_LABEL.test(value)) {
+    if (!looksLikeDomain(value)) {
       return;
     }
     const start = /** @type {number} */ (run.index);
@@ -132,7 +174,7 @@ function findBareDomains(text, skipAddresses) {
       // ce qui suit le `@` ressemble à un domaine. `partagepro.online@x` n'est
       // pas une adresse, et reste désamorcé.
       const next = runs[index + 1];
-      if (text[end] === '@' && next && next.index === end + 1 && HAS_TLD_LIKE_LABEL.test(next[0])) {
+      if (text[end] === '@' && next && next.index === end + 1 && looksLikeDomain(next[0])) {
         return;
       }
     }
@@ -156,7 +198,7 @@ function defangBareDomains(text) {
   let output = '';
   let cursor = 0;
   for (const domain of findBareDomains(text, false)) {
-    output +=text.slice(cursor, domain.start) + defangDomain(domain.value);
+    output += text.slice(cursor, domain.start) + defangDomain(domain.value);
     cursor = domain.end;
   }
   return output + text.slice(cursor);
@@ -172,15 +214,76 @@ function trimDots(value) {
 }
 
 /**
+ * Position du premier `)` ou `]` sans ouvrant devant lui, ou -1. Un couple
+ * ouvrant et fermant à l'intérieur du lien (`/Objet_(2)`) n'est pas concerné.
+ *
+ * @param {string} raw
+ */
+function firstUnbalancedCloser(raw) {
+  let parentheses = 0;
+  let brackets = 0;
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (char === '(') {
+      parentheses += 1;
+    } else if (char === '[') {
+      brackets += 1;
+    } else if (char === ')') {
+      if (parentheses === 0) return index;
+      parentheses -= 1;
+    } else if (char === ']') {
+      if (brackets === 0) return index;
+      brackets -= 1;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Le segment cliquable d'un lien autorisé, ou `null` s'il ne doit pas l'être.
+ *
+ * Un `)` ou un `]` sans ouvrant met fin au lien pour une messagerie : dans
+ * `(https://we.tl/x)evil.online`, `findLinks` garde `evil.online` dans le chemin
+ * (la parenthèse est un caractère de chemin), mais Gmail termine l'URL à la
+ * parenthèse et rend `evil.online` cliquable à part. Le lien s'arrête donc au
+ * premier fermant sans ouvrant, et ce qui suit redevient du texte ordinaire,
+ * traité comme tel (domaines, schémas). Si le début du lien ne se relit pas
+ * comme un lien autorisé, on renonce au lien cliquable.
+ *
+ * @param {import('./contact-screening.mjs').FoundLink} link
+ * @param {readonly string[]} extraAllowedHosts
+ * @returns {LinkSegment | null}
+ */
+function toClickableLink(link, extraAllowedHosts) {
+  if (!isAllowedLink(link, extraAllowedHosts)) {
+    return null;
+  }
+  const closer = firstUnbalancedCloser(link.raw);
+  if (closer === -1) {
+    return { kind: 'link', value: link.raw, href: link.href };
+  }
+
+  // `findLinks` retire lui-même la ponctuation finale du début du lien.
+  const head = findLinks(link.raw.slice(0, closer));
+  if (head.length !== 1 || head[0].start !== 0 || !isAllowedLink(head[0], extraAllowedHosts)) {
+    return null;
+  }
+  return { kind: 'link', value: head[0].raw, href: head[0].href };
+}
+
+/**
  * Découpe un texte en segments sûrs : du texte, et des liens cliquables. Un lien
  * ne devient un segment `link` que si `allowLinks` est vrai et si
  * `isAllowedLink` l'accepte (hôte autorisé, URL utilisable, pas d'identifiant) :
- * son `href` est celui de `findLinks`. Tout autre lien devient du texte
- * désamorcé, de même que tout domaine nu non autorisé. Un domaine nu autorisé
- * reste tel qu'écrit, sauf si `allowLinks` est faux.
+ * son `href` est celui de `findLinks`, et il s'arrête au premier `)` ou `]` sans
+ * ouvrant. Tout autre lien devient du texte désamorcé, de même que tout domaine
+ * nu non autorisé, toute adresse IP écrite avec des points et tout schéma
+ * (`ftp://`) resté dans le texte, en mode `allowLinks` comme sans. Un domaine nu
+ * autorisé reste tel qu'écrit, sauf si `allowLinks` est faux.
  *
- * Si tous les liens sont autorisés et qu'il n'y a aucun autre domaine nu, la
- * concaténation des `value` redonne exactement le texte d'origine.
+ * Si tous les liens sont autorisés et qu'il n'y a ni autre domaine nu, ni IP, ni
+ * schéma isolé, ni fermant sans ouvrant suivi d'un domaine, la concaténation des
+ * `value` redonne exactement le texte d'origine.
  *
  * @param {string} text
  * @param {SafeTextOptions} options
@@ -194,20 +297,26 @@ export function toSafeSegments(text, options) {
   const allowLinks = options?.allowLinks === true;
   const extraAllowedHosts = options?.extraAllowedHosts ?? [];
 
-  const links = findLinks(source);
   /** @type {Array<{ start: number; end: number; segment: SafeSegment }>} */
-  const replacements = links.map((link) => ({
-    start: link.start,
-    end: link.end,
-    segment:
-      allowLinks && isAllowedLink(link, extraAllowedHosts)
-        ? { kind: 'link', value: link.raw, href: link.href }
-        : { kind: 'text', value: defangBareDomains(defangStraySchemes(defang(link.raw))) },
-  }));
+  const replacements = [];
+  for (const link of findLinks(source)) {
+    const clickable = allowLinks ? toClickableLink(link, extraAllowedHosts) : null;
+    if (clickable) {
+      // Un lien raccourci laisse son reste dans le texte : il sera relu plus bas.
+      replacements.push({ start: link.start, end: link.start + clickable.value.length, segment: clickable });
+    } else {
+      replacements.push({
+        start: link.start,
+        end: link.end,
+        segment: { kind: 'text', value: defangBareDomains(defangStraySchemes(defang(link.raw))) },
+      });
+    }
+  }
+  const linkCount = replacements.length;
 
-  // Hors des liens, un texte mis de côté (`allowLinks` faux) ne garde aucun
-  // schéma. Les positions ne changent pas : `hxxp` a la longueur de `http`.
-  const base = allowLinks ? source : defangStraySchemes(source);
+  // Hors des liens, aucun schéma ne reste écrit. Les positions ne changent pas :
+  // `hxxp` a la longueur de `http`, et `ftx` celle de `ftp`.
+  const base = defangStraySchemes(source);
 
   // Les domaines nus se cherchent dans le texte où chaque lien est remplacé par
   // des espaces (mêmes positions) : une suite collée à un lien (`evil.com`
@@ -215,9 +324,9 @@ export function toSafeSegments(text, options) {
   // rattachée, et ne lui échappe pas.
   let masked = '';
   let cursor = 0;
-  for (const link of links) {
-    masked += base.slice(cursor, link.start) + ' '.repeat(link.end - link.start);
-    cursor = link.end;
+  for (const { start, end } of replacements.slice(0, linkCount)) {
+    masked += base.slice(cursor, start) + ' '.repeat(end - start);
+    cursor = end;
   }
   masked += base.slice(cursor);
 

@@ -149,6 +149,24 @@ test('the description stays a block of its own, line by line', () => {
   assert.ok(text.includes('Description :\n  ligne un\n  ligne deux\n\n  Fichiers joints (9)\n'));
 });
 
+test('non-http schemes, IP hosts and link remainders are defanged in both verdicts', () => {
+  const description = 'ftp://203.0.113.7/plans.zip et \\\\203.0.113.7\\share et 203.0.113.7/x et file://evil.online/a';
+  for (const screening of [CLEAN, SUSPECT]) {
+    const text = build({ description }, screening);
+    assert.doesNotMatch(text, /ftp:|file:|203\.0\.113\.7|evil\.online|plans\.zip/i);
+    assert.match(text, /ftx:\/\/203\[\.\]0\[\.\]113\[\.\]7\/plans\[\.\]zip/);
+    assert.match(text, /\\\\203\[\.\]0\[\.\]113\[\.\]7\\share/);
+    assert.match(text, /filx:\/\/evil\[\.\]online\/a/);
+  }
+});
+
+test('a clean text ends an allowed link at an unbalanced bracket and defangs what follows', () => {
+  const text = build({ description: 'voir (https://we.tl/x)evil.online ou https://we.tl/y]evil.online' }, CLEAN);
+  assert.ok(text.includes('(https://we.tl/x)evil[.]online'));
+  assert.ok(text.includes('https://we.tl/y]evil[.]online'));
+  assert.doesNotMatch(text, /evil\.online/);
+});
+
 test('every kind of line break in the description stays inside its block', () => {
   const lineSeparator = String.fromCharCode(0x2028);
   const text = build({ description: `un\r\ndeux\rtrois${lineSeparator}quatre` }, CLEAN);
