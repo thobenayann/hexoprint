@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { BOT_REFUSED_MESSAGE } from '@/lib/bot-refused-message';
 import type { UploadResult } from '@/lib/file-upload';
 import {
     FILE_SIZE_LIMITS,
@@ -55,6 +56,12 @@ export function FileUploadSimple({
                     method: 'POST',
                     body: formData,
                 });
+
+                // Refus anti-robot : message d'accueil avec les coordonnées directes
+                if (response.status === 403) {
+                    alert(BOT_REFUSED_MESSAGE);
+                    return;
+                }
 
                 if (!response.ok) {
                     throw new Error("Erreur lors de l'upload");

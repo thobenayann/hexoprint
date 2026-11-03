@@ -9,8 +9,24 @@ export async function POST(request: NextRequest) {
     try {
         // Contrôle anti-robot avant tout travail : on ne lit pas le corps de la
         // requête, on n'écrit rien sur le store Blob et on ne compte rien
-        const verification = await checkBotId();
-        if (verification.isBot) {
+        let isBot = false;
+        try {
+            const verification = await checkBotId({
+                advancedOptions: { checkLevel: 'basic' },
+            });
+            isBot = verification.isBot === true;
+        } catch (botIdError) {
+            // BotID injoignable ou mal configuré : on laisse passer la demande
+            // plutôt que de bloquer un vrai client. Seul le message est
+            // journalisé, l'objet d'erreur complet pourrait contenir un jeton
+            console.error(
+                'BotID indisponible, requête acceptée',
+                botIdError instanceof Error
+                    ? botIdError.message
+                    : 'erreur inconnue'
+            );
+        }
+        if (isBot) {
             return NextResponse.json(
                 { error: 'Accès refusé' },
                 { status: 403 }

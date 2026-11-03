@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileUploadSimple } from '@/components/ui/file-upload-simple';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BOT_REFUSED_MESSAGE } from '@/lib/bot-refused-message';
 import { BUDGETS, DEADLINES, PROJECT_TYPES } from '@/lib/contact-options.mjs';
 import { ContactFormSchema, type ContactFormDraft } from '@/lib/email-schemas';
 import type { UploadResult } from '@/lib/file-upload';
@@ -63,6 +64,11 @@ export function ContactForm() {
                 },
                 body: JSON.stringify(formData),
             });
+
+            // Refus anti-robot : message d'accueil avec les coordonnées directes
+            if (response.status === 403) {
+                throw new Error(BOT_REFUSED_MESSAGE);
+            }
 
             const result = await response.json();
 
