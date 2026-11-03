@@ -41,6 +41,16 @@ export async function POST(request: NextRequest) {
             const verification = await checkBotId({
                 advancedOptions: { checkLevel: 'basic' },
             });
+            // botid ne contrôle pas le statut HTTP de sa réponse : un corps
+            // d'erreur de l'API Vercel (4xx, 5xx, jeton OIDC refusé) revient
+            // sans verdict. Ce cas est tracé comme une panne, puis la demande
+            // est acceptée, comme pour une exception
+            if (typeof verification.isBot !== 'boolean') {
+                console.error(
+                    'BotID indisponible, requête acceptée',
+                    'verdict absent'
+                );
+            }
             isBot = verification.isBot === true;
         } catch (botIdError) {
             // BotID injoignable ou mal configuré : on laisse passer la demande

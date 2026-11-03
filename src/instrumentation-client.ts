@@ -5,8 +5,11 @@ import { initBotId } from 'botid/client/core';
 // classe l'appel comme un robot : un script (curl, etc.) qui frappe
 // directement l'API est donc refusé.
 // Le niveau Basic est écrit en toutes lettres des deux côtés (ici et dans
-// chaque route) : activer l'analyse approfondie dans le tableau de bord Vercel
-// ne change alors ni le comportement ni la facturation sans décision explicite.
+// chaque route). Côté serveur, il fixe le verdict et la facturation : activer
+// l'analyse approfondie dans le tableau de bord Vercel ne les change pas sans
+// décision explicite. Côté client, il ne garantit rien : si le défi renvoie
+// d=1 (réglage du tableau de bord), le navigateur peut charger le script
+// d'analyse approfondie quel que soit ce niveau.
 initBotId({
     protect: [
         {

@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import {
+  fetchJsonWithTimeout,
+  REQUEST_TIMEOUT_MS,
+} from '../src/lib/fetch-json-with-timeout.mjs';
 
 const source = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -52,26 +56,218 @@ test('an unavailable BotID never turns into a 500, only a detected bot is refuse
     assert.doesNotMatch(catchBlock, /console\.error\([^)]*,\s*\w+\s*\)/, file);
 
     // Un verdict non booléen compte comme humain, et le refus reste un 403
-    assert.match(route.slice(innerTry, catchStart), /isBot = verification\.isBot === true/, file);
+    const tryBlock = route.slice(innerTry, catchStart);
+    assert.match(tryBlock, /isBot = verification\.isBot === true/, file);
     assert.match(route.slice(refusal), /^if \(isBot\) \{\s*return NextResponse\.json(?:<ApiError>)?\(\s*\{ error: 'Accès refusé' \},\s*\{ status: 403 \}/, file);
   }
 });
 
-test('both client components show a friendly message built from company-info on a 403', async () => {
-  const helper = await source('src/lib/bot-refused-message.ts');
-  assert.match(helper, /import \{ COMPANY_INFO \} from '@\/lib\/company-info';/);
-  assert.match(helper, /COMPANY_INFO\.contact\.email/);
-  assert.match(helper, /COMPANY_INFO\.contact\.phone/);
-  assert.doesNotMatch(helper, /[\w.-]+@[\w-]+\.\w+|\b\d{2} \d{2} \d{2}/, 'no hard-coded e-mail or phone number');
-  assert.match(helper, /Votre envoi n'a pas pu être vérifié automatiquement\. Écrivez-nous directement à \$\{COMPANY_INFO\.contact\.email\} ou appelez le \$\{COMPANY_INFO\.contact\.phone\}\./);
-  const message = helper.match(/`([^`]*)`/)?.[1] ?? '';
-  assert.ok(message.length > 0);
-  assert.doesNotMatch(message, /[—–;]/, 'no dash or semicolon in the visible message');
-
-  for (const file of ['src/components/sections/ContactForm.tsx', 'src/components/ui/file-upload-simple.tsx']) {
-    const component = await source(file);
-    assert.match(component, /import \{ BOT_REFUSED_MESSAGE \} from '@\/lib\/bot-refused-message';/, file);
-    assert.match(component, /response\.status === 403/, file);
-    assert.match(component, /BOT_REFUSED_MESSAGE/, file);
+test('a BotID answer without a verdict is logged as an outage and the request goes through', async () => {
+  // botid ne vérifie jamais res.ok : un corps d'erreur de l'API Vercel revient
+  // avec isBot indéfini, sans exception. Sans cette branche, la panne serait muette.
+  for (const [file] of ROUTES) {
+    const route = await source(file);
+    const check = route.indexOf('await checkBotId(');
+    const catchStart = route.indexOf('catch (', check);
+    const tryBlock = route.slice(route.lastIndexOf('try {', check), catchStart);
+    assert.match(
+      tryBlock,
+      /if \(typeof verification\.isBot !== 'boolean'\) \{\s*console\.error\(\s*'BotID indisponible, requête acceptée',\s*'verdict absent',?\s*\);?\s*\}/,
+      `${file}: a missing verdict must write the outage log line`
+    );
+    assert.doesNotMatch(tryBlock, /return|throw/, `${file}: a missing verdict must not stop the request`);
+    // Le journal passe avant l'affectation : un verdict absent compte toujours comme humain
+    assert.ok(
+      tryBlock.indexOf("typeof verification.isBot !== 'boolean'") < tryBlock.indexOf('isBot = verification.isBot === true'),
+      file
+    );
   }
+});
+
+const CLIENT_COMPONENTS = [
+  'src/components/sections/ContactForm.tsx',
+  'src/components/ui/file-upload-simple.tsx',
+];
+
+test('the fallback messages are built from company-info, with no hard-coded contact details', async () => {
+  const helper = await source('src/lib/contact-fallback-messages.ts');
+  assert.match(helper, /import \{ COMPANY_INFO \} from '@\/lib\/company-info';/);
+  assert.doesNotMatch(helper, /[\w.-]+@[\w-]+\.\w+|\b\d{2} \d{2} \d{2}/, 'no hard-coded e-mail or phone number');
+
+  const contact = '\\$\\{COMPANY_INFO\\.contact\\.email\\} ou appelez le \\$\\{COMPANY_INFO\\.contact\\.phone\\}\\.';
+  const expected = {
+    BOT_REFUSED_MESSAGE: `Votre envoi n'a pas pu être vérifié automatiquement\\. Écrivez-nous directement à ${contact}`,
+    RATE_LIMITED_MESSAGE: `Vous avez envoyé plusieurs demandes en peu de temps\\. Merci de patienter dix minutes avant de réessayer, ou écrivez-nous directement à ${contact}`,
+    SEND_FAILED_MESSAGE: `L'envoi n'a pas pu aboutir\\. Vérifiez votre connexion, désactivez un éventuel bloqueur de publicité, puis réessayez, ou écrivez-nous directement à ${contact}`,
+  };
+  for (const [name, pattern] of Object.entries(expected)) {
+    const declaration = helper.match(new RegExp(`export const ${name} = \`([^\`]*)\`;`));
+    assert.ok(declaration, `${name} must be an exported template literal`);
+    assert.match(declaration[1], new RegExp(`^${pattern}$`), name);
+    assert.doesNotMatch(declaration[1], /[—–;]/, `${name}: no dash or semicolon in the visible message`);
+  }
+});
+
+test('both client components show the fallback messages on a 403, a 429 and a failed request', async () => {
+  for (const file of CLIENT_COMPONENTS) {
+    const component = await source(file);
+    assert.match(
+      component,
+      /import \{\s*BOT_REFUSED_MESSAGE,\s*RATE_LIMITED_MESSAGE,\s*SEND_FAILED_MESSAGE,?\s*\} from '@\/lib\/contact-fallback-messages';/,
+      file
+    );
+    assert.match(component, /response\.status === 403\) \{\s*(?:throw new Error|alert)\(BOT_REFUSED_MESSAGE\)/, `${file}: 403`);
+    assert.match(component, /response\.status === 429\) \{\s*(?:throw new Error|alert)\(RATE_LIMITED_MESSAGE\)/, `${file}: 429`);
+    // Un rejet avant toute réponse (réseau, script BotID bloqué, délai) montre le message de repli
+    assert.match(
+      component,
+      /await fetchJsonWithTimeout\([\s\S]*?\} catch \(requestError\) \{[\s\S]*?SEND_FAILED_MESSAGE/,
+      `${file}: a rejected request must show SEND_FAILED_MESSAGE`
+    );
+    // Aucune chaîne en dur à la place des messages
+    assert.doesNotMatch(component, /patienter dix minutes|bloqueur de publicité/, `${file}: messages live in contact-fallback-messages`);
+  }
+});
+
+test('both client components send through the timeout helper and never read the body unguarded', async () => {
+  for (const file of CLIENT_COMPONENTS) {
+    const component = await source(file);
+    assert.match(component, /import \{ fetchJsonWithTimeout \} from '@\/lib\/fetch-json-with-timeout\.mjs';/, file);
+    assert.doesNotMatch(component, /\bfetch\(/, `${file}: no bare fetch`);
+    assert.doesNotMatch(component, /\.json\(\)/, `${file}: the body is read by the guarded helper`);
+  }
+  const form = await source('src/components/sections/ContactForm.tsx');
+  assert.match(form, /fetchJsonWithTimeout\('\/api\/contact'/);
+  assert.match(form, /\} finally \{\s*setIsSubmitting\(false\);/);
+  const upload = await source('src/components/ui/file-upload-simple.tsx');
+  assert.match(upload, /fetchJsonWithTimeout\(\s*'\/api\/upload',[\s\S]*?UPLOAD_TIMEOUT_MS/);
+  assert.match(upload, /\} finally \{\s*setIsUploading\(false\);/);
+
+  const helper = await source('src/lib/fetch-json-with-timeout.mjs');
+  assert.match(helper, /Promise\.race\(\[exchange, timeout\]\)/);
+  assert.match(helper, /new AbortController\(\)/);
+  assert.match(helper, /\} finally \{\s*clearTimeout\(timer\);/);
+  assert.match(helper, /try \{\s*const parsed = await response\.json\(\);[\s\S]*?\} catch \{\s*return null;/);
+});
+
+const withFetch = async (stub, run) => {
+  const original = globalThis.fetch;
+  globalThis.fetch = stub;
+  try {
+    await run();
+  } finally {
+    globalThis.fetch = original;
+  }
+};
+
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+test('fetchJsonWithTimeout waits about twenty seconds by default', () => {
+  assert.equal(REQUEST_TIMEOUT_MS, 20_000);
+});
+
+test('a request that never answers is rejected after the delay and aborted', async () => {
+  let signal;
+  await withFetch(
+    (_url, init) => {
+      signal = init.signal;
+      return new Promise(() => {});
+    },
+    async () => {
+      await assert.rejects(fetchJsonWithTimeout('/api/contact', { method: 'POST' }, 20), /Aucune réponse/);
+      assert.equal(signal.aborted, true);
+    }
+  );
+});
+
+test('a body that never arrives is also cut by the delay', async () => {
+  await withFetch(
+    async () => ({ status: 200, ok: true, json: () => new Promise(() => {}) }),
+    async () => {
+      await assert.rejects(fetchJsonWithTimeout('/api/contact', { method: 'POST' }, 20), /Aucune réponse/);
+    }
+  );
+});
+
+test('a rejection that is not an Error (blocked BotID script) is passed on as a rejection', async () => {
+  const blocked = new Event('error');
+  await withFetch(
+    async () => {
+      throw blocked;
+    },
+    async () => {
+      await assert.rejects(fetchJsonWithTimeout('/api/contact', { method: 'POST' }, 1000), (reason) => reason === blocked && !(reason instanceof Error));
+    }
+  );
+});
+
+test('a non-JSON body (firewall 429) gives a null body, never a SyntaxError', async () => {
+  await withFetch(
+    async () => new Response('<html>Too Many Requests</html>', { status: 429 }),
+    async () => {
+      const { response, body } = await fetchJsonWithTimeout('/api/contact', { method: 'POST' }, 1000);
+      assert.equal(response.status, 429);
+      assert.equal(body, null);
+    }
+  );
+});
+
+test('a JSON object body is returned and anything else is ignored', async () => {
+  const answers = [
+    ['{"error":"Données invalides"}', { error: 'Données invalides' }],
+    ['null', null],
+    ['42', null],
+    ['', null],
+  ];
+  for (const [raw, expected] of answers) {
+    await withFetch(
+      async () => new Response(raw, { status: 400 }),
+      async () => {
+        const { body } = await fetchJsonWithTimeout('/api/contact', { method: 'POST' }, 1000);
+        assert.deepEqual(body, expected, raw);
+      }
+    );
+  }
+});
+
+test('the timer is stopped on success and on failure, so nothing is aborted later', async () => {
+  let signal;
+  await withFetch(
+    async (_url, init) => {
+      signal = init.signal;
+      return new Response('{"success":true}');
+    },
+    async () => {
+      await fetchJsonWithTimeout('/api/contact', { method: 'POST' }, 30);
+      await pause(80);
+      assert.equal(signal.aborted, false, 'success path');
+    }
+  );
+  await withFetch(
+    async (_url, init) => {
+      signal = init.signal;
+      throw new TypeError('Failed to fetch');
+    },
+    async () => {
+      await assert.rejects(fetchJsonWithTimeout('/api/contact', { method: 'POST' }, 30), TypeError);
+      await pause(80);
+      assert.equal(signal.aborted, false, 'failure path');
+    }
+  );
+});
+
+test('the docs name the OIDC setting exactly, use vercel curl for previews and do not over-promise on the client level', async () => {
+  const doc = await source('docs/securite.md');
+  assert.doesNotMatch(doc, /option OIDC/, 'the setting has a precise name');
+  assert.equal(doc.match(/Secure Backend Access with OIDC Federation/g)?.length, 3);
+  assert.match(doc, /Settings > Security/);
+  assert.match(doc, /vercel curl <chemin> --deployment <url-de-la-preview>/);
+  assert.match(doc, /Vercel Authentication/);
+  assert.match(doc, /`d=1`/);
+  assert.match(doc, /Seuls le verdict du serveur et la facturation restent fixés/);
+  assert.doesNotMatch(doc, /ne peut pas le modifier en silence/);
+
+  const client = await source('src/instrumentation-client.ts');
+  assert.match(client, /Côté client, il ne garantit rien/);
+  assert.match(client, /d=1/);
 });

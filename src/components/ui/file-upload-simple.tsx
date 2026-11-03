@@ -1,7 +1,12 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { BOT_REFUSED_MESSAGE } from '@/lib/bot-refused-message';
+import {
+    BOT_REFUSED_MESSAGE,
+    RATE_LIMITED_MESSAGE,
+    SEND_FAILED_MESSAGE,
+} from '@/lib/contact-fallback-messages';
+import { fetchJsonWithTimeout } from '@/lib/fetch-json-with-timeout.mjs';
 import type { UploadResult } from '@/lib/file-upload';
 import {
     FILE_SIZE_LIMITS,
@@ -9,6 +14,10 @@ import {
     validateFile,
 } from '@/lib/file-upload';
 import { useCallback, useState } from 'react';
+
+// Délai plus long que celui du formulaire (20 secondes) : le temps d'envoi
+// d'un fichier dépend de sa taille et de la connexion du visiteur
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 interface FileUploadSimpleProps {
     onFilesUploaded: (results: UploadResult[]) => void;
@@ -52,23 +61,39 @@ export function FileUploadSimple({
                     formData.append('files', file);
                 });
 
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
+                // Si la requête échoue avant toute réponse (réseau, script
+                // BotID bloqué, délai dépassé), on affiche un message de repli
+                let exchange;
+                try {
+                    exchange = await fetchJsonWithTimeout(
+                        '/api/upload',
+                        { method: 'POST', body: formData },
+                        UPLOAD_TIMEOUT_MS
+                    );
+                } catch (requestError) {
+                    console.error('Erreur upload:', requestError);
+                    alert(SEND_FAILED_MESSAGE);
+                    return;
+                }
+                const { response, body } = exchange;
 
-                // Refus anti-robot : message d'accueil avec les coordonnées directes
+                // Refus anti-robot (403) et limite de débit (429) : message
+                // d'accueil avec les coordonnées directes
                 if (response.status === 403) {
                     alert(BOT_REFUSED_MESSAGE);
                     return;
                 }
+                if (response.status === 429) {
+                    alert(RATE_LIMITED_MESSAGE);
+                    return;
+                }
 
-                if (!response.ok) {
+                // Sans liste de résultats lisible, rien n'est confirmé
+                if (!response.ok || !Array.isArray(body?.results)) {
                     throw new Error("Erreur lors de l'upload");
                 }
 
-                const data = await response.json();
-                onFilesUploaded(data.results);
+                onFilesUploaded(body.results as UploadResult[]);
             } catch (error) {
                 console.error('Erreur upload:', error);
                 alert("Erreur lors de l'upload des fichiers");

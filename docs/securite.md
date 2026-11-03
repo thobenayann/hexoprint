@@ -50,7 +50,7 @@ vercel firewall publish --yes
 
 BotID est le service de détection de robots de Vercel. Le paquet `botid` (version 1.5.12) fonctionne en deux parties : une initialisation dans le navigateur, qui signe les appels vers les routes protégées, et une vérification côté serveur.
 
-Le niveau de détection est `basic`. Il est écrit explicitement dans le client et dans chaque route, donc fixé dans le code. Un réglage de l'analyse approfondie dans le tableau de bord Vercel ne peut pas le modifier en silence.
+Le niveau de détection est `basic`. Il est écrit explicitement dans le client et dans chaque route. Côté serveur, il fixe le verdict et la facturation : un réglage de l'analyse approfondie dans le tableau de bord Vercel ne les modifie pas en silence. Côté client, il ne garantit rien : quand le défi renvoie `d=1` (réglage du tableau de bord), le navigateur peut charger le script d'analyse approfondie quel que soit son propre niveau. Seuls le verdict du serveur et la facturation restent fixés au niveau `basic`.
 
 ### Où se trouve la protection
 
@@ -60,16 +60,18 @@ Le niveau de détection est `basic`. Il est écrit explicitement dans le client 
 | `next.config.ts` | `withBotId(nextConfig)` ajoute les réécritures qui servent le script de défi BotID. |
 | `src/app/api/contact/route.ts` | `checkBotId({ advancedOptions: { checkLevel: 'basic' } })` en première instruction du handler `POST`. |
 | `src/app/api/upload/route.ts` | Même appel, en première instruction du handler `POST`. |
+| `src/lib/contact-fallback-messages.ts` | Messages de repli affichés au visiteur (`403`, `429`, requête qui n'aboutit pas), avec l'e-mail et le téléphone lus dans `src/lib/company-info.ts`. |
+| `src/lib/fetch-json-with-timeout.mjs` | Délai maximal des requêtes du navigateur et lecture du corps JSON sans erreur technique visible. |
 
 ### Comportement
 
 - **Robot détecté** : réponse `403` avec `{ "error": "Accès refusé" }`. Le corps de la requête n'est pas lu, aucun mail n'est envoyé et aucune statistique n'est comptée.
-- **Formulaire** : le visiteur voit un message de repli avec l'e-mail et le téléphone publics du site.
-- **BotID indisponible** : la requête est acceptée si BotID ne répond pas. Cela arrive par exemple si le jeton OIDC du projet est absent (OIDC désigne le jeton d'identité que Vercel fournit au projet pour appeler ses propres services), si l'API Vercel est en panne ou si le site est hébergé hors de Vercel. C'est un choix volontaire, pour ne jamais perdre un devis. Le serveur écrit alors `BotID indisponible, requête acceptée` dans les logs. Cette ligne doit être surveillée : tant qu'elle apparaît, les robots ne sont pas filtrés.
+- **Messages de repli** : le formulaire et le dépôt de fichiers montrent au visiteur un message avec l'e-mail et le téléphone publics du site dans trois cas. Un `403` (robot détecté), un `429` (limite de débit, il doit patienter dix minutes) et une requête qui n'aboutit pas (réseau coupé, script BotID bloqué par un bloqueur de publicité, délai dépassé : 20 secondes pour le formulaire, 60 secondes pour le dépôt de fichiers). Une réponse qui n'est pas du JSON n'affiche jamais d'erreur technique.
+- **BotID indisponible** : la requête est acceptée si BotID ne répond pas, ou s'il répond sans verdict. Cela arrive par exemple si le jeton OIDC du projet est absent (OIDC désigne le jeton d'identité que Vercel fournit au projet pour appeler ses propres services), si l'API Vercel est en panne ou répond par une erreur (jeton refusé, `4xx`, `5xx`), ou si le site est hébergé hors de Vercel. C'est un choix volontaire, pour ne jamais perdre un devis. Le serveur écrit alors `BotID indisponible, requête acceptée` dans les logs, suivi du message de l'erreur ou de `verdict absent` quand l'API a répondu sans verdict. Cette ligne doit être surveillée : tant qu'elle apparaît, les robots ne sont pas filtrés.
 
-Prérequis : déploiement sur Vercel, avec l'option OIDC du projet activée.
+Prérequis : déploiement sur Vercel, avec l'option **Secure Backend Access with OIDC Federation** du projet activée (Settings > Security, activée par défaut).
 
-En développement local, BotID considère toujours le visiteur comme humain. Le test d'un robot se fait donc sur une preview ou en production.
+En développement local, BotID considère toujours le visiteur comme humain. Le test d'un robot se fait donc sur une preview ou en production. Les previews sont protégées par Vercel Authentication : un `curl` simple y reçoit un `401` avant même que BotID s'exécute. Sur une preview, utiliser `vercel curl <chemin> --deployment <url-de-la-preview>` (ou un lien de partage). Un `curl` simple ne convient que contre la production.
 
 ### Vérifier
 
@@ -85,7 +87,7 @@ Attention au quota : ce test consomme les 5 requêtes autorisées par 600 second
 
 Un `400` à la place du `403` ne prouve pas à lui seul une panne. Il signifie que BotID n'a pas bloqué l'appel, et le corps `{}` est alors refusé par la validation du formulaire, sans envoi de mail. Pour trancher, consulter les logs Vercel de la fonction :
 
-- Si la ligne `BotID indisponible, requête acceptée` est présente, BotID n'a pas répondu. Vérifier l'option OIDC du projet.
+- Si la ligne `BotID indisponible, requête acceptée` est présente, BotID n'a pas répondu, ou a répondu sans verdict. Vérifier l'option **Secure Backend Access with OIDC Federation** du projet (Settings > Security).
 - Sinon, BotID a classé l'appel comme humain, ce qui est anormal pour un `curl`. Vérifier la configuration BotID.
 
 ## 3. Tri des demandes
@@ -130,6 +132,6 @@ Ces variables doivent exister dans le projet Vercel. Le site a aussi besoin de `
 | Situation | Action |
 |---|---|
 | Une vraie demande est marquée `[À VÉRIFIER]` | Elle arrive quand même. Répondre en copiant l'adresse du demandeur, car le message n'a pas de Reply-To. |
-| Un vrai client reçoit un `429` | La limite se compte par adresse IP, et plusieurs personnes derrière la même connexion partagent le compteur. Attendre 10 minutes (600 s), puis réessayer. |
-| La ligne `BotID indisponible, requête acceptée` apparaît dans les logs | BotID ne répond pas, et les robots passent. Vérifier que l'option OIDC du projet est active dans Vercel. |
+| Un vrai client reçoit un `429` | Il voit un message qui lui demande de patienter dix minutes et lui donne l'e-mail et le téléphone du site. La limite se compte par adresse IP, et plusieurs personnes derrière la même connexion partagent le compteur. Attendre 10 minutes (600 s), puis réessayer. |
+| La ligne `BotID indisponible, requête acceptée` apparaît dans les logs | BotID ne répond pas (ou répond sans verdict), et les robots passent. Vérifier que l'option **Secure Backend Access with OIDC Federation** est active dans Settings > Security du projet Vercel. |
 | Un `curl` renvoie `400`, sans la ligne `BotID indisponible` | BotID a classé l'appel comme humain, alors qu'un `curl` doit être refusé. Vérifier la configuration BotID (niveau `basic`, routes déclarées, paquet `botid`). |
