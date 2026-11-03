@@ -70,32 +70,49 @@ export const ALLOWED_LINK_HOSTS = Object.freeze([
 /*
  * Repérage des candidats : une seule expression régulière, en temps linéaire.
  *
- * Trois formes comptent comme lien :
+ * Le texte lu ici doit être normalisé par le schéma de contact
+ * (`normalizeVisitorText` dans `contact-schema.mjs`) : les caractères
+ * invisibles que l'analyseur d'URL retire d'un hôte (U+00AD, U+200B...) n'y
+ * sont plus, et les points idéographique et pleine chasse y sont des `.`.
+ *
+ * Quatre formes comptent comme lien :
  * 1. `http://` ou `https://` (aussi `https:/` ou `https:\\`, que les
- *    navigateurs acceptent), puis l'autorité, puis un chemin éventuel ;
- * 2. `www.`, puis l'autorité, puis un chemin éventuel ;
- * 3. un domaine nu immédiatement suivi de `/`, dont le dernier libellé est un
- *    vrai suffixe (lettres, ou punycode `xn--`), port facultatif.
- * Les formes 2 et 3 acceptent des `.`, `-`, `_` de tête (`.www.`, `-www.`,
+ *    navigateurs acceptent), puis l'autorité, puis un chemin éventuel.
+ * 2. `www.`, puis l'autorité, puis un chemin éventuel.
+ * 3. Un domaine nu dont le dernier libellé est un vrai suffixe (lettres, ou
+ *    punycode `xn--`), port facultatif, immédiatement suivi de `/`, ou de `?`
+ *    ou `#` puis d'un caractère qui n'est ni un blanc ni une ponctuation
+ *    finale (`partagepro.online?ref=x`, mais pas `site.fr? merci`).
+ * 4. Une adresse IPv4 nue (quatre groupes de un à trois chiffres) suivie
+ *    d'un port, ou de `/`, `?`, `#` comme la forme 3. Son hôte n'est jamais
+ *    dans la liste blanche, la demande est donc suspecte. Seule, sans port ni
+ *    chemin, elle ne compte pas (comme un domaine nu), elle est seulement
+ *    désamorcée à l'affichage.
+ * Les formes 2, 3 et 4 acceptent des `.`, `-`, `_` de tête (`.www.`, `-www.`,
  * `:.partagepro.online/`), retirés ensuite du lien : sans cela, un seul point
  * devant le domaine suffirait à le cacher.
  *
  * Pourquoi c'est linéaire :
- * - aucune répétition n'en contient une autre : les seules répétitions de
+ * - Aucune répétition n'en contient une autre. Les seules répétitions de
  *   groupe portent sur un caractère précédé d'un regard avant de longueur
- *   bornée, et les `?` ne rendent un groupe que facultatif ;
- * - deux quantificateurs voisins ne peuvent jamais lire le même caractère :
- *   l'autorité exclut `/?#\`, le chemin commence forcément par l'un d'eux,
+ *   bornée, et les `?` ne rendent un groupe que facultatif.
+ * - Deux quantificateurs voisins ne peuvent jamais lire le même caractère.
+ *   L'autorité exclut `/?#\`, le chemin commence forcément par l'un d'eux,
  *   les libellés du domaine nu excluent `.` qui les sépare, la tête `[._-]*`
- *   de la forme 2 ne contient pas de `w` ;
- * - les formes 2 et 3 ne peuvent démarrer qu'au début d'une suite de
+ *   des formes 2 et 4 ne contient ni `w` ni chiffre, les groupes de chiffres
+ *   de la forme 4 ont une taille bornée.
+ * - Les formes 2, 3 et 4 ne peuvent démarrer qu'au début d'une suite de
  *   caractères de domaine (regard arrière `GLUED_BEFORE`, qui contient `.`,
  *   `-` et `_`), donc chaque essai raté ne parcourt que sa propre suite, et
- *   ces suites sont disjointes ;
- * - les regards avant et arrière ont une longueur bornée (8 caractères pour
- *   le schéma, 3 pour `GLUED_BEFORE`, 1 pour une autorité vide, un libellé
- *   plus 6 caractères de port pour le suffixe) ;
- * - un candidat trouvé est consommé en entier, la recherche reprend après lui.
+ *   ces suites sont disjointes.
+ * - Le suffixe de la forme 3 n'est vérifié qu'une fois le séparateur atteint
+ *   (`/`, `?`, `#` ne sont pas des caractères de domaine), donc une seule fois
+ *   par essai.
+ * - Les regards avant et arrière ont une longueur bornée : 8 caractères pour
+ *   le schéma, 3 pour `GLUED_BEFORE`, 1 pour une autorité vide ou pour le
+ *   caractère qui suit `?` ou `#`, un libellé plus 7 caractères de port et de
+ *   séparateur pour le suffixe.
+ * - Un candidat trouvé est consommé en entier, la recherche reprend après lui.
  */
 
 // Un candidat collé à un mot ou à un domaine (`awww.`, `exemple.fr`) n'est pas
@@ -116,9 +133,16 @@ const PATH_CHAR = String.raw`(?:(?!${NEXT_URL})[^\s\p{Cc}<>"\x60])`;
 const OPTIONAL_PATH = String.raw`(?:[\/?#\\]${PATH_CHAR}*)?`;
 const LABEL_CHAR = String.raw`[\p{L}\p{M}\p{N}_-]`;
 const HOST_CHAR = String.raw`[\p{L}\p{M}\p{N}_.-]`;
-// Vérifié une seule fois, quand le `/` qui suit le domaine nu est atteint.
-// Écarte les nombres (`2.5/3`), les mesures (`0.4mm/0.6mm`), les initiales.
-const ENDS_WITH_TLD = String.raw`(?<=\.(?:[\p{L}\p{M}]{2,}|xn--[\p{L}\p{N}-]+)(?::\d{1,5})?\/)`;
+const PORT = String.raw`:\d{1,5}`;
+// Ce qui fait d'un domaine ou d'une adresse IPv4 nus un lien : `/`, ou `?` ou
+// `#` suivi d'un caractère d'URL qui n'est pas une ponctuation finale. Un `?`
+// en fin de phrase (`site.fr ?`, `site.fr? merci`, `site.fr?)`) ne compte pas.
+const BARE_SEPARATOR = String.raw`(?:\/|[?#](?=[^\s\p{Cc}<>"\x60.,;:!?)\]}']))`;
+// Vérifié une seule fois, quand le séparateur qui suit le domaine nu est
+// atteint. Écarte les nombres (`2.5/3`), les mesures (`0.4mm/0.6mm`), les
+// initiales.
+const ENDS_WITH_TLD = String.raw`(?<=\.(?:[\p{L}\p{M}]{2,}|xn--[\p{L}\p{N}-]+)(?:${PORT})?[\/?#])`;
+const IPV4_HOST = String.raw`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`;
 
 // Une autorité stricte non vide, ou vide si un délimiteur suit aussitôt
 // (`https://"@partagepro.online/x`) : la lecture large de `findLinks` prend
@@ -129,7 +153,8 @@ const LINK_CANDIDATE = new RegExp(
   [
     String.raw`https?:[\/\\]+${STRICT_AUTHORITY}${OPTIONAL_PATH}`,
     String.raw`${GLUED_BEFORE}[._-]*www\.${STRICT_AUTHORITY}${OPTIONAL_PATH}`,
-    String.raw`${GLUED_BEFORE}\.*${LABEL_CHAR}+\.${HOST_CHAR}*(?::\d{1,5})?\/${ENDS_WITH_TLD}${PATH_CHAR}*`,
+    String.raw`${GLUED_BEFORE}\.*${LABEL_CHAR}+\.${HOST_CHAR}*(?:${PORT})?${BARE_SEPARATOR}${ENDS_WITH_TLD}${PATH_CHAR}*`,
+    String.raw`${GLUED_BEFORE}[._-]*${IPV4_HOST}(?:${PORT}(?:${BARE_SEPARATOR}${PATH_CHAR}*)?|${BARE_SEPARATOR}${PATH_CHAR}*)`,
   ].join('|'),
   'giu'
 );
@@ -254,10 +279,12 @@ function createWideAuthorityReader(text) {
 
 /**
  * Liens présents dans un texte, dans l'ordre. Comptent comme liens une URL
- * `http(s)://`, une adresse commençant par `www.` et un domaine nu suivi d'un
- * chemin (`partagepro.online/fr`). Ne comptent pas : un domaine nu sans chemin
- * (`plan.zip`), une adresse e-mail, un nombre décimal. La ponctuation finale
- * `.,;:!?)]}'"` est retirée du lien.
+ * `http(s)://`, une adresse commençant par `www.`, un domaine nu suivi d'un
+ * chemin, d'une requête ou d'un fragment (`partagepro.online/fr`,
+ * `partagepro.online?ref=x`), une adresse IPv4 nue suivie d'un port ou d'un
+ * chemin (`203.0.113.7:80`). Ne comptent pas : un domaine nu ou une adresse
+ * IPv4 seuls (`plan.zip`), une adresse e-mail, un nombre décimal. La
+ * ponctuation finale `.,;:!?)]}'"` est retirée du lien.
  *
  * Une autorité qui s'arrête sur `"`, `<`, `>` ou un accent grave est lue de
  * deux façons. Un logiciel strict coupe le lien au délimiteur. Un logiciel

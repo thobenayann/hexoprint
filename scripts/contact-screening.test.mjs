@@ -179,6 +179,57 @@ test('scaling: 50 000-character pathological inputs stay under 100 ms', () => {
   }
 });
 
+// Revue de branche, finding 2 : un domaine nu suivi d'une requête, d'un
+// fragment ou d'un port, et une adresse IPv4 nue suivie d'un chemin ou d'un
+// port, sont des liens. Une adresse IPv4 suivie d'un port compte même sans
+// chemin : aucun texte ordinaire n'écrit quatre groupes de chiffres puis `:80`.
+test('finding 2: a bare domain or IPv4 followed by a query, fragment, port or path is a suspect link', () => {
+  for (const [description, host] of [
+    ['partagepro.online?ref=hexoprint', 'partagepro.online'],
+    ['partagepro.online#x', 'partagepro.online'],
+    ['partagepro.online:8080/x', 'partagepro.online'],
+    ['partagepro.online:8080?x', 'partagepro.online'],
+    ['partagepro.online:8080#x', 'partagepro.online'],
+    ['voir partagepro.online?https://we.tl/x', 'partagepro.online'],
+    ['203.0.113.7/x', '203.0.113.7'],
+    ['203.0.113.7:80', '203.0.113.7'],
+    ['203.0.113.7:80/x', '203.0.113.7'],
+    ['203.0.113.7?x', '203.0.113.7'],
+    ['203.0.113.7#x', '203.0.113.7'],
+    ['ici :.203.0.113.7/x', '203.0.113.7'],
+    ['(203.0.113.7:8443)', '203.0.113.7'],
+  ]) {
+    const result = screen({ description });
+    assert.equal(result.verdict, 'suspect', description);
+    assert.ok(result.linkHosts.includes(host), `${description} -> ${result.linkHosts}`);
+  }
+  const [link] = findLinks('le dossier partagepro.online?ref=hexoprint, merci');
+  assert.deepEqual([link.raw, link.href, link.host], ['partagepro.online?ref=hexoprint', 'https://partagepro.online/?ref=hexoprint', 'partagepro.online']);
+  const [ip] = findLinks('serveur 203.0.113.7:80.');
+  assert.deepEqual([ip.raw, ip.host], ['203.0.113.7:80', '203.0.113.7']);
+});
+
+test('finding 2: ordinary text with dots, slashes, question marks and numbers stays clean', () => {
+  for (const description of [
+    'plan.zip', 'pièce.de', 'support.stl', '2.5 cm', '0.4mm/0.6mm', '12.03.2026', 'v1.2', 'PLA/PETG',
+    'jean@exemple.fr', '05.61.22.33.44', 'etc.?', 'ok.? merci',
+    // Un `?` de ponctuation après un domaine nu : fin de texte, blanc ou autre ponctuation.
+    'vous connaissez site.fr?', 'vous connaissez site.fr? merci', '(sur lesite.fr?)', 'lesite.fr?!', 'lesite.fr#',
+    // Une adresse IPv4 seule, un numéro de téléphone ou des dates avec `/`.
+    '203.0.113.7', 'au 203.0.113.7.', '05.61.22.33.44/06.12.34.56.78', 'du 12.03.2026/13.03.2026', 'v1.2.3.4/beta',
+    'à 10:30, ref 1.2.3/4', 'jean@203.0.113.7/x',
+  ]) assert.equal(screen({ description }).verdict, 'clean', description);
+});
+
+test('finding 2: 50 000-character inputs built on the new patterns stay under 100 ms', () => {
+  for (const unit of ['a.aa?', 'a.aa#', 'a.aa?x', 'a.aa? ', 'a.aa?)', 'a.aa:1?', 'a.aa:1', 'a.aa:', 'etc.?', '1.1.1.1', '1.1.1.1.', '1.1.1.1?', '1.1.1.1? ', '1.1.1.1:', '1.1.1.1:1', '-1.1.1.1', '.1.1.1.1:1 ', '1.1.1.1/', '1.', '1.1:1/']) {
+    const description = unit.repeat(Math.ceil(50000 / unit.length)).slice(0, 50000);
+    const t = performance.now();
+    screen({ description });
+    assert.ok(performance.now() - t < 100, unit);
+  }
+});
+
 test('isAllowedHost matches exact hosts and subdomains only', () => {
   assert.equal(isAllowedHost('we.tl'), true);
   assert.equal(isAllowedHost('WWW.Printables.com'), true);
