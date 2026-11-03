@@ -124,12 +124,15 @@ Ces variables doivent exister dans le projet Vercel. Le site a aussi besoin de `
 | Variable | Valeur | Environnements | Rôle |
 |---|---|---|---|
 | `BLOB_PUBLIC_BASE_URL` | `https://vr7ol2pxx8jv7pat.public.blob.vercel-storage.com` | Production, Preview, Development | URL publique du store Blob `hexoprint-blob` (identifiant `store_VR7Ol2pXx8jv7pat`, en minuscules dans l'URL). |
-| `EMAIL_TO` | Adresse de réception principale | Production, Preview, Development | Obligatoire. Sans elle, le build échoue. |
-| `EMAIL_TO_ADMIN` | Adresse de réception secondaire | Selon besoin | Facultative. Lue seulement si `NODE_ENV` vaut `production`, ce qui est aussi le cas des previews. |
+| `EMAIL_TO` | Adresse de réception du gérant | Production | Obligatoire en Production uniquement. Sans elle, le build de Production échoue. Les previews ne l'utilisent jamais. |
+| `EMAIL_TO_ADMIN` | Adresse du développeur | Preview (obligatoire), Production (facultative) | En Preview, seul destinataire des mails admin. En Production, destinataire en plus de `EMAIL_TO`. Sans elle, le build Preview échoue. |
 
 - `BLOB_PUBLIC_BASE_URL` est obligatoire : sans elle, le build échoue. Le serveur n'accepte que les fichiers joints hébergés sur cette origine.
 - `BLOB_READ_WRITE_TOKEN` doit pointer vers le même store que `BLOB_PUBLIC_BASE_URL` dans chaque environnement (Production, Preview, Development) : sinon chaque demande avec pièce jointe y reçoit un `400`, parce que le fichier est déposé dans un store dont l'origine n'est pas acceptée.
-- En Preview, `EMAIL_TO` et `EMAIL_TO_ADMIN` ne doivent pas contenir l'adresse du gérant. Les previews envoient de vrais mails, et `EMAIL_TO_ADMIN` est lue dès que `NODE_ENV` vaut `production`, ce qui est le cas sur les previews.
+- Le site distingue son environnement grâce à `VERCEL_ENV` (`production`, `preview` ou `development`). Une preview tourne avec `NODE_ENV=production` mais reste traitée comme une preview. Hors Vercel, `NODE_ENV=production` vaut Production.
+- En Preview, les mails admin partent uniquement vers `EMAIL_TO_ADMIN`, même si `EMAIL_TO` est définie dans cet environnement. Le gérant ne reçoit donc jamais les essais faits sur une preview, qui envoient de vrais mails. `EMAIL_TO_ADMIN` doit contenir l'adresse du développeur, jamais celle du gérant.
+- Le build échoue si la variable requise par son environnement est absente ou vide : `EMAIL_TO` en Production, `EMAIL_TO_ADMIN` en Preview. Le message d'erreur nomme la variable et l'environnement.
+- En Development, aucune des deux n'est obligatoire. Les mails partent vers l'adresse de test Resend `delivered@resend.dev`.
 
 ## Que faire si…
 
