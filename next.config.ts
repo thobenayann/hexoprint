@@ -4,10 +4,6 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
     // Optimisations pour la production
     experimental: {
-        // Support pour les Server Actions (si utilisées)
-        serverActions: {
-            bodySizeLimit: '10mb', // Pour l'upload de fichiers STL
-        },
         // Optimisation du bundle (toujours experimental en 15.3)
         optimizePackageImports: ['lucide-react', '@sanity/ui'],
     },
@@ -72,7 +68,10 @@ const nextConfig: NextConfig = {
             },
 
             {
-                // Headers pour toutes les pages
+                // Headers de sécurité pour toutes les routes, /studio compris.
+                // Le chemin de défi BotID reçoit aussi ses propres en-têtes
+                // via withBotId, avec le même X-Frame-Options : aucune valeur
+                // ne se contredit
                 source: '/(.*)',
                 headers: [
                     {
@@ -82,6 +81,22 @@ const nextConfig: NextConfig = {
                     {
                         key: 'X-Content-Type-Options',
                         value: 'nosniff',
+                    },
+                    {
+                        key: 'X-Frame-Options',
+                        value: 'SAMEORIGIN',
+                    },
+                    {
+                        key: 'Referrer-Policy',
+                        value: 'strict-origin-when-cross-origin',
+                    },
+                    {
+                        key: 'Permissions-Policy',
+                        value: 'camera=(), microphone=(), geolocation=(), payment=()',
+                    },
+                    {
+                        key: 'Strict-Transport-Security',
+                        value: 'max-age=63072000; includeSubDomains',
                     },
                 ],
             },
