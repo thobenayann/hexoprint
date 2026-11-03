@@ -1,4 +1,5 @@
 import { trackServerEvent } from '@/lib/analytics-server';
+import { screenContactSubmission } from '@/lib/contact-screening.mjs';
 import { emailConfig } from '@/lib/email-config';
 import { createContactSubmissionSchema } from '@/lib/email-schemas';
 import { emailService } from '@/lib/email-service';
@@ -9,6 +10,10 @@ import { NextRequest, NextResponse } from 'next/server';
 const ContactSubmissionSchema = createContactSubmissionSchema(
     emailConfig.BLOB_PUBLIC_BASE_URL
 );
+
+// Hôte du store Blob du projet : un lien vers lui reste autorisé dans le tri
+// et dans le mail admin
+const extraAllowedHosts = [new URL(emailConfig.BLOB_PUBLIC_BASE_URL).host];
 
 // Types pour la gestion des erreurs
 type ApiError = {
@@ -44,8 +49,17 @@ export async function POST(request: NextRequest) {
 
         const formData = validationResult.data;
 
+        // Tri de la demande : le verdict décide du contenu des emails
+        const screening = screenContactSubmission(formData, {
+            extraAllowedHosts,
+        });
+
         // Envoi des emails
-        const emailResult = await emailService.sendContactFormEmails(formData);
+        const emailResult = await emailService.sendContactFormEmails(
+            formData,
+            screening,
+            { extraAllowedHosts }
+        );
 
         if (!emailResult.success) {
             return NextResponse.json<ApiError>(

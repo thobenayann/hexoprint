@@ -1,4 +1,19 @@
+import {
+    REASON_LABELS,
+    SUSPECT_BANNER_BODY,
+    SUSPECT_BANNER_TITLE,
+    buildAdminEnvelope,
+} from '@/lib/contact-email-content.mjs';
+import {
+    BUDGETS,
+    DEADLINES,
+    PROJECT_TYPES,
+    getOptionLabel,
+} from '@/lib/contact-options.mjs';
+import type { ScreeningResult } from '@/lib/contact-screening.mjs';
 import type { ContactFormData } from '@/lib/email-schemas';
+import { toSafeSegments } from '@/lib/safe-text.mjs';
+import { Fragment } from 'react';
 import {
     Body,
     Container,
@@ -15,11 +30,53 @@ import {
 type ContactFormAdminEmailProps = {
     formData: ContactFormData;
     submittedAt: string;
+    screening: ScreeningResult;
+    extraAllowedHosts: string[];
 };
+
+// Libellé affiché si une valeur de liste fermée est inconnue (même texte que
+// la version texte du mail) : la valeur saisie n'est jamais recopiée telle quelle
+const UNKNOWN_OPTION_LABEL = 'Valeur non reconnue';
+
+type SafeTextProps = {
+    value: string | undefined;
+    allowLinks: boolean;
+    extraAllowedHosts: string[];
+};
+
+/**
+ * Affiche un texte saisi par le visiteur. Tout passe par `toSafeSegments` : un
+ * lien autorisé devient cliquable (seulement si `allowLinks`), tout le reste
+ * (lien inconnu, domaine nu, adresse IP, autre schéma) devient du texte désamorcé.
+ */
+function SafeText({ value, allowLinks, extraAllowedHosts }: SafeTextProps) {
+    return (
+        <>
+            {toSafeSegments(value ?? '', { allowLinks, extraAllowedHosts }).map(
+                (segment, index) =>
+                    segment.kind === 'link' ? (
+                        <a
+                            key={index}
+                            href={segment.href}
+                            style={linkStyle}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {segment.value}
+                        </a>
+                    ) : (
+                        <Fragment key={index}>{segment.value}</Fragment>
+                    )
+            )}
+        </>
+    );
+}
 
 export function ContactFormAdminEmail({
     formData,
     submittedAt,
+    screening,
+    extraAllowedHosts,
 }: ContactFormAdminEmailProps) {
     const {
         type,
@@ -35,14 +92,55 @@ export function ContactFormAdminEmail({
         files,
     } = formData;
 
+    // Seul un verdict « clean » rend les liens cliquables : tout autre cas est
+    // traité comme suspect, comme dans l'enveloppe et la version texte
+    const isClean = screening.verdict === 'clean';
+    const envelope = buildAdminEnvelope(screening, email);
+    const reasons = (
+        Array.isArray(screening.reasons) ? screening.reasons : []
+    ).filter((reason) => Object.hasOwn(REASON_LABELS, reason));
+
+    const safe = (value: string | undefined, allowLinks: boolean = isClean) => (
+        <SafeText
+            value={value}
+            allowLinks={allowLinks}
+            extraAllowedHosts={extraAllowedHosts}
+        />
+    );
+
     return (
         <Html>
             <Head />
-            <Preview>
-                Nouvelle demande de devis de {firstName} {lastName}
-            </Preview>
+            <Preview>{envelope.subject}</Preview>
             <Body style={main}>
                 <Container style={container}>
+                    {/* Bandeau d'alerte : demande mise de côté par le tri */}
+                    {!isClean && (
+                        <Section style={suspectBanner}>
+                            <Heading as="h2" style={suspectBannerTitle}>
+                                {SUSPECT_BANNER_TITLE}
+                            </Heading>
+                            <Text style={suspectBannerText}>
+                                {SUSPECT_BANNER_BODY}
+                            </Text>
+                            {reasons.length > 0 && (
+                                <>
+                                    <Text style={suspectBannerText}>
+                                        <strong>Signalé car :</strong>
+                                    </Text>
+                                    {reasons.map((reason) => (
+                                        <Text
+                                            key={reason}
+                                            style={suspectBannerReason}
+                                        >
+                                            • {REASON_LABELS[reason]}
+                                        </Text>
+                                    ))}
+                                </>
+                            )}
+                        </Section>
+                    )}
+
                     {/* Logo Hexo'print */}
                     <Section style={logoSection}>
                         <Img
@@ -74,19 +172,21 @@ export function ContactFormAdminEmail({
                                 : 'Professionnel'}
                         </Text>
                         <Text style={text}>
-                            <strong>Nom :</strong> {firstName} {lastName}
+                            <strong>Nom :</strong> {safe(firstName)}{' '}
+                            {safe(lastName)}
                         </Text>
+                        {/* Adresse en texte brut : le schéma la valide, et il faut pouvoir la copier */}
                         <Text style={text}>
                             <strong>Email :</strong> {email}
                         </Text>
                         {phone && (
                             <Text style={text}>
-                                <strong>Téléphone :</strong> {phone}
+                                <strong>Téléphone :</strong> {safe(phone)}
                             </Text>
                         )}
                         {company && (
                             <Text style={text}>
-                                <strong>Entreprise :</strong> {company}
+                                <strong>Entreprise :</strong> {safe(company)}
                             </Text>
                         )}
                     </Section>
@@ -99,24 +199,29 @@ export function ContactFormAdminEmail({
                         </Heading>
                         <Text style={text}>
                             <strong>Type de projet :</strong>{' '}
-                            {getProjectTypeLabel(projectType)}
+                            {getOptionLabel(PROJECT_TYPES, projectType) ??
+                                UNKNOWN_OPTION_LABEL}
                         </Text>
                         <Text style={text}>
                             <strong>Description :</strong>
                         </Text>
                         <Section style={descriptionBox}>
-                            <Text style={descriptionText}>{description}</Text>
+                            <Text style={descriptionText}>
+                                {safe(description)}
+                            </Text>
                         </Section>
                         {budget && (
                             <Text style={text}>
                                 <strong>Budget approximatif :</strong>{' '}
-                                {getBudgetLabel(budget)}
+                                {getOptionLabel(BUDGETS, budget) ??
+                                    UNKNOWN_OPTION_LABEL}
                             </Text>
                         )}
                         {deadline && (
                             <Text style={text}>
                                 <strong>Délai souhaité :</strong>{' '}
-                                {getDeadlineLabel(deadline)}
+                                {getOptionLabel(DEADLINES, deadline) ??
+                                    UNKNOWN_OPTION_LABEL}
                             </Text>
                         )}
                     </Section>
@@ -130,10 +235,10 @@ export function ContactFormAdminEmail({
                                 </Heading>
                                 {files.map((file, index) => (
                                     <Text key={index} style={text}>
-                                        • <strong>{file.name}</strong> (
+                                        • <strong>{safe(file.name)}</strong> (
                                         {(file.size / 1024 / 1024).toFixed(2)}{' '}
                                         MB)
-                                        {file.url && (
+                                        {isClean && file.url && (
                                             <>
                                                 <br />
                                                 📥{' '}
@@ -145,6 +250,12 @@ export function ContactFormAdminEmail({
                                                 >
                                                     Télécharger le fichier
                                                 </a>
+                                            </>
+                                        )}
+                                        {!isClean && file.url && (
+                                            <>
+                                                <br />
+                                                {safe(file.url, false)}
                                             </>
                                         )}
                                     </Text>
@@ -160,42 +271,6 @@ export function ContactFormAdminEmail({
             </Body>
         </Html>
     );
-}
-
-// Fonctions utilitaires pour les labels
-function getProjectTypeLabel(projectType: string): string {
-    const labels: Record<string, string> = {
-        prototypage: 'Prototypage rapide',
-        reparation: 'Réparation de pièce',
-        modelisme: 'Modélisme',
-        decoration: 'Objet décoratif',
-        'piece-technique': 'Pièce technique sur-mesure',
-        'petite-serie': 'Petite série',
-        autre: 'Autre projet',
-    };
-    return labels[projectType] || projectType;
-}
-
-function getBudgetLabel(budget: string): string {
-    const labels: Record<string, string> = {
-        '0-50': 'Moins de 50€',
-        '50-100': '50€ - 100€',
-        '100-200': '100€ - 200€',
-        '200-500': '200€ - 500€',
-        '500+': 'Plus de 500€',
-    };
-    return labels[budget] || budget;
-}
-
-function getDeadlineLabel(deadline: string): string {
-    const labels: Record<string, string> = {
-        urgent: 'Urgent (48h)',
-        '1-semaine': 'Sous 1 semaine',
-        '2-semaines': 'Sous 2 semaines',
-        '1-mois': 'Sous 1 mois',
-        flexible: 'Flexible',
-    };
-    return labels[deadline] || deadline;
 }
 
 // Styles
@@ -284,4 +359,31 @@ const linkStyle = {
     color: '#24556A',
     textDecoration: 'underline',
     fontWeight: 'bold',
+};
+
+const suspectBanner = {
+    backgroundColor: '#FDECEA',
+    border: '2px solid #B71C1C',
+    borderRadius: '5px',
+    margin: '0 0 20px 0',
+    padding: '15px',
+};
+
+const suspectBannerTitle = {
+    color: '#B71C1C',
+    fontSize: '18px',
+    fontWeight: 'bold',
+    margin: '0 0 10px 0',
+};
+
+const suspectBannerText = {
+    color: '#7F1D1D',
+    fontSize: '14px',
+    margin: '10px 0',
+};
+
+const suspectBannerReason = {
+    color: '#7F1D1D',
+    fontSize: '14px',
+    margin: '4px 0 4px 10px',
 };

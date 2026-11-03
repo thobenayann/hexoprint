@@ -76,7 +76,6 @@ export function getAdminRecipients(): string[] {
 export const EMAIL_TEMPLATES = {
     CONTACT_FORM: {
         subject: "Nouvelle demande de devis - Hexo'print",
-        adminSubject: 'Nouvelle demande de devis reçue',
         confirmationSubject: "Confirmation de votre demande - Hexo'print",
     },
 } as const;
