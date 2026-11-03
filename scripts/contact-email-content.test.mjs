@@ -167,6 +167,30 @@ test('a clean text ends an allowed link at an unbalanced bracket and defangs wha
   assert.doesNotMatch(text, /evil\.online/);
 });
 
+test('a clean text ends an allowed link at any bracket, brace or angle character', () => {
+  const tails = ['([)]evil.com', '[(])evil.online', '((x))evil.com', '[[x]]evil.com', '(xevil.online', 'x{evil.online', 'x}evil.online'];
+  for (const tail of tails) {
+    const text = build({ description: `voir https://we.tl/${tail}` }, CLEAN);
+    const [, head] = /voir (https:\/\/we\.tl\/[^()[\]{}<>\s]*)/.exec(text);
+    assert.ok(text.includes(`voir ${head}`), tail);
+    assert.doesNotMatch(text, /evil\.(com|online)/, tail);
+    assert.match(text, /evil\[\.\](com|online)/, tail);
+  }
+});
+
+test('French phone numbers and amounts with dots are written as they are, in both verdicts', () => {
+  for (const screening of [CLEAN, SUSPECT]) {
+    const text = build({ phone: '05.61.22.33.44', description: 'rappelez le +33.5.61.22.33.44 ou le 05.61.22.33.44, budget 1.234.567.890 EUR' }, screening);
+    assert.ok(text.includes('Téléphone : 05.61.22.33.44\n'));
+    assert.ok(text.includes('+33.5.61.22.33.44 ou le 05.61.22.33.44, budget 1.234.567.890 EUR'));
+    const lines = text.split('\n').filter((line) => /^Téléphone|rappelez/.test(line));
+    assert.equal(lines.length, 2);
+    assert.doesNotMatch(lines.join('\n'), /\[\.\]/);
+  }
+  const plus = build({ phone: '+33.5.61.22.33.44' }, CLEAN);
+  assert.ok(plus.includes('Téléphone : +33.5.61.22.33.44\n'));
+});
+
 test('every kind of line break in the description stays inside its block', () => {
   const lineSeparator = String.fromCharCode(0x2028);
   const text = build({ description: `un\r\ndeux\rtrois${lineSeparator}quatre` }, CLEAN);

@@ -164,10 +164,24 @@ test('schemes, IPs and Windows paths: what is left alone', () => {
   // une seule barre : un chemin Windows ou une heure, pas un lien
   assert.equal(run('dans C:\\Modeles\\liste'), 'dans C:\\Modeles\\liste');
   assert.equal(run('RDV 12:/30'), 'RDV 12:/30');
-  // moins de quatre nombres, ou une lettre devant : pas une adresse IP
-  for (const text of ['1.2.3', '2.5', 'v1.2.3.4', 'buse 0.4.0.6mm', 'version2.5.1.0x']) {
+  // pas exactement quatre groupes de trois chiffres au plus, de 255 au plus : pas une adresse IP
+  for (const text of [
+    '1.2.3',
+    '2.5',
+    '256.1.1.1',
+    '1.2.3.4.5',
+    '1.2.3.4567',
+    '1234.5.6.7',
+    '05.61.22.33.44',
+    '+33.5.61.22.33.44',
+    '33.5.61.22.33.44',
+    '1.234.567.890 EUR',
+    'au 05.61.22.33.44.',
+  ]) {
     assert.equal(run(text), text);
   }
+  // une lettre à côté de l'adresse ne la protège pas
+  assert.equal(run('v1.2.3.4'), 'v1[.]2[.]3[.]4');
   // un schéma désamorcé reste stable
   assert.equal(run('hxxp://a[.]online ftx://203[.]0[.]113[.]7/x'), 'hxxp://a[.]online ftx://203[.]0[.]113[.]7/x');
 });
@@ -212,21 +226,51 @@ test('an allowed link ends at the first unbalanced closing bracket and the rest 
   assert.deepEqual(on(plain).filter((s) => s.kind === 'link').map((s) => s.value), ['https://we.tl/x', 'https://we.tl/y']);
 });
 
-test('balanced brackets stay inside an allowed link', () => {
+test('an allowed link ends at the first bracket, brace or angle character of any kind', () => {
   const on = (text) => toSafeSegments(text, { allowLinks: true });
-  for (const url of ['https://we.tl/Objet_(2)/x', 'https://we.tl/a_[1]c', 'https://we.tl/a(b[c]d)e']) {
-    assert.deepEqual(on(`voir ${url}.`), [
-      { kind: 'text', value: 'voir ' },
-      { kind: 'link', value: url, href: url },
-      { kind: 'text', value: '.' },
-    ]);
+  // [entrée, début cliquable, reste en texte]
+  const cases = [
+    ['https://we.tl/([)]evil.com', 'https://we.tl/', '([)]evil[.]com'],
+    ['https://we.tl/[(])evil.online', 'https://we.tl/', '[(])evil[.]online'],
+    ['https://we.tl/((x))evil.com', 'https://we.tl/', '((x))evil[.]com'],
+    ['https://we.tl/[[x]]evil.com', 'https://we.tl/', '[[x]]evil[.]com'],
+    ['https://we.tl/(xevil.online', 'https://we.tl/', '(xevil[.]online'],
+    ['https://we.tl/x{evil.online', 'https://we.tl/x', '{evil[.]online'],
+    ['https://we.tl/x}evil.online', 'https://we.tl/x', '}evil[.]online'],
+    ['https://we.tl/x<evil.online', 'https://we.tl/x', '<evil[.]online'],
+    ['https://we.tl/x>evil.online', 'https://we.tl/x', '>evil[.]online'],
+    ['https://we.tl/x)evil.online', 'https://we.tl/x', ')evil[.]online'],
+    ['https://we.tl/x]evil.online', 'https://we.tl/x', ']evil[.]online'],
+    ['www.we.tl/a(b)evil.com', 'www.we.tl/a', '(b)evil[.]com'],
+    ['https://we.tl/a?u=1&v=2]x.zip', 'https://we.tl/a?u=1&v=2', ']x[.]zip'],
+  ];
+  for (const [input, head, tail] of cases) {
+    const segments = on(input);
+    assert.equal(segments.length, 2, input);
+    assert.equal(segments[0].kind, 'link', input);
+    assert.equal(segments[0].value, head, input);
+    assert.equal(segments[0].href, head.startsWith('www.') ? `https://${head}` : head, input);
+    assert.deepEqual(segments[1], { kind: 'text', value: tail }, input);
   }
+  // une paire bien formée n'est plus une exception : le lien s'arrête à l'ouvrant
+  assert.deepEqual(on('voir https://we.tl/Objet_(2)/x.'), [
+    { kind: 'text', value: 'voir ' },
+    { kind: 'link', value: 'https://we.tl/Objet_', href: 'https://we.tl/Objet_' },
+    { kind: 'text', value: '(2)/x.' },
+  ]);
   // fermant isolé en fin de phrase : retiré du lien, comme avant
   assert.deepEqual(on('(voir https://we.tl/x)'), [
     { kind: 'text', value: '(voir ' },
     { kind: 'link', value: 'https://we.tl/x', href: 'https://we.tl/x' },
     { kind: 'text', value: ')' },
   ]);
+});
+
+test('with links off, a bracketed tail is defanged inside the single text', () => {
+  const off = (text) => joined(toSafeSegments(text, { allowLinks: false }));
+  assert.equal(off('https://we.tl/((x))evil.com'), 'hxxps://we[.]tl/((x))evil[.]com');
+  assert.equal(off('https://we.tl/(xevil.online'), 'hxxps://we[.]tl/(xevil[.]online');
+  assert.equal(off('https://we.tl/x{evil.online'), 'hxxps://we[.]tl/x{evil[.]online');
 });
 
 test('with links off, a bracket-clipped link is still one defanged text', () => {
@@ -279,7 +323,10 @@ test('long hostile inputs stay fast', () => {
     // schémas, adresses IP, chemins réseau, fermants sans ouvrant
     'ftp://1.2.3.4/', 'ftp:/', 'a://', 'sftp:\\\\1.2.3.4\\', '\\\\1.2.3.4\\share ', '1.2.3.4 ', '1.', 'a1.1.1.1.', '1.1.1.1x ', '1.1.1.1a',
     'abc', 'a1-b2+c3', ':///', 'https://we.tl/x)', 'https://we.tl/x]y.zz ', 'www.we.tl/x)www.we.tl/y)', 'https://we.tl/(x]', '((((((', '))))))', '[]][[]',
-    'https://we.tl/' + ')'.repeat(100), 'https://we.tl/' + '(x)'.repeat(100)]) {
+    'https://we.tl/' + ')'.repeat(100), 'https://we.tl/' + '(x)'.repeat(100),
+    // R15 et R16 : tous les caractères qui terminent un lien, IPv4 et numéros
+    'https://we.tl/([)]x ', 'https://we.tl/((x))e.com ', 'https://we.tl/{x}<y>e.com ', 'www.we.tl/' + '{'.repeat(100), '{[(<', '>)]}',
+    '05.61.22.33.44 ', '+33.5.61.22.33.44 ', '1.2.3.4.5.6.7.8 ', '255.255.255.255 ', '256.256.256.256 ', '1.2.3.', '1234.1234.1234.1234 ', '1.2.3.4.', '9.9.9.9x']) {
     const text = unit.repeat(Math.ceil(50000 / unit.length)).slice(0, 50000);
     const t = performance.now();
     toSafeSegments(text, { allowLinks: true, extraAllowedHosts: ['example.org'] });
