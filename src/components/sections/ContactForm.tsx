@@ -5,8 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileUploadSimple } from '@/components/ui/file-upload-simple';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+    BOT_REFUSED_MESSAGE,
+    RATE_LIMITED_MESSAGE,
+    SEND_FAILED_MESSAGE,
+} from '@/lib/contact-fallback-messages';
 import { BUDGETS, DEADLINES, PROJECT_TYPES } from '@/lib/contact-options.mjs';
 import { ContactFormSchema, type ContactFormDraft } from '@/lib/email-schemas';
+import { fetchJsonWithTimeout } from '@/lib/fetch-json-with-timeout.mjs';
 import type { UploadResult } from '@/lib/file-upload';
 import {
     AlertCircleIcon,
@@ -55,27 +61,54 @@ export function ContactForm() {
                 throw new Error(`Données invalides: ${errors.join(', ')}`);
             }
 
-            // Envoi vers l'API (les fichiers sont déjà uploadés avec leurs URLs)
-            const response = await fetch('/api/contact', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
+            // Envoi vers l'API (les fichiers sont déjà uploadés avec leurs URLs).
+            // Si la requête échoue avant toute réponse (réseau, script BotID
+            // bloqué, délai dépassé), le motif du rejet est souvent un Event
+            // et non une Error : on affiche un message de repli à la place
+            let exchange;
+            try {
+                exchange = await fetchJsonWithTimeout('/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+            } catch (requestError) {
+                throw new Error(SEND_FAILED_MESSAGE, { cause: requestError });
+            }
+            const { response, body } = exchange;
 
-            const result = await response.json();
+            // Refus anti-robot (403) et limite de débit (429) : message
+            // d'accueil avec les coordonnées directes
+            if (response.status === 403) {
+                throw new Error(BOT_REFUSED_MESSAGE);
+            }
+            if (response.status === 429) {
+                throw new Error(RATE_LIMITED_MESSAGE);
+            }
 
             if (!response.ok) {
-                throw new Error(result.error || "Erreur lors de l'envoi");
+                throw new Error(
+                    typeof body?.error === 'string' && body.error
+                        ? body.error
+                        : "Erreur lors de l'envoi"
+                );
+            }
+
+            // Un succès sans corps JSON ne prouve rien : ce n'est pas la
+            // réponse de notre route, donc on ne confirme pas l'envoi
+            if (!body) {
+                throw new Error(SEND_FAILED_MESSAGE);
             }
 
             // Succès
             setSubmitStatus({
                 type: 'success',
                 message:
-                    result.message ||
-                    'Votre demande a été envoyée avec succès !',
+                    typeof body.message === 'string' && body.message
+                        ? body.message
+                        : 'Votre demande a été envoyée avec succès !',
             });
 
             // Reset du formulaire après succès
