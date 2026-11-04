@@ -47,7 +47,12 @@ async function main() {
     });
     const submittedAt = '2 août 2026 à 10:00';
     const adminHtml = await render(
-        ContactFormAdminEmail({ formData, submittedAt })
+        ContactFormAdminEmail({
+            formData,
+            submittedAt,
+            screening: { verdict: 'clean', reasons: [], linkHosts: [] },
+            extraAllowedHosts: [],
+        })
     );
     const confirmationHtml = await render(
         ContactFormConfirmationEmail({ formData, submittedAt })

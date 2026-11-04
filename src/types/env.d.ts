@@ -11,6 +11,10 @@ declare global {
             SANITY_API_READ_TOKEN?: string;
             SANITY_API_WRITE_TOKEN?: string;
 
+            // Variables Vercel Blob (côté serveur uniquement)
+            // URL publique du store : validée au chargement par email-config.ts
+            BLOB_PUBLIC_BASE_URL?: string;
+
             // Variables Next.js
             NODE_ENV: 'development' | 'production' | 'test';
 

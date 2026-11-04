@@ -1,7 +1,12 @@
 import { ContactFormAdminEmail } from '@/components/emails/contact-form-admin-email';
 import { ContactFormConfirmationEmail } from '@/components/emails/contact-form-confirmation-email';
 import { render } from 'react-email';
-import { Resend } from 'resend';
+import { Resend, type CreateEmailResponse } from 'resend';
+import {
+    buildAdminEmailText,
+    buildAdminEnvelope,
+} from './contact-email-content.mjs';
+import type { ScreeningResult } from './contact-screening.mjs';
 import {
     EMAIL_SETTINGS,
     EMAIL_TEMPLATES,
@@ -27,12 +32,22 @@ export class EmailService {
     }
 
     /**
-     * Envoie les emails suite à une demande de contact
+     * Envoie les emails suite à une demande de contact.
+     *
+     * Le verdict du tri décide de la suite : une demande `clean` suit le parcours
+     * normal. Une demande suspecte donne un mail admin signalé (objet préfixé,
+     * pas de réponse directe au visiteur, liens désamorcés) et aucune
+     * confirmation n'est envoyée au visiteur.
      */
     async sendContactFormEmails(
-        formData: ContactFormData
+        formData: ContactFormData,
+        screening: ScreeningResult,
+        options: { extraAllowedHosts: string[] }
     ): Promise<EmailResponse> {
         try {
+            const { extraAllowedHosts } = options;
+            const envelope = buildAdminEnvelope(screening, formData.email);
+
             const submittedAt = new Date().toLocaleString('fr-FR', {
                 timeZone: 'Europe/Paris',
                 dateStyle: 'full',
@@ -47,7 +62,12 @@ export class EmailService {
                     console.log('📧 [DEV MODE] Email qui aurait été envoyé:');
                     console.log('From:', emailConfig.EMAIL_FROM);
                     console.log('To Admin:', emailConfig.EMAIL_TO);
-                    console.log('To Client:', formData.email);
+                    console.log(
+                        'To Client:',
+                        envelope.sendConfirmation
+                            ? formData.email
+                            : 'aucun (demande suspecte)'
+                    );
                     console.log('Form Data:', formData);
                 }
 
@@ -55,7 +75,9 @@ export class EmailService {
                     success: true,
                     message: 'Emails simulés avec succès (mode développement)',
                     adminEmailId: 'dev-admin-' + Date.now(),
-                    clientEmailId: 'dev-client-' + Date.now(),
+                    clientEmailId: envelope.sendConfirmation
+                        ? 'dev-client-' + Date.now()
+                        : '',
                 };
             }
 
@@ -72,7 +94,12 @@ export class EmailService {
                 console.log('📧 [RESEND MODE] Envoi des emails via Resend:');
                 console.log('From:', emailConfig.EMAIL_FROM);
                 console.log('To Admin(s):', adminEmails);
-                console.log('To Client:', clientEmail);
+                console.log(
+                    'To Client:',
+                    envelope.sendConfirmation
+                        ? clientEmail
+                        : 'aucun (demande suspecte)'
+                );
                 console.log('Form Data:', formData);
                 if (settings.useTestEmails) {
                     console.log(
@@ -86,39 +113,56 @@ export class EmailService {
                 ContactFormAdminEmail({
                     formData,
                     submittedAt,
+                    screening,
+                    extraAllowedHosts,
                 })
             );
 
-            const confirmationEmailHtml = await render(
-                ContactFormConfirmationEmail({
-                    formData,
-                    submittedAt,
-                })
-            );
+            // La confirmation n'existe que pour une demande saine
+            const confirmationEmailHtml = envelope.sendConfirmation
+                ? await render(
+                      ContactFormConfirmationEmail({
+                          formData,
+                          submittedAt,
+                      })
+                  )
+                : '';
 
-            // Envoi de l'email à l'admin (ou aux admins)
+            // Envoi de l'email à l'admin (ou aux admins). Version HTML et version
+            // texte sont toutes deux désamorcées si la demande est suspecte, et
+            // `replyTo` est absent dans ce cas.
             const adminEmailResult = await this.sendEmail({
                 from: emailConfig.EMAIL_FROM,
                 to: adminEmails,
-                subject: EMAIL_TEMPLATES.CONTACT_FORM.adminSubject,
+                subject: envelope.subject,
                 html: adminEmailHtml,
-                replyTo: formData.email,
+                text: buildAdminEmailText({
+                    formData,
+                    screening,
+                    submittedAt,
+                    extraAllowedHosts,
+                }),
+                replyTo: envelope.replyTo,
             });
 
-            // Envoi de l'email de confirmation au client
-            const confirmationEmailResult = await this.sendEmail({
-                from: emailConfig.EMAIL_FROM,
-                to: [clientEmail],
-                subject: EMAIL_TEMPLATES.CONTACT_FORM.confirmationSubject,
-                html: confirmationEmailHtml,
-            });
+            // Envoi de l'email de confirmation au client, seulement si la
+            // demande est saine
+            let confirmationEmailResult: CreateEmailResponse | null = null;
+            if (envelope.sendConfirmation) {
+                confirmationEmailResult = await this.sendEmail({
+                    from: emailConfig.EMAIL_FROM,
+                    to: [clientEmail],
+                    subject: EMAIL_TEMPLATES.CONTACT_FORM.confirmationSubject,
+                    html: confirmationEmailHtml,
+                });
+            }
 
             // Vérification des résultats
-            if (adminEmailResult.error || confirmationEmailResult.error) {
+            if (adminEmailResult.error || confirmationEmailResult?.error) {
                 throw new Error(
                     `Erreur lors de l'envoi: ${
                         adminEmailResult.error?.message ||
-                        confirmationEmailResult.error?.message
+                        confirmationEmailResult?.error?.message
                     }`
                 );
             }
@@ -127,7 +171,7 @@ export class EmailService {
                 success: true,
                 message: 'Emails envoyés avec succès',
                 adminEmailId: adminEmailResult.data?.id || '',
-                clientEmailId: confirmationEmailResult.data?.id || '',
+                clientEmailId: confirmationEmailResult?.data?.id || '',
             };
         } catch (error) {
             console.error("Erreur lors de l'envoi des emails:", error);
@@ -150,6 +194,7 @@ export class EmailService {
         to: string[];
         subject: string;
         html: string;
+        text?: string;
         replyTo?: string;
     }) {
         try {
@@ -158,6 +203,7 @@ export class EmailService {
                 to: params.to,
                 subject: params.subject,
                 html: params.html,
+                text: params.text,
                 replyTo: params.replyTo,
             });
 
