@@ -2,10 +2,47 @@ import { trackServerEvent } from '@/lib/analytics-server';
 import { validateFile } from '@/lib/file-upload';
 import { exceedsUploadFileLimit } from '@/lib/upload-limits.mjs';
 import { put } from '@vercel/blob';
+import { checkBotId } from 'botid/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
     try {
+        // Contrôle anti-robot avant tout travail : on ne lit pas le corps de la
+        // requête, on n'écrit rien sur le store Blob et on ne compte rien
+        let isBot = false;
+        try {
+            const verification = await checkBotId({
+                advancedOptions: { checkLevel: 'basic' },
+            });
+            // botid ne contrôle pas le statut HTTP de sa réponse : un corps
+            // d'erreur de l'API Vercel (4xx, 5xx, jeton OIDC refusé) revient
+            // sans verdict. Ce cas est tracé comme une panne, puis la demande
+            // est acceptée, comme pour une exception
+            if (typeof verification.isBot !== 'boolean') {
+                console.error(
+                    'BotID indisponible, requête acceptée',
+                    'verdict absent'
+                );
+            }
+            isBot = verification.isBot === true;
+        } catch (botIdError) {
+            // BotID injoignable ou mal configuré : on laisse passer la demande
+            // plutôt que de bloquer un vrai client. Seul le message est
+            // journalisé, l'objet d'erreur complet pourrait contenir un jeton
+            console.error(
+                'BotID indisponible, requête acceptée',
+                botIdError instanceof Error
+                    ? botIdError.message
+                    : 'erreur inconnue'
+            );
+        }
+        if (isBot) {
+            return NextResponse.json(
+                { error: 'Accès refusé' },
+                { status: 403 }
+            );
+        }
+
         // Vérifier que le token Vercel Blob est configuré
         if (!process.env.BLOB_READ_WRITE_TOKEN) {
             return NextResponse.json(
