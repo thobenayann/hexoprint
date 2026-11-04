@@ -97,6 +97,7 @@ test('the fallback messages are built from company-info, with no hard-coded cont
   const contact = '\\$\\{COMPANY_INFO\\.contact\\.email\\} ou appelez le \\$\\{COMPANY_INFO\\.contact\\.phone\\}\\.';
   const expected = {
     BOT_REFUSED_MESSAGE: `Votre envoi n'a pas pu être vérifié automatiquement\\. Écrivez-nous directement à ${contact}`,
+    FILE_TOO_LARGE_MESSAGE: `Ce fichier est trop volumineux pour être envoyé par le formulaire\\. Collez plutôt un lien de partage \\(WeTransfer, Google Drive, Dropbox…\\) dans la description de votre projet, ou écrivez-nous directement à ${contact}`,
     RATE_LIMITED_MESSAGE: `Vous avez envoyé plusieurs demandes en peu de temps\\. Merci de patienter dix minutes avant de réessayer, ou écrivez-nous directement à ${contact}`,
     SEND_FAILED_MESSAGE: `L'envoi n'a pas pu aboutir\\. Vérifiez votre connexion, désactivez un éventuel bloqueur de publicité, puis réessayez, ou écrivez-nous directement à ${contact}`,
   };
@@ -113,7 +114,7 @@ test('both client components show the fallback messages on a 403, a 429 and a fa
     const component = await source(file);
     assert.match(
       component,
-      /import \{\s*BOT_REFUSED_MESSAGE,\s*RATE_LIMITED_MESSAGE,\s*SEND_FAILED_MESSAGE,?\s*\} from '@\/lib\/contact-fallback-messages';/,
+      /import \{\s*BOT_REFUSED_MESSAGE,\s*(?:FILE_TOO_LARGE_MESSAGE,\s*)?RATE_LIMITED_MESSAGE,\s*SEND_FAILED_MESSAGE,?\s*\} from '@\/lib\/contact-fallback-messages';/,
       file
     );
     assert.match(component, /response\.status === 403\) \{\s*(?:throw new Error|alert)\(BOT_REFUSED_MESSAGE\)/, `${file}: 403`);
@@ -127,6 +128,25 @@ test('both client components show the fallback messages on a 403, a 429 and a fa
     // Aucune chaîne en dur à la place des messages
     assert.doesNotMatch(component, /patienter dix minutes|bloqueur de publicité/, `${file}: messages live in contact-fallback-messages`);
   }
+});
+
+test('the upload component answers a 413 with the oversized-file message, built from company-info', async () => {
+  // Vercel refuse un corps de requête de plus de 4,5 Mo avec un 413, alors que
+  // le formulaire autorise 100 Mo pour un fichier 3D : le visiteur doit être
+  // orienté vers un lien de partage et les coordonnées du site.
+  const upload = await source('src/components/ui/file-upload-simple.tsx');
+  assert.match(upload, /\bFILE_TOO_LARGE_MESSAGE,\s*RATE_LIMITED_MESSAGE/, 'imported from the helper');
+  assert.match(upload, /response\.status === 413\) \{\s*alert\(FILE_TOO_LARGE_MESSAGE\);\s*return;\s*\}/);
+  // Le 413 est traité avant le repli générique « sans résultats lisibles »
+  assert.ok(upload.indexOf('response.status === 413') < upload.indexOf('Array.isArray(body?.results)'));
+  assert.doesNotMatch(upload, /trop volumineux|WeTransfer/, 'the copy lives in contact-fallback-messages');
+
+  const helper = await source('src/lib/contact-fallback-messages.ts');
+  const declaration = helper.match(/export const FILE_TOO_LARGE_MESSAGE = `([^`]*)`;/);
+  assert.ok(declaration, 'FILE_TOO_LARGE_MESSAGE must be an exported template literal');
+  assert.match(declaration[1], /\$\{COMPANY_INFO\.contact\.email\}/);
+  assert.match(declaration[1], /\$\{COMPANY_INFO\.contact\.phone\}/);
+  assert.match(declaration[1], /lien de partage \(WeTransfer, Google Drive, Dropbox…\)/);
 });
 
 test('both client components send through the timeout helper and never read the body unguarded', async () => {

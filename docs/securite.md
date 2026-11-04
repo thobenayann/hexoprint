@@ -60,18 +60,21 @@ Le niveau de détection est `basic`. Il est écrit explicitement dans le client 
 | `next.config.ts` | `withBotId(nextConfig)` ajoute les réécritures qui servent le script de défi BotID. |
 | `src/app/api/contact/route.ts` | `checkBotId({ advancedOptions: { checkLevel: 'basic' } })` en première instruction du handler `POST`. |
 | `src/app/api/upload/route.ts` | Même appel, en première instruction du handler `POST`. |
-| `src/lib/contact-fallback-messages.ts` | Messages de repli affichés au visiteur (`403`, `429`, requête qui n'aboutit pas), avec l'e-mail et le téléphone lus dans `src/lib/company-info.ts`. |
+| `src/lib/contact-fallback-messages.ts` | Messages de repli affichés au visiteur (`403`, `429`, `413` pour un fichier trop volumineux, requête qui n'aboutit pas), avec l'e-mail et le téléphone lus dans `src/lib/company-info.ts`. |
 | `src/lib/fetch-json-with-timeout.mjs` | Délai maximal des requêtes du navigateur et lecture du corps JSON sans erreur technique visible. |
 
 ### Comportement
 
 - **Robot détecté** : réponse `403` avec `{ "error": "Accès refusé" }`. Le corps de la requête n'est pas lu, aucun mail n'est envoyé et aucune statistique n'est comptée.
 - **Messages de repli** : le formulaire et le dépôt de fichiers montrent au visiteur un message avec l'e-mail et le téléphone publics du site dans trois cas. Un `403` (robot détecté), un `429` (limite de débit, il doit patienter dix minutes) et une requête qui n'aboutit pas (réseau coupé, script BotID bloqué par un bloqueur de publicité, délai dépassé : 20 secondes pour le formulaire, 60 secondes pour le dépôt de fichiers). Une réponse qui n'est pas du JSON n'affiche jamais d'erreur technique.
+- **Fichier trop volumineux** : Vercel refuse par un `413` un corps de requête de plus d'environ 4,5 Mo, alors que le formulaire autorise jusqu'à 100 Mo pour un fichier 3D. Le dépôt de fichiers montre alors un message qui invite à coller un lien de partage (WeTransfer, Google Drive, Dropbox…) dans la description du projet, avec l'e-mail et le téléphone du site.
 - **BotID indisponible** : la requête est acceptée si BotID ne répond pas, ou s'il répond sans verdict. Cela arrive par exemple si le jeton OIDC du projet est absent (OIDC désigne le jeton d'identité que Vercel fournit au projet pour appeler ses propres services), si l'API Vercel est en panne ou répond par une erreur (jeton refusé, `4xx`, `5xx`), ou si le site est hébergé hors de Vercel. C'est un choix volontaire, pour ne jamais perdre un devis. Le serveur écrit alors `BotID indisponible, requête acceptée` dans les logs, suivi du message de l'erreur ou de `verdict absent` quand l'API a répondu sans verdict. Cette ligne doit être surveillée : tant qu'elle apparaît, les robots ne sont pas filtrés.
 
 Prérequis : déploiement sur Vercel, avec l'option **Secure Backend Access with OIDC Federation** du projet activée (Settings > Security, activée par défaut).
 
 En développement local, BotID considère toujours le visiteur comme humain. Le test d'un robot se fait donc sur une preview ou en production. Les previews sont protégées par Vercel Authentication : un `curl` simple y reçoit un `401` avant même que BotID s'exécute. Sur une preview, utiliser `vercel curl <chemin> --deployment <url-de-la-preview>` (ou un lien de partage). Un `curl` simple ne convient que contre la production.
+
+Un appel direct (`curl`, script) fait aussi écrire à `botid` la ligne `Possible misconfiguration of Vercel BotId`, au niveau `error` sur une preview et `warn` en production. Elle signale seulement que la requête n'a pas passé par le script de défi du navigateur : elle est attendue pour tout appel direct, et ce n'est pas la ligne de panne. Celle à surveiller reste `BotID indisponible, requête acceptée`.
 
 ### Vérifier
 
@@ -121,11 +124,15 @@ Ces variables doivent exister dans le projet Vercel. Le site a aussi besoin de `
 | Variable | Valeur | Environnements | Rôle |
 |---|---|---|---|
 | `BLOB_PUBLIC_BASE_URL` | `https://vr7ol2pxx8jv7pat.public.blob.vercel-storage.com` | Production, Preview, Development | URL publique du store Blob `hexoprint-blob` (identifiant `store_VR7Ol2pXx8jv7pat`, en minuscules dans l'URL). |
-| `EMAIL_TO` | Adresse de réception principale | Production, Preview, Development | Obligatoire. Sans elle, le build échoue. |
-| `EMAIL_TO_ADMIN` | Adresse de réception secondaire | Selon besoin | Facultative. Lue seulement si `NODE_ENV` vaut `production`, ce qui est aussi le cas des previews. |
+| `EMAIL_TO` | Adresse de réception du gérant | Production | Obligatoire en Production uniquement. Sans elle, le build de Production échoue. Les previews ne l'utilisent jamais. |
+| `EMAIL_TO_ADMIN` | Adresse du développeur | Preview (obligatoire), Production (facultative) | En Preview, seul destinataire des mails admin. En Production, destinataire en plus de `EMAIL_TO`. Sans elle, le build Preview échoue. |
 
 - `BLOB_PUBLIC_BASE_URL` est obligatoire : sans elle, le build échoue. Le serveur n'accepte que les fichiers joints hébergés sur cette origine.
-- En Preview, `EMAIL_TO` et `EMAIL_TO_ADMIN` ne doivent pas contenir l'adresse du gérant. Les previews envoient de vrais mails, et `EMAIL_TO_ADMIN` est lue dès que `NODE_ENV` vaut `production`, ce qui est le cas sur les previews.
+- `BLOB_READ_WRITE_TOKEN` doit pointer vers le même store que `BLOB_PUBLIC_BASE_URL` dans chaque environnement (Production, Preview, Development) : sinon chaque demande avec pièce jointe y reçoit un `400`, parce que le fichier est déposé dans un store dont l'origine n'est pas acceptée.
+- Le site distingue son environnement grâce à `VERCEL_ENV` (`production`, `preview` ou `development`). Une preview tourne avec `NODE_ENV=production` mais reste traitée comme une preview. Hors Vercel, `NODE_ENV=production` vaut Production.
+- En Preview, les mails admin partent uniquement vers `EMAIL_TO_ADMIN`, même si `EMAIL_TO` est définie dans cet environnement. Le gérant ne reçoit donc jamais les essais faits sur une preview, qui envoient de vrais mails. `EMAIL_TO_ADMIN` doit contenir l'adresse du développeur, jamais celle du gérant.
+- Le build échoue si la variable requise par son environnement est absente ou vide : `EMAIL_TO` en Production, `EMAIL_TO_ADMIN` en Preview. Le message d'erreur nomme la variable et l'environnement.
+- En Development, aucune des deux n'est obligatoire. Les mails partent vers l'adresse de test Resend `delivered@resend.dev`.
 
 ## Que faire si…
 
